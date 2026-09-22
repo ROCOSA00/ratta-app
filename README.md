@@ -61,7 +61,7 @@ A medida que avancen las fases se añadirán las carpetas `components/`,
 
 - [x] **Fase 0** — Entorno de desarrollo comprobado
 - [x] **Fase 1** — Proyecto Next.js + Git inicializado
-- [ ] **Fase 2** — Diseño base y navegación móvil
+- [x] **Fase 2** — Diseño base y navegación móvil
 - [ ] **Fase 3** — Configuración de Supabase
 - [ ] **Fase 4** — Esquema de base de datos y RLS
 - [ ] **Fase 5** — Autenticación
