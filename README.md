@@ -70,7 +70,9 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
 - [x] **Fase 3** — Configuración de Supabase
 - [x] **Fase 4** — Esquema de base de datos y RLS (migraciones en
   `supabase/migrations/`, aplicadas al proyecto Supabase real)
-- [ ] **Fase 5** — Autenticación
+- [~] **Fase 5** — Autenticación (login, middleware y protección de
+  rutas implementados; falta crear las cuentas reales de Rocco y
+  Giselz y probar el flujo con ellas)
 - [ ] **Fase 6** — Calendario compartido
 - [ ] **Fase 7** — Notas
 - [ ] **Fase 8** — El Trono

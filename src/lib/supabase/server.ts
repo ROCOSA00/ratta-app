@@ -4,9 +4,10 @@ import { getSupabaseEnv } from "./env";
 
 /**
  * Cliente de Supabase para Server Components, Server Actions y Route
- * Handlers. Hasta que exista middleware (Fase 5) que refresque la sesión,
- * las escrituras de cookies desde un Server Component se ignoran: es el
- * comportamiento esperado según la documentación de @supabase/ssr.
+ * Handlers. La sesión se refresca en middleware.ts; si esta función se
+ * llama desde un Server Component (no una Action), la escritura de
+ * cookies se ignora silenciosamente (comportamiento esperado según la
+ * documentación de @supabase/ssr).
  */
 export async function createClient() {
   const cookieStore = await cookies();
