@@ -11,13 +11,13 @@ export default function InicioPage() {
       >
         <div className="flex flex-col items-center gap-4 text-center">
           <span
-            className="flex h-20 w-20 items-center justify-center rounded-[26%] p-4 shadow-lg"
+            className="flex h-28 w-28 items-center justify-center rounded-[26%] p-6 shadow-lg"
             style={{ backgroundImage: "var(--color-gradient)" }}
           >
             <RattaLogo className="h-full w-full text-white" />
           </span>
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold" style={{ color: "var(--color-ink)" }}>
+            <h1 className="text-4xl font-bold" style={{ color: "var(--color-ink)" }}>
               Ratta
             </h1>
             <p className="text-sm" style={{ color: "var(--color-muted)" }}>
