@@ -11,7 +11,7 @@ export default function InicioPage() {
       >
         <div className="flex flex-col items-center gap-4 text-center">
           <span
-            className="flex h-28 w-28 items-center justify-center rounded-[26%] p-6 shadow-lg"
+            className="flex h-28 w-28 items-center justify-center rounded-[26%] p-5 shadow-lg"
             style={{ backgroundImage: "var(--color-gradient)" }}
           >
             <RattaLogo className="h-full w-full text-white" />
