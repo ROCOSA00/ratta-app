@@ -1,5 +1,6 @@
 import { ComingSoon } from "@/components/shared/ComingSoon";
 import { RattaLogo } from "@/components/shared/RattaLogo";
+import { SupabaseStatus } from "@/components/shared/SupabaseStatus";
 import { LayoutDashboard } from "lucide-react";
 
 export default function InicioPage() {
@@ -26,6 +27,8 @@ export default function InicioPage() {
           </div>
         </div>
       </header>
+
+      <SupabaseStatus />
 
       <div className="mt-1">
         <ComingSoon

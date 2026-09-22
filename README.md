@@ -9,8 +9,10 @@ público; las cuentas se crean manualmente.
 ## Stack
 
 - **Next.js** (App Router) + **React** + **TypeScript**
-- **Tailwind CSS v4**
-- **Supabase** (PostgreSQL + Auth + Storage) — se configura en la Fase 3
+- **Tailwind CSS v3** (fijado a propósito: v4 tiene un bug conocido con el
+  motor Oxide/WASM en algunos entornos)
+- **Supabase** (PostgreSQL + Auth + Storage) — cliente conectado en la
+  Fase 3, esquema y RLS en la Fase 4
 - **Vercel** para el despliegue — Fase 12
 - **Cloudflare** para el DNS del dominio `ratta.servidorcomponentes.com` — Fase 13
 
@@ -49,21 +51,25 @@ excluido en `.gitignore`).
 ratta-app/
 ├── public/               # archivos estáticos
 ├── src/
-│   └── app/              # rutas (App Router de Next.js)
+│   ├── app/              # rutas (App Router de Next.js)
+│   ├── components/       # componentes compartidos y de navegación
+│   └── lib/
+│       └── supabase/     # clientes de Supabase (browser y server)
 ├── .env.example          # plantilla de variables de entorno (sin secretos)
 └── README.md
 ```
 
-A medida que avancen las fases se añadirán las carpetas `components/`,
-`features/`, `lib/`, `server/`, `types/` y `supabase/` (migraciones).
+A medida que avancen las fases se añadirán las carpetas `features/`,
+`server/` y `types/`.
 
 ## Progreso del proyecto
 
 - [x] **Fase 0** — Entorno de desarrollo comprobado
 - [x] **Fase 1** — Proyecto Next.js + Git inicializado
 - [x] **Fase 2** — Diseño base y navegación móvil
-- [ ] **Fase 3** — Configuración de Supabase
-- [ ] **Fase 4** — Esquema de base de datos y RLS
+- [x] **Fase 3** — Configuración de Supabase
+- [x] **Fase 4** — Esquema de base de datos y RLS (migraciones en
+  `supabase/migrations/`, aplicadas al proyecto Supabase real)
 - [ ] **Fase 5** — Autenticación
 - [ ] **Fase 6** — Calendario compartido
 - [ ] **Fase 7** — Notas
