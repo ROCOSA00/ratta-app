@@ -1,12 +1,33 @@
-import { PageHeader } from "@/components/shared/PageHeader";
 import { ComingSoon } from "@/components/shared/ComingSoon";
+import { RattaLogo } from "@/components/shared/RattaLogo";
 import { LayoutDashboard } from "lucide-react";
 
 export default function InicioPage() {
   return (
     <>
-      <PageHeader title="Hola 👋" subtitle="Nuestro pequeño mundo para dos" />
-      <div className="mt-5">
+      <header
+        className="px-5 pb-6"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 2rem)" }}
+      >
+        <div className="flex flex-col items-center gap-4 text-center">
+          <span
+            className="flex h-20 w-20 items-center justify-center rounded-[26%] p-4 shadow-lg"
+            style={{ backgroundImage: "var(--color-gradient)" }}
+          >
+            <RattaLogo className="h-full w-full text-white" />
+          </span>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold" style={{ color: "var(--color-ink)" }}>
+              Ratta
+            </h1>
+            <p className="text-sm" style={{ color: "var(--color-muted)" }}>
+              Nuestro pequeño mundo para dos.
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div className="mt-1">
         <ComingSoon
           icon={LayoutDashboard}
           title="El panel llega en la Fase 10"

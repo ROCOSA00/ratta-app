@@ -18,7 +18,10 @@ export function ComingSoon({
     >
       <span
         className="flex h-12 w-12 items-center justify-center rounded-xl"
-        style={{ background: "var(--color-bg)", color: "var(--color-accent)" }}
+        style={{
+          background: "color-mix(in srgb, var(--color-accent) 12%, var(--color-surface))",
+          color: "var(--color-accent)",
+        }}
       >
         <Icon size={24} strokeWidth={2} />
       </span>
@@ -30,7 +33,10 @@ export function ComingSoon({
       </p>
       <span
         className="mt-1 rounded-full px-3 py-1 text-xs font-medium"
-        style={{ background: "var(--color-bg)", color: "var(--color-muted)" }}
+        style={{
+          background: "color-mix(in srgb, var(--color-ink) 6%, var(--color-surface))",
+          color: "var(--color-muted)",
+        }}
       >
         {phase}
       </span>
