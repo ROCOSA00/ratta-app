@@ -68,9 +68,8 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
 - [x] **Fase 1** — Proyecto Next.js + Git inicializado
 - [x] **Fase 2** — Diseño base y navegación móvil
 - [x] **Fase 3** — Configuración de Supabase
-- [~] **Fase 4** — Esquema de base de datos y RLS (migraciones
-  escritas y validadas localmente en `supabase/migrations/`,
-  pendiente de aplicar al proyecto Supabase real)
+- [x] **Fase 4** — Esquema de base de datos y RLS (migraciones en
+  `supabase/migrations/`, aplicadas al proyecto Supabase real)
 - [ ] **Fase 5** — Autenticación
 - [ ] **Fase 6** — Calendario compartido
 - [ ] **Fase 7** — Notas
