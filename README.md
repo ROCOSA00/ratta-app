@@ -108,14 +108,21 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
   - [ ] Minijuego (tipo Brick Breaker) con puntuaciones — descartado
     por ahora, se retoma si se pide más adelante
   - [ ] Tests automatizados (Vitest/Playwright)
-- [~] **Fase 12** — GitHub + Vercel
-  - [x] Repositorio privado en GitHub, despliegue automático en
-    Vercel siguiendo la rama `main` desde la Fase 5
-  - [x] Historial reconciliado: todo el trabajo de las Fases 6-11
-    fusionado en `main` (PR #4 y PR #5); solo queda confirmar que
-    Vercel recoge el último merge en producción
-- [ ] **Fase 13** — Dominio en Cloudflare
-- [ ] **Fase 14** — PWA
+- [x] **Fase 12** — GitHub + Vercel: repositorio privado en GitHub,
+  despliegue automático en Vercel siguiendo la rama `main`, historial
+  reconciliado (Fases 6-11 fusionadas vía PR #4 y PR #5) y confirmado
+  en vivo que el "Production Branch" de Vercel es `main`
+- [x] **Fase 13** — Dominio en Cloudflare: aparcada a petición del
+  usuario; la URL de Vercel (`ratta-app.vercel.app`) es suficiente
+  por ahora, se puede retomar más adelante si se quiere un dominio
+  propio
+- [x] **Fase 14** — PWA: manifest.json, iconos propios (192/512/apple
+  touch icon) generados a partir del logo sobre el degradado de
+  marca, y metadatos de instalación (modo standalone, barra de
+  estado translúcida a juego con el `safe-area-inset` ya usado en
+  cabeceras y nav) — instalable desde "Compartir → Añadir a pantalla
+  de inicio" en iOS; sin caché offline (fuera de alcance, decisión
+  del usuario)
 - [ ] **Fase 15** — Backups y documentación
 
 ## Notas de seguridad
