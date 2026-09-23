@@ -75,7 +75,10 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
   dado de alta en Supabase; falta la prueba en vivo del login, aparcada
   hasta la Fase 12 por un problema de compatibilidad de StackBlitz con
   Next.js — ver nota en `supabase/README.md`)
-- [ ] **Fase 6** — Calendario compartido
+- [~] **Fase 6** — Calendario compartido (versión mínima: lista de
+  próximos eventos + formulario de título/fecha/hora; sin editar,
+  borrar ni vista mensual todavía — pendiente de probar en vivo, igual
+  que la Fase 5)
 - [ ] **Fase 7** — Notas
 - [ ] **Fase 8** — El Trono
 - [ ] **Fase 9** — Pregunta del día
