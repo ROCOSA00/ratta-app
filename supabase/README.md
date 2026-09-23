@@ -99,6 +99,66 @@ Ratta Space: a mano, nunca automáticamente desde la app. Puedes añadir
 más preguntas después, en cualquier momento, con el mismo patrón
 `insert into public.questions (text, category) values (...)`.
 
+## Backups y restauración (Fase 15)
+
+El **esquema** (tablas, RLS, funciones) ya está a salvo: vive en
+`supabase/migrations/`, versionado en git. Si el proyecto de Supabase
+desapareciera, se reconstruye entero aplicando esas migraciones en
+orden a un proyecto nuevo.
+
+Lo que **no** está respaldado en ningún sitio son los **datos**: las
+notas, los registros de El Trono, las respuestas de Pregunta del día,
+los mensajitos de cariño, las fotos de avatar. Eso solo existe dentro
+de Supabase, y en el plan gratuito no hay copias automáticas — hay que
+hacerlas a mano de vez en cuando.
+
+### Opción A — con terminal (recomendada, lo respalda todo de una vez)
+
+```bash
+DATABASE_URL="postgresql://postgres:TU-PASSWORD@db.evmyyhjtycxdybdbmyjp.supabase.co:5432/postgres" \
+  ./scripts/backup.sh
+```
+
+La cadena de conexión está en el panel de Supabase: **Project Settings
+→ Database → Connection string → URI**. Usa la de "Direct connection"
+o "Session pooler" (no la de "Transaction pooler", puerto 6543, que no
+soporta `pg_dump`).
+
+Esto genera un fichero `ratta-backup-AAAA-MM-DD_HHMM.sql` con todos los
+datos (ya excluido de git en `.gitignore`, para no subir nunca datos
+personales sin querer). Guárdalo en un sitio propio y privado — Google
+Drive, iCloud, donde prefieras —, nunca en GitHub.
+
+**Restaurar**: en un proyecto Supabase nuevo, aplicar las migraciones
+(ver arriba) y luego cargar el volcado:
+
+```bash
+psql "$DATABASE_URL" -f ratta-backup-AAAA-MM-DD_HHMM.sql
+```
+
+### Opción B — sin terminal, desde el móvil o el navegador
+
+Si no tienes un ordenador a mano con `pg_dump`/`psql` instalados,
+Supabase permite exportar tabla por tabla desde el propio panel:
+**Table Editor → (elige una tabla) → botón "Export data" → CSV**.
+
+Tablas con datos personales que merece la pena exportar así de vez en
+cuando: `notes`, `note_items`, `events`, `poop_entries`,
+`question_rounds`, `question_answers`, `activity_log`, `profiles`.
+(`spaces`, `space_members` y `questions` casi no cambian, y
+`questions` además ya está en `supabase/seed.sql` — menos urgentes).
+
+Para las fotos de perfil: **Storage → bucket `avatars`** → descargar
+los archivos manualmente.
+
+### Un aviso del plan gratuito
+
+Los proyectos gratuitos de Supabase se **pausan solos tras ~1 semana
+sin actividad**. Si algún día pasáis una temporada larga sin abrir la
+app, entrad al panel de Supabase para reactivarlo antes de que os
+extrañe que el login deje de funcionar — no es un fallo de la app, es
+el proyecto dormido.
+
 ## Nota: StackBlitz no sirve para probar el login (usar Vercel)
 
 El login (Fase 5) usa `middleware.ts`, que hace una llamada real a
