@@ -17,7 +17,7 @@ const config: Config = {
         danger: "var(--color-danger)",
       },
       fontFamily: {
-        display: ["Fraunces", "ui-serif", "Georgia", "serif"],
+        display: ["Quicksand", "ui-sans-serif", "system-ui", "sans-serif"],
         sans: ["Sora", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "monospace"],
       },

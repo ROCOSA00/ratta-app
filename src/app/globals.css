@@ -5,7 +5,7 @@
 /* ---------------------------------------------------------------
    Ratta App — design tokens
    Paleta: tinta noche + teal "Ratta" + toque frambuesa para El Trono
-   Tipografía: Fraunces (display) + Sora (UI/cuerpo) + JetBrains Mono (cifras)
+   Tipografía: Quicksand (títulos, redondeada) + Sora (UI/cuerpo) + JetBrains Mono (cifras)
    --------------------------------------------------------------- */
 
 :root {
@@ -68,7 +68,8 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: "Fraunces", ui-serif, Georgia, serif;
+  font-family: "Quicksand", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
   text-wrap: balance;
 }
 
