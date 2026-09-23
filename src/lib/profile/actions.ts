@@ -39,7 +39,7 @@ export async function updateDisplayName(
     return { error: "No se pudo guardar. Inténtalo de nuevo." };
   }
 
-  revalidatePath("/mas");
+  revalidatePath("/perfil");
   revalidatePath("/inicio");
   revalidatePath("/juegos");
   return { error: null };

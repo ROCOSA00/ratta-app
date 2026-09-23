@@ -12,7 +12,7 @@ export function RenameForm({ currentName }: { currentName: string }) {
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor="displayName" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
-        Tu nombre
+        Es el nombre que ve tu pareja en toda la app
       </label>
       <form action={formAction} className="flex items-center gap-2">
         <input
