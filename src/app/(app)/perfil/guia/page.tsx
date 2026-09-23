@@ -2,6 +2,7 @@ import type { ComponentType, ReactNode } from "react";
 import {
   CalendarDays,
   Crown,
+  Camera,
   Heart,
   HeartHandshake,
   MessageCircleHeart,
@@ -187,6 +188,19 @@ export default function GuiaPage() {
           </ul>
         </Section>
 
+        <Section icon={Camera} tint="var(--color-accent)" title="Momento Ratta">
+          <p>
+            Vuestro BeReal 📸 Una vez al día, a una hora al azar entre las 10:00 y las 22:00, os llega un aviso a los
+            dos a la vez. Tenéis <B>10 minutos</B> para hacer una foto con la cámara de lo que estéis haciendo en
+            ese momento (se puede subir más tarde, pero queda marcada como tarde).
+          </p>
+          <p>
+            No verás la foto de tu pareja hasta que subas la tuya. Mientras no la hayas subido, te lo recuerda un
+            aviso arriba del todo en Inicio. Los Momentos quedan guardados en el <B>Calendario</B>: los días con 📸
+            los tienen; toca el día para verlos.
+          </p>
+        </Section>
+
         <Section icon={HeartHandshake} tint="var(--color-accent)" title="Corazones">
           <p>
             El otro juego de la pestaña <B>Juegos</B>: un corazón gigante que puedes pulsar todo lo rápido que
@@ -223,7 +237,7 @@ export default function GuiaPage() {
           </p>
           <p>
             Y las <B>notificaciones</B>: actívalas una vez en cada móvil y te avisará cuando tu pareja te escriba, te
-            mande cariño, añada un plan, fotos a un plan, una nota o un recuerdo, responda la pregunta del día, visite El Trono o te mande corazones. En el
+            mande cariño, añada un plan, fotos a un plan, una nota o un recuerdo, responda la pregunta del día, visite El Trono o te mande corazones, y cuando suene el Momento Ratta. En el
             iPhone solo funcionan con la app instalada en la pantalla de inicio.
           </p>
         </Section>

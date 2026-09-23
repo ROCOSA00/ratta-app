@@ -50,6 +50,8 @@ export const config = {
   matcher: [
     // sw.js y manifest.json son públicos a propósito: el navegador los pide
     // sin sesión (instalar la app, recibir notificaciones) y no contienen datos.
-    "/((?!_next/static|_next/image|favicon.ico|sw\\.js$|manifest\\.json$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // /api/momento lo llama el despertador de Supabase, sin sesión: se protege
+    // con su propia clave (ver src/app/api/momento/route.ts).
+    "/((?!_next/static|_next/image|favicon.ico|sw\\.js$|manifest\\.json$|api/momento$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

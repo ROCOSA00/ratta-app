@@ -20,10 +20,73 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Fotos de los planes — ⏳ pendiente de aplicar
+## Momento Ratta — ⏳ pendiente de aplicar
 
-`20260926100000_event_photos.sql`. Hay que aplicarla en producción
-**antes** de publicar el código que la usa.
+`20260927100000_momento_ratta.sql` + la puesta en marcha de
+`setup/momento_despertador.sql` (que **no** es una migración: crea una
+clave propia de esta instalación y programa el despertador).
+
+**Cómo funciona.** `moment_tick()` se ejecuta cada minuto con `pg_cron`.
+La primera vez de cada día elige para cada espacio una hora al azar entre
+las 10:00 y las 22:00 (Madrid) y la guarda en `moment_days`. Cuando llega,
+marca `notified_at` y llama por HTTP (`pg_net`) a
+`https://ratta-app.vercel.app/api/momento` con la clave de Vault
+`moment_cron_secret`, pasándole los móviles suscritos de ese espacio; la
+app (que tiene la clave VAPID) manda las notificaciones. Si el
+despertador estuvo parado más de 2 horas, ese día se salta.
+
+**Reglas (en la base de datos, no solo en la app):**
+- La hora del día no se puede ver hasta que suena.
+- Solo se sube el Momento de hoy, solo después de que suene, uno por
+  persona y día. El retraso (`late_seconds`, más allá de los 10 min) lo
+  calcula un trigger con el reloj de la base de datos: no se puede falsear.
+- **Regla BeReal:** la foto de tu pareja de un día (fila y fichero) solo
+  se ve si ya subiste la tuya o si ese día ya terminó.
+  `moment_posters()` dice quién ha subido sin enseñar la foto.
+- `moment_tick()` no la puede llamar nadie más (ni usuarios ni `anon`).
+- Almacén privado `moments`; `/api/momento` solo acepta la clave correcta
+  (comparación en tiempo constante) y destinos `https://`.
+
+**Puesta en marcha (en este orden):**
+1. Supabase → **Database → Extensions**: activar `pg_cron` y `pg_net`.
+2. SQL Editor: ejecutar la migración `20260927100000_momento_ratta.sql`.
+3. SQL Editor: ejecutar los pasos 1 y 2 de `setup/momento_despertador.sql`
+   y copiar la clave que sale.
+4. Vercel → Settings → Environment Variables: `MOMENT_CRON_SECRET` = esa
+   clave. Luego fusionar la PR (el despliegue ya la incluye).
+5. Con la app nueva publicada: ejecutar el paso 3 (`cron.schedule`).
+
+Validada en Postgres 16 local, con todas las migraciones anteriores y
+con imitaciones de Vault y `pg_net` que apuntan cada llamada:
+
+| Caso | Resultado |
+|---|---|
+| Hora elegida (5000 sorteos) | siempre entre 10:00 y 22:00 de Madrid |
+| Antes de la hora | no suena |
+| Llega la hora | 1 llamada con los 2 móviles de la pareja y la clave |
+| 4 ejecuciones más | sigue siendo 1 llamada |
+| Otro espacio | su propia llamada, con sus móviles |
+| Despertador parado más de 2 h | ese día se salta |
+| Sin clave en Vault | cuenta como sonado, no llama |
+| Usuario / `anon` llaman a `moment_tick()` | permiso denegado |
+| Ver la hora antes de que suene / después | 0 / 1 filas |
+| Subir antes de que suene / para otro día | rechazado por el trigger |
+| A tiempo (2 min) / tarde (25 min) | retraso 0 / 900 s |
+| Poner `late_seconds = 0` a mano | se recalcula igual (900) |
+| Subir a nombre de tu pareja / dos el mismo día | rechazado (RLS / única) |
+| Pareja sin subir la suya: ver tu foto / ver que subiste | 0 filas / sí |
+| Pareja tras subir la suya | ve las 2 |
+| Fichero de tu pareja antes / después de subir la tuya | 0 / visible |
+| Tu propio fichero recién subido | visible |
+| Día ya terminado sin subir | se ven |
+| Persona de fuera: días / fotos / quién subió / subir | 0 / 0 / 0 / rechazado |
+| Borrar la foto de tu pareja / la tuya | 0 / 1 |
+| Escribir en `moment_days` a mano | rechazado por RLS |
+
+## Fotos de los planes — ✅ ya aplicada
+
+`20260926100000_event_photos.sql`. Aplicada en producción antes de
+publicar el código que la usa.
 
 - Tabla `event_photos` (varias fotos por plan). Un `CHECK` exige que la
   ruta esté en la carpeta del mismo espacio, y la política de `INSERT`
