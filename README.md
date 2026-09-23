@@ -97,6 +97,11 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
   - [x] Pulido divertido (paquete 1): confeti de emojis al registrar
     en El Trono, mensajitos de cariño entre los dos (reutiliza
     `activity_log`, sin migración nueva), cambiar tu nombre desde "Más"
+  - [x] Cambiar contraseña desde "Más": pide la contraseña actual antes
+    de aceptar la nueva (evita que alguien con el móvil desbloqueado y
+    la sesión abierta pueda cambiarla sin saberla), y cierra la sesión
+    al terminar para confirmar que la nueva funciona de verdad. Usa
+    `auth.updateUser()` de Supabase, sin tabla ni migración propia
   - [~] Foto de perfil (avatar): bucket de Storage + subida desde
     "Más", solo puedes escribir en tu propia carpeta (probado con un
     stub local de `storage.objects`); pendiente de aplicar la

@@ -5,6 +5,7 @@ import { signOut } from "@/lib/auth/actions";
 import { QuestionOfTheDay } from "@/components/features/QuestionOfTheDay";
 import { RenameForm } from "./RenameForm";
 import { AvatarUpload } from "./AvatarUpload";
+import { ChangePasswordForm } from "./ChangePasswordForm";
 
 export default async function MasPage() {
   const supabase = await createClient();
@@ -57,6 +58,8 @@ export default async function MasPage() {
         {user ? <AvatarUpload userId={user.id} currentAvatarUrl={avatarUrl} /> : null}
 
         <RenameForm currentName={displayName} />
+
+        <ChangePasswordForm />
       </div>
 
       <div className="mt-5">

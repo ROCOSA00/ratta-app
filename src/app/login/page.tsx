@@ -1,7 +1,13 @@
 import { RattaLogo } from "@/components/shared/RattaLogo";
 import { LoginForm } from "./LoginForm";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ passwordChanged?: string }>;
+}) {
+  const { passwordChanged } = await searchParams;
+
   return (
     <div
       className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6"
@@ -23,6 +29,18 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+
+      {passwordChanged ? (
+        <p
+          className="mb-4 rounded-xl px-4 py-2.5 text-center text-sm font-medium"
+          style={{
+            background: "color-mix(in srgb, var(--color-accent-2) 12%, var(--color-surface))",
+            color: "var(--color-accent-2)",
+          }}
+        >
+          Contraseña actualizada. Entra con la nueva.
+        </p>
+      ) : null}
 
       <LoginForm />
     </div>
