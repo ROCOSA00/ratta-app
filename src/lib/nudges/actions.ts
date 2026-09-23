@@ -5,13 +5,12 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
 import { notifyPartner } from "@/lib/push/notify";
+import { findNudge } from "./options";
 
-const NUDGE_KEYS = ["te_quiero", "te_echo_de_menos", "pienso_en_ti", "buenas_noches"] as const;
-
+// Del cliente solo aceptamos la key; el emoji y el texto salen de la lista
+// del servidor (options.ts), nunca del formulario.
 const nudgeSchema = z.object({
-  key: z.enum(NUDGE_KEYS),
-  emoji: z.string().trim().min(1).max(8),
-  label: z.string().trim().min(1).max(40),
+  key: z.string().max(40),
 });
 
 export type NudgeState = { error: string | null; sent: boolean };
@@ -20,13 +19,10 @@ export async function sendNudge(
   _prevState: NudgeState,
   formData: FormData,
 ): Promise<NudgeState> {
-  const parsed = nudgeSchema.safeParse({
-    key: formData.get("key"),
-    emoji: formData.get("emoji"),
-    label: formData.get("label"),
-  });
+  const parsed = nudgeSchema.safeParse({ key: formData.get("key") });
+  const nudge = parsed.success ? findNudge(parsed.data.key) : null;
 
-  if (!parsed.success) {
+  if (!nudge) {
     return { error: "No se pudo enviar.", sent: false };
   }
 
@@ -50,14 +46,14 @@ export async function sendNudge(
     user_id: user.id,
     action: "nudge",
     entity_type: "nudge",
-    metadata: { key: parsed.data.key, emoji: parsed.data.emoji, label: parsed.data.label },
+    metadata: { key: nudge.key, emoji: nudge.emoji, label: nudge.label },
   });
 
   if (error) {
     return { error: "No se pudo enviar. Inténtalo de nuevo.", sent: false };
   }
 
-  const { emoji, label } = parsed.data;
+  const { emoji, label } = nudge;
   await notifyPartner((me) => ({ title: `${emoji} ${me}`, body: label, url: "/inicio", tag: "nudge" }));
 
   revalidatePath("/inicio");

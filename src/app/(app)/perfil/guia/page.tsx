@@ -121,8 +121,10 @@ export default function GuiaPage() {
 
         <Section icon={Heart} tint="var(--color-accent)" title="Cariño">
           <p>
-            Un toque y le mandas un mensajito: 🥰 <B>Te quiero</B>, 🥺 <B>Te echo de menos</B>, 💭{" "}
-            <B>Pienso en ti</B> o 🌙 <B>Buenas noches</B>. Le aparece a tu pareja en Inicio.
+            Toca <B>Mandar un mensajito</B> y elige uno de sus tres grupos: <B>Cariño</B> (🥰 Te quiero, 🥺 Te
+            echo de menos…), <B>Planes</B> (🛌 ¿Pijamada?, 🍕 Tengo hambre, 🚬 ¿Fumamos?…) y <B>Tonterías</B> (💩
+            Tengo caca, 💨 el pedo que flipas…). Se envía al momento y a tu pareja le aparece en Inicio (y le llega
+            como notificación).
           </p>
         </Section>
 

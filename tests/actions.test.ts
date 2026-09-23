@@ -265,13 +265,25 @@ describe("Pregunta del día, Cariño y Perfil", () => {
   it("manda un mensajito de cariño", async () => {
     const res = await sendNudge(
       { error: null, sent: false },
-      form({ key: "te_quiero", emoji: "🥰", label: "Te quiero" }),
+      form({ key: "te_quiero" }),
     );
     expect(res).toEqual({ error: null, sent: true });
     expect(opsOf("activity_log", "insert")[0]?.payload).toMatchObject({
       action: "nudge",
       metadata: { key: "te_quiero", emoji: "🥰", label: "Te quiero" },
     });
+  });
+
+  it("los mensajitos nuevos funcionan y el texto lo pone el servidor, no el móvil", async () => {
+    const res = await sendNudge(
+      { error: null, sent: false },
+      form({ key: "pedo", emoji: "🔥", label: "Texto inventado desde el móvil" }),
+    );
+    expect(res).toEqual({ error: null, sent: true });
+    expect(opsOf("activity_log", "insert")[0]?.payload).toMatchObject({
+      metadata: { key: "pedo", emoji: "💨", label: "Me he tirado un pedo que flipas" },
+    });
+    expect(state.notified[0]).toMatchObject({ title: "💨 Rokito", body: "Me he tirado un pedo que flipas" });
   });
 
   it("rechaza mensajitos inventados", async () => {
@@ -447,7 +459,7 @@ describe("Chat", () => {
 
 describe("Notificaciones a la pareja", () => {
   it("cada acción que crea algo avisa con su texto", async () => {
-    await sendNudge({ error: null, sent: false }, form({ key: "te_echo_de_menos", emoji: "🥺", label: "Te echo de menos" }));
+    await sendNudge({ error: null, sent: false }, form({ key: "te_echo_de_menos" }));
     await logEntry();
     await createEvent(ok, form({ title: "Cena", date: "2026-09-25", time: "20:00", location: "", description: "" }));
     await createNote(ok, form({ noteType: "text", title: "Ideas", content: "Roma" }));

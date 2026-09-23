@@ -3,6 +3,7 @@ import { computeStats } from "@/lib/poop/stats";
 import { getTogetherInfo } from "@/lib/couple";
 import { zonedInputToUTC, formatDateTime } from "@/lib/format-date";
 import { monthGridKeys, toDateKey, weekKeys } from "@/lib/calendar/date-utils";
+import { NUDGE_GROUPS, findNudge } from "@/lib/nudges/options";
 
 describe("Hora de Madrid", () => {
   it("convierte la hora escrita en el formulario al instante UTC correcto (verano, invierno, medianoche)", () => {
@@ -91,5 +92,29 @@ describe("Días juntos (desde el 6 de marzo de 2026)", () => {
     expect(getTogetherInfo("2026-04-05").nextLabel).toBe("Falta 1 día para el primer mes");
     expect(getTogetherInfo("2027-02-10").nextLabel).toBe("Faltan 24 días para el año");
     expect(getTogetherInfo("2027-05-10").breakdown).toBe("1 año, 2 meses y 4 días");
+  });
+});
+
+// ---------------------------------------------------------- Mensajitos
+
+describe("Lista de mensajitos", () => {
+  const all = NUDGE_GROUPS.flatMap((g) => g.options);
+
+  it("no hay keys repetidas y los textos caben en una notificación", () => {
+    expect(new Set(all.map((o) => o.key)).size).toBe(all.length);
+    for (const o of all) {
+      expect(o.key.length).toBeLessThanOrEqual(40);
+      expect(o.label.length).toBeGreaterThan(0);
+      expect(o.label.length).toBeLessThanOrEqual(40);
+    }
+  });
+
+  it("siguen existiendo los mensajitos antiguos y están los nuevos", () => {
+    const keys = ["te_quiero", "te_echo_de_menos", "pienso_en_ti", "buenas_noches", "pijamada", "tengo_hambre"];
+    for (const key of [...keys, "fumamos", "tengo_caca", "pedo"]) {
+      expect(findNudge(key)).not.toBeNull();
+    }
+    expect(findNudge("hackeo")).toBeNull();
+    expect(findNudge("toString")).toBeNull();
   });
 });
