@@ -213,7 +213,7 @@ export default async function InicioPage() {
             label="El Trono"
             right={
               <Link
-                href="/juegos"
+                href="/juegos/trono"
                 className="flex items-center gap-0.5 text-xs"
                 style={{ color: "var(--color-muted)" }}
               >

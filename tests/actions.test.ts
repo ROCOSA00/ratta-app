@@ -43,7 +43,8 @@ import { sendNudge } from "@/lib/nudges/actions";
 import { updateDisplayName } from "@/lib/profile/actions";
 import { changePassword, signIn } from "@/lib/auth/actions";
 import { addMemory, deleteMemory } from "@/lib/memories/actions";
-import { sendMessage } from "@/lib/chat/actions";
+import { sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
+import { sendHearts } from "@/lib/hearts/actions";
 
 const ok = { error: null };
 const NOTE_ID = "11111111-1111-4111-8111-111111111111";
@@ -425,7 +426,13 @@ describe("Chat", () => {
     state.fake = createFakeSupabase({
       results: {
         "messages:insert": {
-          data: { id: "m1", sender_id: "user-me", body: "Te quiero", created_at: "2026-09-23T18:00:00Z" },
+          data: {
+            id: "m1",
+            sender_id: "user-me",
+            body: "Te quiero",
+            image_path: null,
+            created_at: "2026-09-23T18:00:00Z",
+          },
           error: null,
         },
       },
@@ -437,7 +444,9 @@ describe("Chat", () => {
       space_id: "space-1",
       sender_id: "user-me",
       body: "Te quiero",
+      image_path: null,
     });
+    expect(res.message?.image_url).toBeNull();
     expect(state.notified).toEqual([{ title: "💬 Rokito", body: "Te quiero", url: "/chat", tag: "chat" }]);
   });
 
@@ -452,6 +461,94 @@ describe("Chat", () => {
     state.fake = createFakeSupabase({ results: { "messages:insert": { data: null, error: { message: "x" } } } });
     expect((await sendMessage("hola")).error).toMatch(/No se pudo enviar/);
     expect(state.notified).toHaveLength(0);
+  });
+
+  const CHAT_SPACE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const CHAT_PHOTO = `${CHAT_SPACE}/cccccccc-cccc-4ccc-8ccc-cccccccccccc.jpg`;
+
+  it("envía una foto con texto, devuelve su enlace temporal y avisa", async () => {
+    state.spaceId = CHAT_SPACE;
+    state.fake = createFakeSupabase({
+      results: {
+        "messages:insert": {
+          data: { id: "m2", sender_id: "user-me", body: "Mira", image_path: CHAT_PHOTO, created_at: "2026-09-23T18:00:00Z" },
+          error: null,
+        },
+      },
+    });
+    const res = await sendPhotoMessage({ path: CHAT_PHOTO, caption: " Mira " });
+    expect(res.error).toBeNull();
+    expect(opsOf("messages", "insert")[0]?.payload).toEqual({
+      space_id: CHAT_SPACE,
+      sender_id: "user-me",
+      body: "Mira",
+      image_path: CHAT_PHOTO,
+    });
+    expect(res.message?.image_url).toBe(`https://signed.test/chat/${CHAT_PHOTO}`);
+    expect(state.notified).toEqual([{ title: "💬 Rokito", body: "📷 Mira", url: "/chat", tag: "chat" }]);
+  });
+
+  it("una foto sin texto también vale", async () => {
+    state.spaceId = CHAT_SPACE;
+    const res = await sendPhotoMessage({ path: CHAT_PHOTO, caption: "   " });
+    expect(res.error).toBeNull();
+    expect(opsOf("messages", "insert")[0]?.payload).toMatchObject({ body: "", image_path: CHAT_PHOTO });
+    expect(state.notified[0]?.body).toBe("📷 Te ha enviado una foto");
+  });
+
+  it("rechaza fotos de otro espacio o con rutas manipuladas", async () => {
+    state.spaceId = CHAT_SPACE;
+    for (const path of [
+      "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/cccccccc-cccc-4ccc-8ccc-cccccccccccc.jpg",
+      `${CHAT_SPACE}/../otra.jpg`,
+      `${CHAT_SPACE}/cccccccc-cccc-4ccc-8ccc-cccccccccccc.png`,
+      "https://evil.test/foto.jpg",
+    ]) {
+      expect((await sendPhotoMessage({ path, caption: "" })).error).toBe("Ruta de foto no válida.");
+    }
+    expect(state.fake.ops).toHaveLength(0);
+    expect(state.notified).toHaveLength(0);
+  });
+});
+
+// ------------------------------------------------------------- Corazones
+
+describe("Corazones", () => {
+  it("manda un paquete de corazones a tu espacio y avisa al empezar una racha", async () => {
+    state.fake = createFakeSupabase({ results: { "rpc:add_hearts": { data: true, error: null } } });
+    expect(await sendHearts(37)).toEqual({ error: null });
+    expect(state.fake.rpcCalls).toEqual([{ fn: "add_hearts", args: { p_space_id: "space-1", p_count: 37 } }]);
+    expect(state.notified).toEqual([
+      { title: "💖 Corazones", body: "Rokito te está mandando corazones", url: "/juegos/corazones", tag: "hearts" },
+    ]);
+  });
+
+  it("en mitad de una racha no vuelve a avisar", async () => {
+    state.fake = createFakeSupabase({ results: { "rpc:add_hearts": { data: false, error: null } } });
+    expect(await sendHearts(12)).toEqual({ error: null });
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("rechaza paquetes vacíos, negativos, decimales o demasiado grandes", async () => {
+    for (const bad of [0, -5, 1.5, 301, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect((await sendHearts(bad)).error).toBe("Número de corazones no válido.");
+    }
+    expect(state.fake.rpcCalls).toHaveLength(0);
+  });
+
+  it("si la base de datos lo rechaza, avisa del error y no notifica", async () => {
+    state.fake = createFakeSupabase({ results: { "rpc:add_hearts": { data: null, error: { message: "x" } } } });
+    expect((await sendHearts(5)).error).toMatch(/No se pudieron mandar/);
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("sin sesión o sin espacio no manda nada", async () => {
+    state.fake = createFakeSupabase({ userId: null });
+    expect((await sendHearts(5)).error).toMatch(/sesión/);
+    state.fake = createFakeSupabase();
+    state.spaceId = null;
+    expect((await sendHearts(5)).error).toMatch(/espacio/);
+    expect(state.fake.rpcCalls).toHaveLength(0);
   });
 });
 
@@ -469,7 +566,7 @@ describe("Notificaciones a la pareja", () => {
 
     expect(state.notified.map((n) => `${n.title} | ${n.body} | ${n.url}`)).toEqual([
       "🥺 Rokito | Te echo de menos | /inicio",
-      "👑 El Trono | Rokito acaba de visitar El Trono 💩 | /juegos",
+      "👑 El Trono | Rokito acaba de visitar El Trono 💩 | /juegos/trono",
       expect.stringMatching(/^📅 Nuevo plan \| Rokito ha añadido: Cena \(vie, 25 sept?, 20:00\) \| \/calendario$/),
       "📝 Nueva nota | Rokito: Ideas | /notas/new-id",
       "❓ Pregunta del día | Rokito ya ha respondido. ¡Te toca! | /inicio",

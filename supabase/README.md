@@ -20,6 +20,66 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Juego de los corazones — ⏳ pendiente de aplicar
+
+`20260925120000_hearts_game.sql`. Hay que aplicarla en producción
+**antes** de publicar el código que la usa.
+
+- Tabla `heart_taps`: una fila por persona y **día** (hora de Madrid)
+  con el total de ese día, no una por toque. Los dos miembros del
+  espacio ven las filas de ambos (es un ranking).
+- **Nadie escribe directamente** en la tabla (no hay políticas de
+  INSERT/UPDATE/DELETE). Solo se suma con `add_hearts(p_space_id,
+  p_count)` (`SECURITY DEFINER`, revocada para `anon`), que siempre
+  suma a quien tiene la sesión, exige ser miembro del espacio y acepta
+  entre 1 y 300 corazones por llamada (la app agrupa los toques).
+- Devuelve `true` solo si llevabas 10 minutos o más sin mandar: así la
+  app avisa a tu pareja al empezar una racha, no en cada paquete.
+
+Validada en Postgres 16 local, con todas las migraciones anteriores:
+
+| Caso | Resultado |
+|---|---|
+| Primer paquete (37) | suma 37, avisar = true |
+| Segundo paquete seguido (20) | suma 57, avisar = false |
+| Tras 1 hora sin mandar | suma al día de hoy, avisar = true |
+| Tu pareja ve el ranking | filas de los dos |
+| 0, 301 o un número negativo | rechazado por la función |
+| Persona de fuera: sumar / ver el ranking | rechazado / 0 filas |
+| Escribir directo en la tabla | rechazado por RLS |
+| Cambiar o borrar los corazones de tu pareja | 0 filas |
+| Sin sesión (`anon`) llama a `add_hearts` | permiso denegado |
+
+## Fotos en el chat — ⏳ pendiente de aplicar
+
+`20260925100000_chat_photos.sql`. Hay que aplicarla en producción
+**antes** de publicar el código que la usa.
+
+- `messages.image_path`: ruta de la foto en el almacén privado `chat`.
+  Un `CHECK` exige que esté en la carpeta del **mismo espacio** que el
+  mensaje (`<space_id>/<uuid>.jpg`), así que nadie puede enlazar en su
+  mensaje una foto de otro espacio.
+- El texto puede ir vacío solo si el mensaje lleva foto (sigue siendo
+  máximo 2000 caracteres). Los mensajes antiguos siguen siendo válidos.
+- Almacén `chat` **privado** (5 MB, solo JPEG), con las mismas reglas
+  que `memories`: ver y subir solo en la carpeta de tu espacio, borrar
+  solo tus propias fotos. Se ven con enlaces firmados de 1 hora.
+
+Validada en Postgres 16 local, con todas las migraciones anteriores,
+como Rokito, Giselz y una persona de otro espacio:
+
+| Caso | Resultado |
+|---|---|
+| Foto con texto / foto sin texto | permitido / permitido |
+| Mensaje vacío sin foto | rechazado por `messages_body_check` |
+| Texto de 2001 caracteres con foto | rechazado por `messages_body_check` |
+| Foto de otro espacio o ruta con `../` | rechazado por `messages_image_path_check` |
+| Escribir como tu pareja / persona de fuera escribe | rechazado por RLS |
+| Persona de fuera: leer vuestros mensajes | 0 filas |
+| Tu pareja ve tu foto en el almacén | 1 visible |
+| Persona de fuera: ver / subir en vuestra carpeta | 0 visibles / rechazado por RLS |
+| Tu pareja borra tu foto / borras la tuya | 0 borradas / 1 borrada |
+
 ## Chat + notificaciones — ✅ ya aplicada
 
 `20260924140000_chat_and_push.sql`. Aplicada en producción antes de

@@ -42,5 +42,7 @@ export async function updateDisplayName(
   revalidatePath("/perfil");
   revalidatePath("/inicio");
   revalidatePath("/juegos");
+  revalidatePath("/juegos/trono");
+  revalidatePath("/juegos/corazones");
   return { error: null };
 }

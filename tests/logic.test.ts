@@ -4,6 +4,7 @@ import { getTogetherInfo } from "@/lib/couple";
 import { zonedInputToUTC, formatDateTime } from "@/lib/format-date";
 import { monthGridKeys, toDateKey, weekKeys } from "@/lib/calendar/date-utils";
 import { NUDGE_GROUPS, findNudge } from "@/lib/nudges/options";
+import { computeHeartStats } from "@/lib/hearts/stats";
 
 describe("Hora de Madrid", () => {
   it("convierte la hora escrita en el formulario al instante UTC correcto (verano, invierno, medianoche)", () => {
@@ -116,5 +117,41 @@ describe("Lista de mensajitos", () => {
     }
     expect(findNudge("hackeo")).toBeNull();
     expect(findNudge("toString")).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------- Corazones
+
+describe("Ranking de corazones", () => {
+  // Hoy es jueves 24/09/2026: la semana empieza el lunes 21 y el mes el 1.
+  const today = "2026-09-24";
+  const rows = [
+    { user_id: "yo", day: "2026-09-24", count: 30 },
+    { user_id: "yo", day: "2026-09-21", count: 10 }, // lunes: esta semana
+    { user_id: "yo", day: "2026-09-20", count: 5 }, // domingo: semana pasada, este mes
+    { user_id: "yo", day: "2026-08-31", count: 100 }, // mes pasado
+    { user_id: "ella", day: "2026-09-24", count: 45 },
+    { user_id: "intruso", day: "2026-09-24", count: 999 }, // no es del espacio
+  ];
+
+  it("suma hoy, semana (desde el lunes), mes y total por persona", () => {
+    const { totals } = computeHeartStats(rows, ["yo", "ella"], today);
+    expect(totals.yo).toEqual({ today: 30, week: 40, month: 45, total: 145 });
+    expect(totals.ella).toEqual({ today: 45, week: 45, month: 45, total: 45 });
+    expect(totals.intruso).toBeUndefined();
+  });
+
+  it("el récord es el mejor día de cualquiera de los dos", () => {
+    expect(computeHeartStats(rows, ["yo", "ella"], today).record).toEqual({
+      userId: "yo",
+      day: "2026-08-31",
+      count: 100,
+    });
+  });
+
+  it("sin corazones todo es cero y no hay récord", () => {
+    const stats = computeHeartStats([], ["yo", "ella"], today);
+    expect(stats.totals.yo).toEqual({ today: 0, week: 0, month: 0, total: 0 });
+    expect(stats.record).toBeNull();
   });
 });

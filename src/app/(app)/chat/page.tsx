@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
-import type { ChatMessage } from "@/lib/chat/actions";
+import { CHAT_BUCKET, CHAT_COLUMNS, SIGNED_URL_SECONDS, type ChatMessage } from "@/lib/chat/types";
 import { ChatRoom } from "./ChatRoom";
 
 const PAGE_SIZE = 150;
@@ -26,12 +26,25 @@ export default async function ChatPage() {
     supabase.auth.getUser(),
     supabase
       .from("messages")
-      .select("id, sender_id, body, created_at")
+      .select(CHAT_COLUMNS)
       .eq("space_id", spaceId)
       .order("created_at", { ascending: false })
       .limit(PAGE_SIZE),
     supabase.from("profiles").select("id, display_name, avatar_url"),
   ]);
+
+  // Enlaces temporales para las fotos, todos de una vez (el almacén es privado).
+  const rows = ((messages ?? []) as Omit<ChatMessage, "image_url">[]).reverse();
+  const paths = rows.flatMap((m) => (m.image_path ? [m.image_path] : []));
+  const { data: signed } =
+    paths.length > 0
+      ? await supabase.storage.from(CHAT_BUCKET).createSignedUrls(paths, SIGNED_URL_SECONDS)
+      : { data: [] };
+  const urlByPath = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]));
+  const initialMessages: ChatMessage[] = rows.map((m) => ({
+    ...m,
+    image_url: m.image_path ? (urlByPath.get(m.image_path) ?? null) : null,
+  }));
 
   const me = user?.id ?? "";
   const partner = (profiles ?? []).find((p) => p.id !== me) as
@@ -44,7 +57,7 @@ export default async function ChatPage() {
       myId={me}
       partnerName={partner?.display_name ?? "Tu pareja"}
       partnerAvatar={partner?.avatar_url ?? null}
-      initialMessages={((messages ?? []) as ChatMessage[]).reverse()}
+      initialMessages={initialMessages}
     />
   );
 }
