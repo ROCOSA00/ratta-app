@@ -73,8 +73,18 @@ export function createFakeSupabase(options: {
     return chain;
   }
 
+  const storage = { removed: [] as { bucket: string; paths: string[] }[] };
+
   const client = {
     from: (table: string) => builder(table),
+    storage: {
+      from: (bucket: string) => ({
+        remove: async (paths: string[]) => {
+          storage.removed.push({ bucket, paths });
+          return { data: [], error: null };
+        },
+      }),
+    },
     auth: {
       getUser: async () => ({
         data: { user: userId ? { id: userId, email: options.email ?? "yo@ratta.test" } : null },
@@ -94,7 +104,7 @@ export function createFakeSupabase(options: {
     },
   };
 
-  return { client, ops, auth };
+  return { client, ops, auth, storage };
 }
 
 /** Construye un FormData con exactamente los campos que manda el formulario. */

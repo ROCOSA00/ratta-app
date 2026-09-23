@@ -36,6 +36,7 @@ import { submitAnswer } from "@/lib/questions/actions";
 import { sendNudge } from "@/lib/nudges/actions";
 import { updateDisplayName } from "@/lib/profile/actions";
 import { changePassword, signIn } from "@/lib/auth/actions";
+import { addMemory, deleteMemory } from "@/lib/memories/actions";
 
 const ok = { error: null };
 const NOTE_ID = "11111111-1111-4111-8111-111111111111";
@@ -332,5 +333,67 @@ describe("Acceso y contraseña", () => {
         .error,
     ).toBe("Las contraseñas nuevas no coinciden.");
     expect(state.fake.auth.updateUserCalls).toHaveLength(0);
+  });
+});
+
+// -------------------------------------------------------------- Recuerdos
+
+describe("Recuerdos", () => {
+  const SPACE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const PHOTO = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const MEMORY_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+
+  beforeEach(() => {
+    state.spaceId = SPACE;
+  });
+
+  it("registra un recuerdo con pie de foto y fecha", async () => {
+    const res = await addMemory({ path: `${SPACE}/${PHOTO}.jpg`, caption: " Playa ", takenOn: "2026-07-14" });
+    expect(res).toEqual({ error: null });
+    expect(opsOf("memories", "insert")[0]?.payload).toEqual({
+      space_id: SPACE,
+      uploaded_by: "user-me",
+      storage_path: `${SPACE}/${PHOTO}.jpg`,
+      caption: "Playa",
+      taken_on: "2026-07-14",
+    });
+    expect(state.revalidated).toEqual(expect.arrayContaining(["/recuerdos", "/inicio"]));
+  });
+
+  it("sin pie ni fecha guarda null (campos opcionales vacíos)", async () => {
+    await addMemory({ path: `${SPACE}/${PHOTO}.jpg`, caption: "", takenOn: "" });
+    expect(opsOf("memories", "insert")[0]?.payload).toMatchObject({ caption: null, taken_on: null });
+  });
+
+  it("rechaza una foto de la carpeta de otro espacio", async () => {
+    const other = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    const res = await addMemory({ path: `${other}/${PHOTO}.jpg` });
+    expect(res.error).toBe("Ruta de foto no válida.");
+    expect(state.fake.ops).toHaveLength(0);
+  });
+
+  it("rechaza rutas manipuladas", async () => {
+    for (const path of ["../../secreto.jpg", `${SPACE}/${PHOTO}.png`, `${SPACE}/../x/${PHOTO}.jpg`, ""]) {
+      expect((await addMemory({ path })).error).toBe("Ruta de foto no válida.");
+    }
+    expect(state.fake.ops).toHaveLength(0);
+  });
+
+  it("borra solo un recuerdo tuyo, y también su foto", async () => {
+    state.fake = createFakeSupabase({
+      results: { "memories:delete": { data: { storage_path: `${SPACE}/${PHOTO}.jpg` }, error: null } },
+    });
+    await expect(deleteMemory(form({ memoryId: MEMORY_ID }))).rejects.toThrow("NEXT_REDIRECT:/recuerdos");
+    expect(opsOf("memories", "delete")[0]?.filters).toEqual([
+      ["id", MEMORY_ID],
+      ["uploaded_by", "user-me"],
+    ]);
+    expect(state.fake.storage.removed).toEqual([{ bucket: "memories", paths: [`${SPACE}/${PHOTO}.jpg`] }]);
+  });
+
+  it("si el recuerdo no era tuyo, no toca ninguna foto", async () => {
+    state.fake = createFakeSupabase({ results: { "memories:delete": { data: null, error: null } } });
+    await expect(deleteMemory(form({ memoryId: MEMORY_ID }))).rejects.toThrow("NEXT_REDIRECT:/recuerdos");
+    expect(state.fake.storage.removed).toHaveLength(0);
   });
 });
