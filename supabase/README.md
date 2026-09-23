@@ -38,23 +38,31 @@ insert into public.space_members (space_id, user_id, role) values
   ('<id del space anterior>', '<uuid de Giselz>', 'member');
 ```
 
-## Nota: prueba en vivo del login pendiente (StackBlitz)
+## Nota: StackBlitz no sirve para probar el login (usar Vercel)
 
-El login (Fase 5) está implementado y verificado con un navegador real
-en un entorno de desarrollo estándar (carga, hidratación, envío del
-formulario y manejo de errores, todo correcto). Sin embargo, probarlo
-en **StackBlitz** (que simula Node.js dentro del navegador vía
+El login (Fase 5) usa `middleware.ts`, que hace una llamada real a
+`supabase.auth.getUser()` en cada petición. Probar esto en
+**StackBlitz** (que simula Node.js dentro del navegador vía
 WebContainers) produce un error interno de Next.js
-(`Invariant: Expected workUnitAsyncStorage to have a store`) en cuanto
-`middleware.ts` hace una llamada real a `supabase.auth.getUser()`. Es
-un fallo de compatibilidad conocido entre WebContainers y las APIs
+(`Invariant: Expected workUnitAsyncStorage to have a store`) — un
+fallo de compatibilidad conocido entre WebContainers y las APIs
 internas de Next.js 15 relacionadas con `AsyncLocalStorage`, no un bug
-en este código.
+en este código (verificado con un navegador real en un entorno de
+desarrollo estándar: carga, hidratación, envío del formulario y manejo
+de errores, todo correcto).
 
-Se decidió aparcar la prueba en vivo hasta la Fase 12 (despliegue en
-Vercel), donde se ejecuta Node.js real y este problema no debería
-aparecer, en vez de seguir peleando con las limitaciones de StackBlitz
-para esta parte concreta de la app.
+Por eso, para probar el login (y cualquier página protegida) en vivo,
+se usa el despliegue de vista previa en **Vercel** en vez de
+StackBlitz — adelantado desde la Fase 12 solo para poder probar esta
+parte. Confirmado funcionando: login, Calendario y Notas, con las
+cuentas reales de Rocco y Giselz.
+
+**Importante sobre las URLs de Vercel**: cada despliegue individual
+tiene una URL única que queda congelada para siempre en esa versión.
+Para ver siempre la última versión de esta rama, usa la URL con
+`-git-<rama>-` en el nombre (ej.
+`ratta-app-git-claude-beautiful-mayer-5gaub5-<team>.vercel.app`), no
+una URL de un despliegue concreto.
 
 ## Cómo se probaron estas migraciones
 
