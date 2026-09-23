@@ -44,6 +44,7 @@ import { updateDisplayName } from "@/lib/profile/actions";
 import { changePassword, signIn } from "@/lib/auth/actions";
 import { addMemory, deleteMemory } from "@/lib/memories/actions";
 import { sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
+import { sendHearts } from "@/lib/hearts/actions";
 
 const ok = { error: null };
 const NOTE_ID = "11111111-1111-4111-8111-111111111111";
@@ -510,6 +511,47 @@ describe("Chat", () => {
   });
 });
 
+// ------------------------------------------------------------- Corazones
+
+describe("Corazones", () => {
+  it("manda un paquete de corazones a tu espacio y avisa al empezar una racha", async () => {
+    state.fake = createFakeSupabase({ results: { "rpc:add_hearts": { data: true, error: null } } });
+    expect(await sendHearts(37)).toEqual({ error: null });
+    expect(state.fake.rpcCalls).toEqual([{ fn: "add_hearts", args: { p_space_id: "space-1", p_count: 37 } }]);
+    expect(state.notified).toEqual([
+      { title: "💖 Corazones", body: "Rokito te está mandando corazones", url: "/juegos/corazones", tag: "hearts" },
+    ]);
+  });
+
+  it("en mitad de una racha no vuelve a avisar", async () => {
+    state.fake = createFakeSupabase({ results: { "rpc:add_hearts": { data: false, error: null } } });
+    expect(await sendHearts(12)).toEqual({ error: null });
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("rechaza paquetes vacíos, negativos, decimales o demasiado grandes", async () => {
+    for (const bad of [0, -5, 1.5, 301, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect((await sendHearts(bad)).error).toBe("Número de corazones no válido.");
+    }
+    expect(state.fake.rpcCalls).toHaveLength(0);
+  });
+
+  it("si la base de datos lo rechaza, avisa del error y no notifica", async () => {
+    state.fake = createFakeSupabase({ results: { "rpc:add_hearts": { data: null, error: { message: "x" } } } });
+    expect((await sendHearts(5)).error).toMatch(/No se pudieron mandar/);
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("sin sesión o sin espacio no manda nada", async () => {
+    state.fake = createFakeSupabase({ userId: null });
+    expect((await sendHearts(5)).error).toMatch(/sesión/);
+    state.fake = createFakeSupabase();
+    state.spaceId = null;
+    expect((await sendHearts(5)).error).toMatch(/espacio/);
+    expect(state.fake.rpcCalls).toHaveLength(0);
+  });
+});
+
 // ---------------------------------------------------------- Notificaciones
 
 describe("Notificaciones a la pareja", () => {
@@ -524,7 +566,7 @@ describe("Notificaciones a la pareja", () => {
 
     expect(state.notified.map((n) => `${n.title} | ${n.body} | ${n.url}`)).toEqual([
       "🥺 Rokito | Te echo de menos | /inicio",
-      "👑 El Trono | Rokito acaba de visitar El Trono 💩 | /juegos",
+      "👑 El Trono | Rokito acaba de visitar El Trono 💩 | /juegos/trono",
       expect.stringMatching(/^📅 Nuevo plan \| Rokito ha añadido: Cena \(vie, 25 sept?, 20:00\) \| \/calendario$/),
       "📝 Nueva nota | Rokito: Ideas | /notas/new-id",
       "❓ Pregunta del día | Rokito ya ha respondido. ¡Te toca! | /inicio",

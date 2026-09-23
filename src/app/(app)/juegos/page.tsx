@@ -1,57 +1,92 @@
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { LogButton } from "@/components/features/LogButton";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
-import { addDays, todayKey, WEEKDAY_LABELS, weekdayMon0 } from "@/lib/calendar/date-utils";
-import { StatsCard } from "./StatsCard";
-import { WeekChart } from "./WeekChart";
+import { getHeartsSummary } from "@/lib/hearts/get-hearts-summary";
 
-const SERIES_COLORS = ["var(--color-accent)", "var(--color-accent-2)"];
+function GameCard({
+  href,
+  emoji,
+  title,
+  description,
+  today,
+  tint,
+}: {
+  href: string;
+  emoji: string;
+  title: string;
+  description: string;
+  today: string | null;
+  tint: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="mx-5 flex items-center gap-4 rounded-2xl border p-4"
+      style={{
+        background: `color-mix(in srgb, ${tint} 7%, var(--color-surface))`,
+        borderColor: `color-mix(in srgb, ${tint} 20%, var(--color-line))`,
+      }}
+    >
+      <span
+        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-3xl"
+        style={{ background: `color-mix(in srgb, ${tint} 16%, var(--color-surface))` }}
+      >
+        {emoji}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-lg font-semibold" style={{ color: "var(--color-ink)" }}>
+          {title}
+        </p>
+        <p className="text-sm" style={{ color: "var(--color-muted)" }}>
+          {description}
+        </p>
+        {today ? (
+          <p className="mt-1 text-xs font-semibold" style={{ color: tint }}>
+            {today}
+          </p>
+        ) : null}
+      </div>
+      <ChevronRight size={20} style={{ color: "var(--color-muted)" }} />
+    </Link>
+  );
+}
 
 export default async function JuegosPage() {
-  const summary = await getPoopSummary();
+  const [poop, hearts] = await Promise.all([getPoopSummary(), getHeartsSummary()]);
 
-  if (!summary) {
-    return (
-      <>
-        <PageHeader title="Juegos" subtitle="El Trono y algo más" />
-        <p className="mx-5 mt-5 text-sm" style={{ color: "var(--color-muted)" }}>
-          No perteneces a ningún espacio todavía.
-        </p>
-      </>
-    );
+  let poopToday: string | null = null;
+  if (poop) {
+    const parts = poop.orderedIds.map((id) => {
+      const name = id === poop.currentUserId ? "tú" : (poop.displayNameById.get(id) ?? "tu pareja");
+      return `${name} ${poop.stats[id]?.today ?? 0}`;
+    });
+    poopToday = `Hoy: ${parts.join(" · ")}`;
   }
 
-  const { currentUserId, orderedIds, stats, displayNameById, comparison } = summary;
-  const nameOf = (id: string) => (id === currentUserId ? "Tú" : (displayNameById.get(id) ?? "Compañero/a"));
-
-  const today = todayKey();
-  const dayLabels = Array.from({ length: 7 }, (_, i) => WEEKDAY_LABELS[weekdayMon0(addDays(today, i - 6))]!);
+  const heartsToday = hearts
+    ? `Hoy: tú ${hearts.me.totals.today}${hearts.partner ? ` · ${hearts.partner.name} ${hearts.partner.totals.today}` : ""}`
+    : null;
 
   return (
     <>
-      <PageHeader title="Juegos" subtitle="El Trono y algo más" />
-      <div className="mt-5 flex flex-col gap-5">
-        <LogButton />
-
-        {comparison ? (
-          <p className="mx-5 text-center text-sm font-medium" style={{ color: "var(--color-muted)" }}>
-            {comparison}
-          </p>
-        ) : null}
-
-        <div className="mx-5 grid grid-cols-2 gap-3">
-          {orderedIds.map((id) => (
-            <StatsCard key={id} name={nameOf(id)} stats={stats[id]} />
-          ))}
-        </div>
-
-        <WeekChart
-          labels={dayLabels}
-          series={orderedIds.map((id, i) => ({
-            name: nameOf(id),
-            values: stats[id]?.last7 ?? [],
-            color: SERIES_COLORS[i % SERIES_COLORS.length]!,
-          }))}
+      <PageHeader title="Juegos" subtitle="Piques sanos entre vosotros dos" />
+      <div className="mt-5 flex flex-col gap-3">
+        <GameCard
+          href="/juegos/trono"
+          emoji="👑"
+          title="El Trono"
+          description="Registra tus visitas al baño y compite"
+          today={poopToday}
+          tint="var(--color-gold)"
+        />
+        <GameCard
+          href="/juegos/corazones"
+          emoji="💖"
+          title="Corazones"
+          description="Pulsa sin parar y manda corazones"
+          today={heartsToday}
+          tint="var(--color-accent)"
         />
       </div>
     </>

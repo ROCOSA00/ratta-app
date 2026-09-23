@@ -38,12 +38,13 @@ export async function logEntry(): Promise<LogEntryState> {
   await notifyPartner((me) => ({
     title: "👑 El Trono",
     body: `${me} acaba de visitar El Trono 💩`,
-    url: "/juegos",
+    url: "/juegos/trono",
     tag: "trono",
   }));
 
-  // Se usa desde /juegos y desde el dashboard de /inicio.
+  // Se usa desde /juegos/trono (y su resumen en /juegos) y desde /inicio.
   revalidatePath("/juegos");
+  revalidatePath("/juegos/trono");
   revalidatePath("/inicio");
   return { error: null, entryId: data.id as string };
 }
@@ -66,5 +67,6 @@ export async function undoEntry(entryId: string): Promise<void> {
   await supabase.from("poop_entries").delete().eq("id", parsed.data.entryId).eq("user_id", user.id);
 
   revalidatePath("/juegos");
+  revalidatePath("/juegos/trono");
   revalidatePath("/inicio");
 }

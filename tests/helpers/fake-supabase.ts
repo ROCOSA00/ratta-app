@@ -75,8 +75,14 @@ export function createFakeSupabase(options: {
 
   const storage = { removed: [] as { bucket: string; paths: string[] }[] };
 
+  const rpcCalls: { fn: string; args: unknown }[] = [];
+
   const client = {
     from: (table: string) => builder(table),
+    rpc: async (fn: string, args?: unknown): Promise<Result> => {
+      rpcCalls.push({ fn, args });
+      return options.results?.[`rpc:${fn}`] ?? { data: null, error: null };
+    },
     storage: {
       from: (bucket: string) => ({
         remove: async (paths: string[]) => {
@@ -108,7 +114,7 @@ export function createFakeSupabase(options: {
     },
   };
 
-  return { client, ops, auth, storage };
+  return { client, ops, auth, storage, rpcCalls };
 }
 
 /** Construye un FormData con exactamente los campos que manda el formulario. */

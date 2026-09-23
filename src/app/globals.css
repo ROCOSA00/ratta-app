@@ -104,6 +104,31 @@ a:active {
   font-variant-numeric: tabular-nums;
 }
 
+/* Juego de los corazones: cada toque lanza un corazón que sube y se
+   desvanece (--dx = deriva lateral aleatoria), y el botón "late". */
+@keyframes heart-float {
+  0% {
+    transform: translate(-50%, 0) scale(0.6);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--dx, 0px)), -170px) scale(1.4);
+    opacity: 0;
+  }
+}
+
+@keyframes heart-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 @keyframes emoji-burst {
   0% {
     transform: translate(-50%, -50%) translateY(0) scale(0.5);

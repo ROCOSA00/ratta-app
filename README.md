@@ -253,6 +253,11 @@ puntuales según se van usando:
   que se reducen en el móvil antes de subirse (sin GPS) a un almacén
   privado `chat`, y se ven con enlaces firmados de 1 hora. Toca una foto
   para verla en grande. Migración `20260925100000_chat_photos.sql`.
+- **Juegos**: la pestaña pasa a ser un menú con dos juegos. **El Trono**
+  se mueve a `/juegos/trono` y hay uno nuevo, **Corazones**
+  (`/juegos/corazones`): pulsa sin parar para mandar corazones, con
+  ranking de hoy, semana, mes y total. Los toques se agrupan en paquetes
+  antes de enviarse. Migración `20260925120000_hearts_game.sql`.
 
 ## Notas de seguridad
 

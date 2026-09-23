@@ -3,6 +3,7 @@ import {
   CalendarDays,
   Crown,
   Heart,
+  HeartHandshake,
   MessageCircleHeart,
   Home,
   Images,
@@ -156,8 +157,8 @@ export default function GuiaPage() {
 
         <Section icon={Crown} tint="var(--color-gold)" title="El Trono">
           <p>
-            El juego más serio de la app. 👑 Cada vez que vayas al baño, toca el botón <B>+</B> (en Juegos o en
-            Inicio). Si le das sin querer, tienes unos segundos para darle a <B>Deshacer</B>.
+            El juego más serio de la app. 👑 Cada vez que vayas al baño, toca el botón <B>+</B> (en{" "}
+            <B>Juegos → El Trono</B> o en Inicio). Si le das sin querer, tienes unos segundos para darle a <B>Deshacer</B>.
           </p>
           <p>
             Compara con tu pareja cuántas llevas hoy, esta semana, el mes y el año, vuestras rachas, el récord
@@ -180,6 +181,18 @@ export default function GuiaPage() {
               </li>
             ))}
           </ul>
+        </Section>
+
+        <Section icon={HeartHandshake} tint="var(--color-accent)" title="Corazones">
+          <p>
+            El otro juego de la pestaña <B>Juegos</B>: un corazón gigante que puedes pulsar todo lo rápido que
+            quieras. Cada toque es un corazón para tu pareja 💘
+          </p>
+          <p>
+            Abajo tenéis el <B>ranking</B> de hoy, la semana, el mes y el total, con corona para quien va ganando y
+            el récord en un día. A tu pareja le llega un aviso cuando empiezas a mandarle corazones (no uno por
+            toque, tranquilidad).
+          </p>
         </Section>
 
         <Section icon={Images} tint="var(--color-gold)" title="Recuerdos">
@@ -206,7 +219,7 @@ export default function GuiaPage() {
           </p>
           <p>
             Y las <B>notificaciones</B>: actívalas una vez en cada móvil y te avisará cuando tu pareja te escriba, te
-            mande cariño, añada un plan, una nota o un recuerdo, responda la pregunta del día o visite El Trono. En el
+            mande cariño, añada un plan, una nota o un recuerdo, responda la pregunta del día, visite El Trono o te mande corazones. En el
             iPhone solo funcionan con la app instalada en la pantalla de inicio.
           </p>
         </Section>

@@ -20,6 +20,36 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Juego de los corazones — ⏳ pendiente de aplicar
+
+`20260925120000_hearts_game.sql`. Hay que aplicarla en producción
+**antes** de publicar el código que la usa.
+
+- Tabla `heart_taps`: una fila por persona y **día** (hora de Madrid)
+  con el total de ese día, no una por toque. Los dos miembros del
+  espacio ven las filas de ambos (es un ranking).
+- **Nadie escribe directamente** en la tabla (no hay políticas de
+  INSERT/UPDATE/DELETE). Solo se suma con `add_hearts(p_space_id,
+  p_count)` (`SECURITY DEFINER`, revocada para `anon`), que siempre
+  suma a quien tiene la sesión, exige ser miembro del espacio y acepta
+  entre 1 y 300 corazones por llamada (la app agrupa los toques).
+- Devuelve `true` solo si llevabas 10 minutos o más sin mandar: así la
+  app avisa a tu pareja al empezar una racha, no en cada paquete.
+
+Validada en Postgres 16 local, con todas las migraciones anteriores:
+
+| Caso | Resultado |
+|---|---|
+| Primer paquete (37) | suma 37, avisar = true |
+| Segundo paquete seguido (20) | suma 57, avisar = false |
+| Tras 1 hora sin mandar | suma al día de hoy, avisar = true |
+| Tu pareja ve el ranking | filas de los dos |
+| 0, 301 o un número negativo | rechazado por la función |
+| Persona de fuera: sumar / ver el ranking | rechazado / 0 filas |
+| Escribir directo en la tabla | rechazado por RLS |
+| Cambiar o borrar los corazones de tu pareja | 0 filas |
+| Sin sesión (`anon`) llama a `add_hearts` | permiso denegado |
+
 ## Fotos en el chat — ⏳ pendiente de aplicar
 
 `20260925100000_chat_photos.sql`. Hay que aplicarla en producción
