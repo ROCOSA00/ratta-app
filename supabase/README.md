@@ -20,6 +20,34 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Fotos de los planes — ⏳ pendiente de aplicar
+
+`20260926100000_event_photos.sql`. Hay que aplicarla en producción
+**antes** de publicar el código que la usa.
+
+- Tabla `event_photos` (varias fotos por plan). Un `CHECK` exige que la
+  ruta esté en la carpeta del mismo espacio, y la política de `INSERT`
+  exige que el plan (`event_id`) sea de ese mismo espacio: nadie puede
+  colgar fotos en un plan ajeno. Se borran en cascada con el plan.
+- Cualquiera de los dos puede quitar fotos de un plan (igual que puede
+  borrar el plan entero). Almacén **privado** `event-photos` (5 MB,
+  JPEG), con enlaces firmados de 1 hora.
+- "Solo a partir del día del plan" lo comprueba la app (no es una regla
+  de seguridad).
+
+Validada en Postgres 16 local, con todas las migraciones anteriores:
+
+| Caso | Resultado |
+|---|---|
+| Añadir foto a un plan vuestro | permitido |
+| Foto en un plan de otro espacio / a nombre de tu pareja | rechazado por RLS |
+| Ruta en la carpeta de otro espacio | rechazado por el `CHECK` |
+| Persona de fuera: añadir (en vuestro espacio o en el suyo con vuestro plan) | rechazado por RLS |
+| Ver fotos: tu pareja / persona de fuera | 1 / 0 |
+| Quitar foto: tu pareja / persona de fuera | 1 / 0 borradas |
+| Borrar el plan | sus fotos se borran en cascada |
+| Almacén: tu pareja ve y borra / persona de fuera ve, sube o borra | sí / 0, rechazado, 0 |
+
 ## Juego de los corazones — ✅ ya aplicada
 
 `20260925120000_hearts_game.sql`. Aplicada en producción antes de

@@ -8,7 +8,17 @@ import { ViewToggle } from "./ViewToggle";
 import { MonthView } from "./MonthView";
 import { WeekView } from "./WeekView";
 
-const EVENT_COLUMNS = "id, title, start_at, end_at, all_day, location, description";
+// event_photos(count): cuántas fotos tiene cada plan, en la misma consulta.
+const EVENT_COLUMNS = "id, title, start_at, end_at, all_day, location, description, event_photos(count)";
+
+type EventQueryRow = Omit<EventRow, "photo_count"> & { event_photos: { count: number }[] | null };
+
+function toEventRows(data: unknown): EventRow[] {
+  return ((data ?? []) as EventQueryRow[]).map(({ event_photos, ...rest }) => ({
+    ...rest,
+    photo_count: event_photos?.[0]?.count ?? 0,
+  }));
+}
 const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default async function CalendarioPage({
@@ -33,7 +43,7 @@ export default async function CalendarioPage({
         .eq("space_id", spaceId)
         .gte("end_at", new Date().toISOString())
         .order("start_at", { ascending: true });
-      events = data ?? [];
+      events = toEventRows(data);
     } else {
       // Mes/semana: traemos un rango con un día de margen a cada lado
       // (por si el huso horario mueve un evento a la key vecina) y
@@ -49,7 +59,7 @@ export default async function CalendarioPage({
         .gte("end_at", `${rangeStart}T00:00:00.000Z`)
         .lt("start_at", `${rangeEnd}T00:00:00.000Z`)
         .order("start_at", { ascending: true });
-      events = data ?? [];
+      events = toEventRows(data);
     }
   }
 

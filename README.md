@@ -258,6 +258,10 @@ puntuales según se van usando:
   (`/juegos/corazones`): pulsa sin parar para mandar corazones, con
   ranking de hoy, semana, mes y total. Los toques se agrupan en paquetes
   antes de enviarse. Migración `20260925120000_hearts_game.sql`.
+- **Fotos en los planes**: cada plan tiene su página (`/calendario/[id]`)
+  y, desde el día del plan, se le pueden añadir varias fotos (almacén
+  privado `event-photos`). Las tarjetas de plan muestran "📸 N fotos".
+  Migración `20260926100000_event_photos.sql`.
 
 ## Notas de seguridad
 

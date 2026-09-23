@@ -142,6 +142,10 @@ export default function GuiaPage() {
             Para añadir un plan: título, fecha y hora (o <B>Todo el día</B>), y si quieres, ubicación y notas.
             La papelera 🗑️ lo borra.
           </p>
+          <p>
+            Toca un plan para abrirlo. Desde el día del plan podéis <B>añadirle fotos</B> 📸 (varias a la vez, de la
+            cámara o la galería) y quedan guardadas en él. Los planes con fotos lo indican en el calendario.
+          </p>
         </Section>
 
         <Section icon={NotebookPen} tint="var(--color-accent-2)" title="Notas">
@@ -219,7 +223,7 @@ export default function GuiaPage() {
           </p>
           <p>
             Y las <B>notificaciones</B>: actívalas una vez en cada móvil y te avisará cuando tu pareja te escriba, te
-            mande cariño, añada un plan, una nota o un recuerdo, responda la pregunta del día, visite El Trono o te mande corazones. En el
+            mande cariño, añada un plan, fotos a un plan, una nota o un recuerdo, responda la pregunta del día, visite El Trono o te mande corazones. En el
             iPhone solo funcionan con la app instalada en la pantalla de inicio.
           </p>
         </Section>

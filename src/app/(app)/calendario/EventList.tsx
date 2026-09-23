@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CalendarDays, MapPin } from "lucide-react";
 import { formatDate, formatDateTime } from "@/lib/format-date";
 import { ConfirmDeleteButton } from "@/components/shared/ConfirmDeleteButton";
@@ -10,6 +11,8 @@ export type EventRow = {
   all_day: boolean;
   location: string | null;
   description: string | null;
+  /** Cuántas fotos tiene el plan (0 si ninguna). */
+  photo_count: number;
 };
 
 export function EventCard({ event }: { event: EventRow }) {
@@ -21,35 +24,42 @@ export function EventCard({ event }: { event: EventRow }) {
         borderColor: "color-mix(in srgb, var(--color-accent-2) 18%, var(--color-line))",
       }}
     >
-      <span
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-        style={{
-          background: "color-mix(in srgb, var(--color-accent-2) 18%, var(--color-surface))",
-          color: "var(--color-accent-2)",
-        }}
-      >
-        <CalendarDays size={16} strokeWidth={2.3} />
-      </span>
+      <Link href={`/calendario/${event.id}`} className="flex min-w-0 flex-1 items-start gap-3">
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+          style={{
+            background: "color-mix(in srgb, var(--color-accent-2) 18%, var(--color-surface))",
+            color: "var(--color-accent-2)",
+          }}
+        >
+          <CalendarDays size={16} strokeWidth={2.3} />
+        </span>
 
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium" style={{ color: "var(--color-ink)" }}>
-          {event.title}
-        </p>
-        <p className="mt-0.5 text-xs font-medium" style={{ color: "var(--color-accent-2)" }}>
-          {event.all_day ? formatDate(event.start_at) : formatDateTime(event.start_at)}
-        </p>
-        {event.location ? (
-          <p className="mt-1 flex items-center gap-1 text-xs" style={{ color: "var(--color-muted)" }}>
-            <MapPin size={12} />
-            {event.location}
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium" style={{ color: "var(--color-ink)" }}>
+            {event.title}
           </p>
-        ) : null}
-        {event.description ? (
-          <p className="mt-1 line-clamp-2 text-xs" style={{ color: "var(--color-muted)" }}>
-            {event.description}
+          <p className="mt-0.5 text-xs font-medium" style={{ color: "var(--color-accent-2)" }}>
+            {event.all_day ? formatDate(event.start_at) : formatDateTime(event.start_at)}
           </p>
-        ) : null}
-      </div>
+          {event.location ? (
+            <p className="mt-1 flex items-center gap-1 text-xs" style={{ color: "var(--color-muted)" }}>
+              <MapPin size={12} />
+              {event.location}
+            </p>
+          ) : null}
+          {event.description ? (
+            <p className="mt-1 line-clamp-2 text-xs" style={{ color: "var(--color-muted)" }}>
+              {event.description}
+            </p>
+          ) : null}
+          {event.photo_count > 0 ? (
+            <p className="mt-1 text-xs font-semibold" style={{ color: "var(--color-accent-2)" }}>
+              📸 {event.photo_count} {event.photo_count === 1 ? "foto" : "fotos"}
+            </p>
+          ) : null}
+        </div>
+      </Link>
 
       <form action={deleteEvent}>
         <input type="hidden" name="eventId" value={event.id} />
