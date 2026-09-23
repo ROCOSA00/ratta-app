@@ -6,6 +6,8 @@ import { QuestionOfTheDay } from "@/components/features/QuestionOfTheDay";
 import { LogButton } from "@/components/features/LogButton";
 import { NudgeButtons } from "@/components/features/NudgeButtons";
 import { GuideWelcome } from "@/components/features/GuideWelcome";
+import { SpotifyCard } from "@/components/features/SpotifyCard";
+import { MemoryOfTheDayCard } from "@/components/features/MemoryOfTheDayCard";
 import { getNextEvent } from "@/lib/events/get-next-event";
 import { getPinnedNote } from "@/lib/notes/get-pinned-note";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
@@ -180,6 +182,8 @@ export default async function InicioPage() {
           </SectionCard>
         </Link>
 
+        <MemoryOfTheDayCard />
+
         <QuestionOfTheDay />
 
         <SectionCard tint="var(--color-accent)">
@@ -199,6 +203,8 @@ export default async function InicioPage() {
             <NudgeButtons />
           </div>
         </SectionCard>
+
+        <SpotifyCard />
 
         <SectionCard tint="var(--color-gold)">
           <SectionHeader
@@ -268,7 +274,7 @@ export default async function InicioPage() {
           )}
         </SectionCard>
 
-        <Link href="/notas">
+        <Link href={pinnedNote ? `/notas/${pinnedNote.id}` : "/notas"}>
           <SectionCard tint="var(--color-accent-2)">
             <SectionHeader
               icon={Pin}
@@ -282,7 +288,7 @@ export default async function InicioPage() {
                   {pinnedNote.title}
                 </p>
                 <p className="mt-0.5 line-clamp-2 text-sm" style={{ color: "var(--color-muted)" }}>
-                  {pinnedNote.content}
+                  {pinnedNote.note_type === "checklist" ? "Lista de tareas · toca para abrirla" : pinnedNote.content}
                 </p>
               </>
             ) : (

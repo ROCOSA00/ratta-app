@@ -33,10 +33,12 @@ export async function createEvent(
   const parsed = newEventSchema.safeParse({
     title: formData.get("title"),
     date: formData.get("date"),
-    time: formData.get("time"),
+    // Con "Todo el día" el campo de hora no existe en el formulario y llega
+    // como null; para Zod, opcional significa undefined, no null.
+    time: formData.get("time") ?? undefined,
     allDay: formData.get("allDay") === "on" ? "true" : "false",
-    location: formData.get("location"),
-    description: formData.get("description"),
+    location: formData.get("location") ?? undefined,
+    description: formData.get("description") ?? undefined,
   });
 
   if (!parsed.success) {

@@ -62,6 +62,21 @@ dentro del navegador sin instalar nada, funciona para páginas simples,
 pero **no** para el login ni ninguna página que requiera sesión — ver
 la nota al respecto en `supabase/README.md`.)
 
+## Pruebas automáticas
+
+```bash
+npm test
+```
+
+Comprueba en menos de un segundo, sin tocar la base de datos real, que
+cada acción de la app (crear, editar y borrar notas, listas, planes,
+registros de El Trono, respuestas, mensajitos, nombre, contraseña...)
+hace exactamente lo que debe con los datos tal como los envía cada
+formulario, y que las fechas se calculan en hora de Madrid. Supabase se
+sustituye por uno falso que solo apunta lo que se le pide
+(`tests/helpers/fake-supabase.ts`). Se ejecuta antes de cada cambio,
+junto con `npm run lint`, `npx tsc --noEmit` y `npm run build`.
+
 ## Variables de entorno
 
 Copia `.env.example` como `.env.local` y rellena los valores según las
@@ -82,7 +97,7 @@ ratta-app/
 ├── src/
 │   ├── app/
 │   │   ├── (app)/       # páginas protegidas: inicio, calendario, notas,
-│   │   │                #   juegos (El Trono), mas
+│   │   │                #   juegos (El Trono), perfil, recuerdos
 │   │   └── login/       # página de acceso
 │   ├── components/
 │   │   ├── features/    # componentes compartidos entre Inicio y sus páginas
@@ -91,6 +106,7 @@ ratta-app/
 │   └── lib/             # lógica de servidor por dominio: auth, events,
 │                        #   notes, nudges, poop, profile, questions,
 │                        #   spaces, supabase (clientes browser/server)
+├── tests/               # pruebas automáticas (npm test)
 ├── middleware.ts        # protección de rutas + refresco de sesión
 ├── .env.example         # plantilla de variables de entorno (sin secretos)
 └── README.md
@@ -146,7 +162,8 @@ ratta-app/
     ([PR #5](https://github.com/ROCOSA00/ratta-app/pull/5))
   - [ ] Minijuego (tipo Brick Breaker) con puntuaciones — descartado
     por ahora, se retoma si se pide más adelante
-  - [ ] Tests automatizados (Vitest/Playwright)
+  - [x] Tests automatizados con Vitest (`npm test`): todas las acciones
+    del servidor y la lógica de fechas, El Trono y días juntos
 - [x] **Fase 12** — GitHub + Vercel: repositorio privado en GitHub,
   despliegue automático en Vercel siguiendo la rama `main`, historial
   reconciliado (Fases 6-11 fusionadas vía PR #4 y PR #5) y confirmado
@@ -202,6 +219,19 @@ puntuales según se van usando:
 - **Seguridad**: en El Trono cada uno solo puede editar o borrar sus
   propios registros, también a nivel de base de datos (RLS)
   ([PR #14](https://github.com/ROCOSA00/ratta-app/pull/14)).
+- **Revisión a fondo**: crear una **Lista** fallaba ("expected string,
+  received null") porque en ese modo el formulario no envía el campo de
+  contenido; lo mismo pasaba con los planes de **todo el día** y la hora.
+  Arreglados, y cubiertos por 45 pruebas automáticas que se comprobó que
+  fallan sin el arreglo. También: la Pregunta del día cambiaba a la
+  01:00-02:00 (UTC) en vez de a medianoche en Madrid, y una lista fijada
+  salía vacía en Inicio.
+- **Perfil, música y recuerdos**: "Más" pasa a ser **Perfil**, con foto de
+  portada y un diseño nuevo (`/mas` redirige a `/perfil`). Inicio muestra
+  vuestra playlist de Spotify y un **recuerdo del día**. Nueva galería
+  **Recuerdos** con fotos privadas (bucket privado + enlaces firmados).
+  Las fotos se reducen en el móvil antes de subirlas, lo que además
+  quita la ubicación GPS que llevan dentro.
 
 ## Notas de seguridad
 

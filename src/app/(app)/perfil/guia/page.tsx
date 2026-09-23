@@ -4,9 +4,11 @@ import {
   Crown,
   Heart,
   Home,
+  Images,
+  Music,
   MessageCircleQuestion,
   NotebookPen,
-  Settings,
+  UserRound,
   Smartphone,
 } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -68,7 +70,7 @@ export default function GuiaPage() {
   return (
     <>
       <MarkGuideSeen />
-      <PageHeader title="Cómo funciona Ratta" subtitle="Una vuelta rápida por todo" backHref="/mas" />
+      <PageHeader title="Cómo funciona Ratta" subtitle="Una vuelta rápida por todo" backHref="/perfil" />
 
       <div className="mt-5 flex flex-col gap-4 pb-4">
         <p className="mx-5 text-sm leading-relaxed" style={{ color: "var(--color-muted)" }}>
@@ -94,8 +96,11 @@ export default function GuiaPage() {
             • <B>Próximo plan</B> del calendario, con cuántos días faltan.
           </p>
           <p>
-            • <B>Pregunta del día</B>, <B>Cariño</B>, <B>El Trono</B> y tu <B>nota fijada</B>, para usarlos
-            sin cambiar de pestaña.
+            • <B>Recuerdo del día</B>: cada día, una de vuestras fotos.
+          </p>
+          <p>
+            • <B>Pregunta del día</B>, <B>Cariño</B>, vuestra <B>música</B>, <B>El Trono</B> y tu{" "}
+            <B>nota fijada</B>, para usarlos sin cambiar de pestaña.
           </p>
         </Section>
 
@@ -163,10 +168,27 @@ export default function GuiaPage() {
           </ul>
         </Section>
 
-        <Section icon={Settings} tint="var(--color-muted)" title="Más">
+        <Section icon={Images} tint="var(--color-gold)" title="Recuerdos">
           <p>
-            Tu <B>foto de perfil</B>, tu <B>nombre</B> (el que ve tu pareja), <B>cambiar la contraseña</B>,{" "}
-            <B>cerrar sesión</B> y esta guía, por si quieres volver a verla.
+            Vuestra galería de fotos juntos. Entra desde Inicio o desde tu Perfil, toca <B>Añadir un recuerdo</B>,
+            elige la foto y, si quieres, ponle un pie y la fecha.
+          </p>
+          <p>
+            Las fotos son <B>privadas</B>: solo las veis vosotros dos. Cada uno puede borrar las que ha subido él/ella.
+          </p>
+        </Section>
+
+        <Section icon={Music} tint="var(--color-accent-2)" title="Nuestra música">
+          <p>
+            Vuestra playlist de Spotify, en Inicio. Dale al play para escucharla ahí mismo, o a{" "}
+            <B>Abrir en Spotify</B> para ir a la app.
+          </p>
+        </Section>
+
+        <Section icon={UserRound} tint="var(--color-accent-2)" title="Perfil">
+          <p>
+            Tu <B>foto de perfil</B> y tu <B>foto de portada</B> (toca cualquiera de las dos para cambiarla), tu{" "}
+            <B>nombre</B> (el que ve tu pareja), <B>cambiar la contraseña</B>, <B>cerrar sesión</B> y esta guía.
           </p>
         </Section>
 

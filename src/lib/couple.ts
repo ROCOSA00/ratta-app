@@ -3,6 +3,9 @@ import { addMonths, daysBetween, todayKey } from "@/lib/calendar/date-utils";
 /** El día que empezasteis a salir (hora de Madrid). */
 export const TOGETHER_SINCE = "2026-03-06";
 
+/** Vuestra playlist conjunta (pública) de Spotify. */
+export const SPOTIFY_PLAYLIST_ID = "6PJuoghpfvDAtedIiep4Ok";
+
 export type TogetherInfo = {
   days: number;
   /** "6 meses y 17 días", "1 año, 2 meses y 3 días"... */

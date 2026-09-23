@@ -56,7 +56,7 @@ export function GuideWelcome({ name }: { name?: string }) {
         Vuestro rincón para dos. ¿Te enseño en un minuto qué es cada cosa?
       </p>
       <Link
-        href="/mas/guia"
+        href="/perfil/guia"
         className="mt-3 inline-block rounded-full bg-white px-4 py-1.5 text-sm font-semibold"
         style={{ color: "var(--color-accent)" }}
       >

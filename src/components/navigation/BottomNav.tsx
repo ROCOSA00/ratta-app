@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Home, MoreHorizontal, NotebookPen, Sparkles } from "lucide-react";
+import { CalendarDays, Home, NotebookPen, Sparkles, UserRound } from "lucide-react";
 import type { ComponentType } from "react";
 
 type Tab = {
@@ -16,7 +16,7 @@ const TABS: Tab[] = [
   { href: "/calendario", label: "Calendario", icon: CalendarDays },
   { href: "/notas", label: "Notas", icon: NotebookPen },
   { href: "/juegos", label: "Juegos", icon: Sparkles },
-  { href: "/mas", label: "Más", icon: MoreHorizontal },
+  { href: "/perfil", label: "Perfil", icon: UserRound },
 ];
 
 export function BottomNav() {
