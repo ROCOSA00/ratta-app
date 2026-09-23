@@ -268,7 +268,7 @@ export default async function InicioPage() {
           )}
         </SectionCard>
 
-        <Link href="/notas">
+        <Link href={pinnedNote ? `/notas/${pinnedNote.id}` : "/notas"}>
           <SectionCard tint="var(--color-accent-2)">
             <SectionHeader
               icon={Pin}
@@ -282,7 +282,7 @@ export default async function InicioPage() {
                   {pinnedNote.title}
                 </p>
                 <p className="mt-0.5 line-clamp-2 text-sm" style={{ color: "var(--color-muted)" }}>
-                  {pinnedNote.content}
+                  {pinnedNote.note_type === "checklist" ? "Lista de tareas · toca para abrirla" : pinnedNote.content}
                 </p>
               </>
             ) : (

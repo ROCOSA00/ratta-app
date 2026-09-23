@@ -1,15 +1,12 @@
 import { HelpCircle, Clock3 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
+import { todayKey } from "@/lib/calendar/date-utils";
 import { AnswerForm } from "./AnswerForm";
 
-function todayDateString() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+// El día de la pregunta es el de Madrid, no el del servidor (UTC): si no,
+// la pregunta nueva no llegaba hasta la 01:00-02:00 de la madrugada.
+const todayDateString = todayKey;
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
