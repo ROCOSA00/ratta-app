@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
-import { QuestionOfTheDay } from "./QuestionOfTheDay";
+import { QuestionOfTheDay } from "@/components/features/QuestionOfTheDay";
 
 export default async function MasPage() {
   const supabase = await createClient();

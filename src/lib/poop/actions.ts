@@ -32,6 +32,8 @@ export async function logEntry(): Promise<LogEntryState> {
     return { error: "No se pudo registrar. Inténtalo de nuevo." };
   }
 
+  // Se usa desde /juegos y desde el dashboard de /inicio.
   revalidatePath("/juegos");
+  revalidatePath("/inicio");
   return { error: null };
 }

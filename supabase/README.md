@@ -38,7 +38,15 @@ insert into public.space_members (space_id, user_id, role) values
   ('<id del space anterior>', '<uuid de Giselz>', 'member');
 ```
 
-## Cargar el banco de preguntas (una sola vez, pendiente)
+## Migración pendiente de aplicar: `is_pinned` en `notes`
+
+`20260923120000_notes_pinning.sql` (Fase 10) añade una columna
+`is_pinned` a `notes` para la función de fijar. Igual que las
+anteriores, pégala en el SQL Editor o aplícala con `supabase db push`.
+Validada localmente (migración + `UPDATE` respetando RLS) antes de
+pedir que se aplique al proyecto real.
+
+## Cargar el banco de preguntas (una sola vez) — ✅ ya hecho
 
 `questions` empieza vacía. Pega el contenido de `supabase/seed.sql`
 (24 preguntas variadas) en el **SQL Editor**, una vez. Es contenido

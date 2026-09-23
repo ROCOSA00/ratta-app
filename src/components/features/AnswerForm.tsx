@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { Send } from "lucide-react";
-import { submitAnswer, type AnswerState } from "./actions";
+import { submitAnswer, type AnswerState } from "@/lib/questions/actions";
 
 const initialState: AnswerState = { error: null };
 

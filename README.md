@@ -77,17 +77,19 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
 - [x] **Fase 6** — Calendario compartido (versión mínima: lista de
   próximos eventos + formulario de título/fecha/hora; probado en vivo;
   sin editar, borrar ni vista mensual todavía — siguiente iteración)
-- [x] **Fase 7** — Notas (versión mínima: solo texto libre, lista +
-  formulario de título/contenido; probado en vivo; sin checklists,
-  archivar, editar ni borrar todavía — siguiente iteración)
-- [~] **Fase 8** — El Trono (botón +1, estadísticas hoy/semana/mes/año,
-  racha y logros humorísticos, comparativa entre los dos; pendiente de
-  probar en vivo en Vercel)
-- [~] **Fase 9** — Pregunta del día (ronda diaria automática, respuesta
+- [x] **Fase 7** — Notas (texto libre, lista + formulario de
+  título/contenido, y fijar/desfijar una nota desde la Fase 10; sin
+  checklists, archivar, editar ni borrar todavía — siguiente iteración)
+- [x] **Fase 8** — El Trono (botón +1, estadísticas hoy/semana/mes/año,
+  racha y logros humorísticos, comparativa entre los dos; probado en
+  vivo)
+- [x] **Fase 9** — Pregunta del día (ronda diaria automática, respuesta
   individual, revelado solo cuando ambos han contestado; banco de 24
-  preguntas en `supabase/seed.sql`, pendiente de cargarlo y de probar
-  en vivo en Vercel)
-- [ ] **Fase 10** — Dashboard
+  preguntas cargado y probado en vivo con las dos cuentas reales)
+- [~] **Fase 10** — Dashboard (próximo evento, Pregunta del día
+  respondible sin salir de Inicio, El Trono con botón +1 y racha, nota
+  fijada; nueva migración `is_pinned` en `notes`, pendiente de aplicar
+  y de probar en vivo)
 - [ ] **Fase 11** — Testing, seguridad y pulido
 - [ ] **Fase 12** — GitHub + Vercel
 - [ ] **Fase 13** — Dominio en Cloudflare

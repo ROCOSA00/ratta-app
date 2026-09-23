@@ -47,6 +47,8 @@ export async function submitAnswer(
     return { error: "No se pudo guardar tu respuesta. Inténtalo de nuevo." };
   }
 
+  // Se usa desde /mas y desde el dashboard de /inicio.
   revalidatePath("/mas");
+  revalidatePath("/inicio");
   return { error: null };
 }

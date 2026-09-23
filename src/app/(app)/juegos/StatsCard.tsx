@@ -1,4 +1,4 @@
-import type { UserStats } from "./stats";
+import type { UserStats } from "@/lib/poop/stats";
 
 const emptyStats: Omit<UserStats, "userId"> = {
   today: 0,

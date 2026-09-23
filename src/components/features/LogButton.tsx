@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { Plus } from "lucide-react";
-import { logEntry, type LogEntryState } from "./actions";
+import { logEntry, type LogEntryState } from "@/lib/poop/actions";
 
 const initialState: LogEntryState = { error: null };
 

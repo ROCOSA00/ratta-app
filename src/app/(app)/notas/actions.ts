@@ -5,6 +5,11 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
 
+const togglePinSchema = z.object({
+  noteId: z.string().uuid(),
+  nextPinned: z.enum(["true", "false"]),
+});
+
 const newNoteSchema = z.object({
   title: z.string().trim().min(1, "Ponle un título a la nota."),
   content: z.string().trim().min(1, "Escribe algo en la nota."),
@@ -55,4 +60,24 @@ export async function createNote(
 
   revalidatePath("/notas");
   return { error: null };
+}
+
+export async function togglePin(formData: FormData): Promise<void> {
+  const parsed = togglePinSchema.safeParse({
+    noteId: formData.get("noteId"),
+    nextPinned: formData.get("nextPinned"),
+  });
+  if (!parsed.success) return;
+
+  const supabase = await createClient();
+  // No se recalcula el espacio aquí: la RLS de notes ya exige que la
+  // nota pertenezca a un espacio del que el usuario es miembro, igual
+  // que en cualquier UPDATE/DELETE por id de esta app.
+  await supabase
+    .from("notes")
+    .update({ is_pinned: parsed.data.nextPinned === "true" })
+    .eq("id", parsed.data.noteId);
+
+  revalidatePath("/notas");
+  revalidatePath("/inicio");
 }
