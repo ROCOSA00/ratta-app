@@ -20,10 +20,10 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Juego de los corazones — ⏳ pendiente de aplicar
+## Juego de los corazones — ✅ ya aplicada
 
-`20260925120000_hearts_game.sql`. Hay que aplicarla en producción
-**antes** de publicar el código que la usa.
+`20260925120000_hearts_game.sql`. Aplicada en producción antes de
+publicar el código que la usa.
 
 - Tabla `heart_taps`: una fila por persona y **día** (hora de Madrid)
   con el total de ese día, no una por toque. Los dos miembros del
@@ -50,10 +50,10 @@ Validada en Postgres 16 local, con todas las migraciones anteriores:
 | Cambiar o borrar los corazones de tu pareja | 0 filas |
 | Sin sesión (`anon`) llama a `add_hearts` | permiso denegado |
 
-## Fotos en el chat — ⏳ pendiente de aplicar
+## Fotos en el chat — ✅ ya aplicada
 
-`20260925100000_chat_photos.sql`. Hay que aplicarla en producción
-**antes** de publicar el código que la usa.
+`20260925100000_chat_photos.sql`. Aplicada en producción antes de
+publicar el código que la usa.
 
 - `messages.image_path`: ruta de la foto en el almacén privado `chat`.
   Un `CHECK` exige que esté en la carpeta del **mismo espacio** que el
