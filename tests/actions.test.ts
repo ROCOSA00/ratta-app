@@ -43,7 +43,7 @@ import { sendNudge } from "@/lib/nudges/actions";
 import { updateDisplayName } from "@/lib/profile/actions";
 import { changePassword, signIn } from "@/lib/auth/actions";
 import { addMemory, deleteMemory } from "@/lib/memories/actions";
-import { sendMessage } from "@/lib/chat/actions";
+import { sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
 
 const ok = { error: null };
 const NOTE_ID = "11111111-1111-4111-8111-111111111111";
@@ -425,7 +425,13 @@ describe("Chat", () => {
     state.fake = createFakeSupabase({
       results: {
         "messages:insert": {
-          data: { id: "m1", sender_id: "user-me", body: "Te quiero", created_at: "2026-09-23T18:00:00Z" },
+          data: {
+            id: "m1",
+            sender_id: "user-me",
+            body: "Te quiero",
+            image_path: null,
+            created_at: "2026-09-23T18:00:00Z",
+          },
           error: null,
         },
       },
@@ -437,7 +443,9 @@ describe("Chat", () => {
       space_id: "space-1",
       sender_id: "user-me",
       body: "Te quiero",
+      image_path: null,
     });
+    expect(res.message?.image_url).toBeNull();
     expect(state.notified).toEqual([{ title: "💬 Rokito", body: "Te quiero", url: "/chat", tag: "chat" }]);
   });
 
@@ -451,6 +459,53 @@ describe("Chat", () => {
   it("si falla al guardar, no avisa", async () => {
     state.fake = createFakeSupabase({ results: { "messages:insert": { data: null, error: { message: "x" } } } });
     expect((await sendMessage("hola")).error).toMatch(/No se pudo enviar/);
+    expect(state.notified).toHaveLength(0);
+  });
+
+  const CHAT_SPACE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const CHAT_PHOTO = `${CHAT_SPACE}/cccccccc-cccc-4ccc-8ccc-cccccccccccc.jpg`;
+
+  it("envía una foto con texto, devuelve su enlace temporal y avisa", async () => {
+    state.spaceId = CHAT_SPACE;
+    state.fake = createFakeSupabase({
+      results: {
+        "messages:insert": {
+          data: { id: "m2", sender_id: "user-me", body: "Mira", image_path: CHAT_PHOTO, created_at: "2026-09-23T18:00:00Z" },
+          error: null,
+        },
+      },
+    });
+    const res = await sendPhotoMessage({ path: CHAT_PHOTO, caption: " Mira " });
+    expect(res.error).toBeNull();
+    expect(opsOf("messages", "insert")[0]?.payload).toEqual({
+      space_id: CHAT_SPACE,
+      sender_id: "user-me",
+      body: "Mira",
+      image_path: CHAT_PHOTO,
+    });
+    expect(res.message?.image_url).toBe(`https://signed.test/chat/${CHAT_PHOTO}`);
+    expect(state.notified).toEqual([{ title: "💬 Rokito", body: "📷 Mira", url: "/chat", tag: "chat" }]);
+  });
+
+  it("una foto sin texto también vale", async () => {
+    state.spaceId = CHAT_SPACE;
+    const res = await sendPhotoMessage({ path: CHAT_PHOTO, caption: "   " });
+    expect(res.error).toBeNull();
+    expect(opsOf("messages", "insert")[0]?.payload).toMatchObject({ body: "", image_path: CHAT_PHOTO });
+    expect(state.notified[0]?.body).toBe("📷 Te ha enviado una foto");
+  });
+
+  it("rechaza fotos de otro espacio o con rutas manipuladas", async () => {
+    state.spaceId = CHAT_SPACE;
+    for (const path of [
+      "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/cccccccc-cccc-4ccc-8ccc-cccccccccccc.jpg",
+      `${CHAT_SPACE}/../otra.jpg`,
+      `${CHAT_SPACE}/cccccccc-cccc-4ccc-8ccc-cccccccccccc.png`,
+      "https://evil.test/foto.jpg",
+    ]) {
+      expect((await sendPhotoMessage({ path, caption: "" })).error).toBe("Ruta de foto no válida.");
+    }
+    expect(state.fake.ops).toHaveLength(0);
     expect(state.notified).toHaveLength(0);
   });
 });

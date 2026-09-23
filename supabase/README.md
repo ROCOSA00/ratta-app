@@ -20,6 +20,36 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Fotos en el chat — ⏳ pendiente de aplicar
+
+`20260925100000_chat_photos.sql`. Hay que aplicarla en producción
+**antes** de publicar el código que la usa.
+
+- `messages.image_path`: ruta de la foto en el almacén privado `chat`.
+  Un `CHECK` exige que esté en la carpeta del **mismo espacio** que el
+  mensaje (`<space_id>/<uuid>.jpg`), así que nadie puede enlazar en su
+  mensaje una foto de otro espacio.
+- El texto puede ir vacío solo si el mensaje lleva foto (sigue siendo
+  máximo 2000 caracteres). Los mensajes antiguos siguen siendo válidos.
+- Almacén `chat` **privado** (5 MB, solo JPEG), con las mismas reglas
+  que `memories`: ver y subir solo en la carpeta de tu espacio, borrar
+  solo tus propias fotos. Se ven con enlaces firmados de 1 hora.
+
+Validada en Postgres 16 local, con todas las migraciones anteriores,
+como Rokito, Giselz y una persona de otro espacio:
+
+| Caso | Resultado |
+|---|---|
+| Foto con texto / foto sin texto | permitido / permitido |
+| Mensaje vacío sin foto | rechazado por `messages_body_check` |
+| Texto de 2001 caracteres con foto | rechazado por `messages_body_check` |
+| Foto de otro espacio o ruta con `../` | rechazado por `messages_image_path_check` |
+| Escribir como tu pareja / persona de fuera escribe | rechazado por RLS |
+| Persona de fuera: leer vuestros mensajes | 0 filas |
+| Tu pareja ve tu foto en el almacén | 1 visible |
+| Persona de fuera: ver / subir en vuestra carpeta | 0 visibles / rechazado por RLS |
+| Tu pareja borra tu foto / borras la tuya | 0 borradas / 1 borrada |
+
 ## Chat + notificaciones — ✅ ya aplicada
 
 `20260924140000_chat_and_push.sql`. Aplicada en producción antes de

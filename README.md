@@ -249,6 +249,10 @@ puntuales según se van usando:
   (tipo "globo") separada de los bordes. Su altura y separación viven en
   `--nav-height` y `--nav-gap` (`globals.css`), que también usan el
   hueco final de cada pantalla y la barra de escribir del chat.
+- **Fotos en el chat**: botón 📷 para mandar fotos (con texto opcional),
+  que se reducen en el móvil antes de subirse (sin GPS) a un almacén
+  privado `chat`, y se ven con enlaces firmados de 1 hora. Toca una foto
+  para verla en grande. Migración `20260925100000_chat_photos.sql`.
 
 ## Notas de seguridad
 

@@ -83,6 +83,10 @@ export function createFakeSupabase(options: {
           storage.removed.push({ bucket, paths });
           return { data: [], error: null };
         },
+        createSignedUrl: async (path: string) => ({
+          data: { signedUrl: `https://signed.test/${bucket}/${path}` },
+          error: null,
+        }),
       }),
     },
     auth: {

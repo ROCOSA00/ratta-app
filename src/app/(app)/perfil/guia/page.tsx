@@ -110,6 +110,10 @@ export default function GuiaPage() {
             Vuestro chat privado, en la pestaña <B>Chat</B>. Los mensajes llegan al instante, y si tenéis las
             notificaciones activadas, os avisa aunque la app esté cerrada.
           </p>
+          <p>
+            Con el botón 📷 puedes mandar <B>fotos</B> (con un texto si quieres). Toca una foto para verla en grande.
+            Son privadas: solo las veis vosotros dos.
+          </p>
         </Section>
 
         <Section icon={MessageCircleQuestion} tint="var(--color-accent)" title="Pregunta del día">
