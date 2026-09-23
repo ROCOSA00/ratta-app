@@ -38,13 +38,12 @@ insert into public.space_members (space_id, user_id, role) values
   ('<id del space anterior>', '<uuid de Giselz>', 'member');
 ```
 
-## Migración pendiente de aplicar: `is_pinned` en `notes`
+## `is_pinned` en `notes` — ✅ ya aplicada
 
-`20260923120000_notes_pinning.sql` (Fase 10) añade una columna
-`is_pinned` a `notes` para la función de fijar. Igual que las
-anteriores, pégala en el SQL Editor o aplícala con `supabase db push`.
-Validada localmente (migración + `UPDATE` respetando RLS) antes de
-pedir que se aplique al proyecto real.
+`20260923120000_notes_pinning.sql` (Fase 10) añadió `is_pinned` a
+`notes` para la función de fijar. Validada localmente antes de
+aplicarla (migración + `UPDATE` respetando RLS), y confirmada
+funcionando en producción.
 
 ## Cargar el banco de preguntas (una sola vez) — ✅ ya hecho
 

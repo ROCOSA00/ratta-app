@@ -86,10 +86,9 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
 - [x] **Fase 9** — Pregunta del día (ronda diaria automática, respuesta
   individual, revelado solo cuando ambos han contestado; banco de 24
   preguntas cargado y probado en vivo con las dos cuentas reales)
-- [~] **Fase 10** — Dashboard (próximo evento, Pregunta del día
+- [x] **Fase 10** — Dashboard (próximo evento, Pregunta del día
   respondible sin salir de Inicio, El Trono con botón +1 y racha, nota
-  fijada; nueva migración `is_pinned` en `notes`, pendiente de aplicar
-  y de probar en vivo)
+  fijada; probado en vivo)
 - [ ] **Fase 11** — Testing, seguridad y pulido
 - [ ] **Fase 12** — GitHub + Vercel
 - [ ] **Fase 13** — Dominio en Cloudflare
