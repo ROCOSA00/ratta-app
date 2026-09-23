@@ -45,6 +45,33 @@ insert into public.space_members (space_id, user_id, role) values
 aplicarla (migración + `UPDATE` respetando RLS), y confirmada
 funcionando en producción.
 
+## Migración pendiente de aplicar: cierre de seguridad en "Pregunta del día"
+
+`20260923130000_gate_question_answers_reveal.sql` (Fase 11, revisión
+de seguridad). Hallazgo: el revelado de respuestas ("solo ves la de tu
+pareja si ya has respondido tú") solo se aplicaba en
+`QuestionOfTheDay.tsx`, no en la base de datos — la política
+`question_answers_select_member` original solo comprobaba pertenencia
+al espacio. Como la anon key es pública y cada usuario tiene su propio
+token de sesión, cualquiera podía llamar a la API REST de Supabase
+directamente y leer la respuesta ajena antes de responder, saltándose
+la app por completo.
+
+La migración añade una función `has_answered_round()` (`SECURITY
+DEFINER`, mismo patrón que `is_space_member()`, necesaria para evitar
+"infinite recursion detected in policy" al consultar `question_answers`
+desde su propia política) y ajusta la política de `SELECT` para exigir
+también que el usuario ya tenga su propia respuesta en esa ronda.
+
+Validada localmente simulando el ataque exacto que encontró la
+revisión: antes del fix, un usuario sin responder consultando
+`question_answers` directamente veía la respuesta de su pareja (0
+filas esperadas, filas reales encontradas); tras aplicar la migración,
+la misma consulta devuelve 0 filas hasta que responde, y las 2
+correctas después. No requiere ningún cambio en el código de la app.
+
+Pégala en el SQL Editor como las anteriores.
+
 ## Cargar el banco de preguntas (una sola vez) — ✅ ya hecho
 
 `questions` empieza vacía. Pega el contenido de `supabase/seed.sql`
