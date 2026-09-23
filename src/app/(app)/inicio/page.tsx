@@ -10,6 +10,20 @@ import { getPinnedNote } from "@/lib/notes/get-pinned-note";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
 import { getLatestNudge } from "@/lib/nudges/get-latest-nudge";
 import { formatDate, formatDateTime, formatRelative } from "@/lib/format-date";
+import { daysBetween, madridHour, todayKey, toDateKey } from "@/lib/calendar/date-utils";
+
+function greetingFor(hour: number): string {
+  if (hour >= 6 && hour < 13) return "Buenos días";
+  if (hour >= 13 && hour < 21) return "Buenas tardes";
+  return "Buenas noches";
+}
+
+function countdownLabel(startAt: string): string {
+  const days = daysBetween(todayKey(), toDateKey(new Date(startAt)));
+  if (days <= 0) return "Hoy";
+  if (days === 1) return "Mañana";
+  return `En ${days} días`;
+}
 
 function SectionCard({ tint, children }: { tint: string; children: React.ReactNode }) {
   return (
@@ -62,6 +76,9 @@ export default async function InicioPage() {
     getLatestNudge(),
   ]);
 
+  const myName = poopSummary ? poopSummary.displayNameById.get(poopSummary.currentUserId) : undefined;
+  const greeting = greetingFor(madridHour(new Date()));
+
   return (
     <>
       <header
@@ -81,7 +98,7 @@ export default async function InicioPage() {
           </span>
           <div className="space-y-0.5">
             <h1 className="text-2xl font-bold" style={{ color: "var(--color-ink)" }}>
-              Ratta
+              {myName ? `${greeting}, ${myName}` : greeting}
             </h1>
             <p className="text-sm" style={{ color: "var(--color-muted)" }}>
               Nuestro pequeño mundo para dos.
@@ -101,9 +118,17 @@ export default async function InicioPage() {
             />
             {nextEvent ? (
               <>
-                <p className="mt-2 text-base font-semibold" style={{ color: "var(--color-ink)" }}>
-                  {nextEvent.title}
-                </p>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className="text-base font-semibold" style={{ color: "var(--color-ink)" }}>
+                    {nextEvent.title}
+                  </p>
+                  <span
+                    className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                    style={{ background: "var(--color-accent-2)", color: "#ffffff" }}
+                  >
+                    {countdownLabel(nextEvent.start_at)}
+                  </span>
+                </div>
                 <p className="mt-0.5 text-sm" style={{ color: "var(--color-muted)" }}>
                   {nextEvent.all_day ? formatDate(nextEvent.start_at) : formatDateTime(nextEvent.start_at)}
                 </p>
