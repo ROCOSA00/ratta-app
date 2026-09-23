@@ -20,10 +20,10 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Migración pendiente de aplicar: chat + notificaciones
+## Chat + notificaciones — ✅ ya aplicada
 
-`20260924140000_chat_and_push.sql`. **Hay que aplicarla antes de
-publicar el código que la usa.**
+`20260924140000_chat_and_push.sql`. Aplicada en producción antes de
+publicar el código que la usa, junto con `VAPID_PRIVATE_KEY` en Vercel.
 
 - Tabla `messages` (chat) añadida a la publicación `supabase_realtime`:
   Supabase Realtime solo emite a cada persona los cambios que su RLS de
@@ -56,8 +56,6 @@ usuario sin sesión:
 | Endpoint que no es `https://` | rechazado |
 | Persona de fuera: leer chat / obtener destinos / escribir | 0 / ninguno / rechazado |
 | Sin sesión (`anon`) llama a las funciones | permiso denegado |
-
-Pégala en el SQL Editor como las anteriores.
 
 ## Portada del perfil + Recuerdos — ✅ ya aplicada
 
