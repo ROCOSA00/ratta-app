@@ -3,10 +3,12 @@ import { ChevronRight, Flame } from "lucide-react";
 import { RattaLogo } from "@/components/shared/RattaLogo";
 import { QuestionOfTheDay } from "@/components/features/QuestionOfTheDay";
 import { LogButton } from "@/components/features/LogButton";
+import { NudgeButtons } from "@/components/features/NudgeButtons";
 import { getNextEvent } from "@/lib/events/get-next-event";
 import { getPinnedNote } from "@/lib/notes/get-pinned-note";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
-import { formatDate, formatDateTime } from "@/lib/format-date";
+import { getLatestNudge } from "@/lib/nudges/get-latest-nudge";
+import { formatDate, formatDateTime, formatRelative } from "@/lib/format-date";
 
 function SectionCard({ children }: { children: React.ReactNode }) {
   return (
@@ -28,10 +30,11 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default async function InicioPage() {
-  const [nextEvent, pinnedNote, poopSummary] = await Promise.all([
+  const [nextEvent, pinnedNote, poopSummary, latestNudge] = await Promise.all([
     getNextEvent(),
     getPinnedNote(),
     getPoopSummary(),
+    getLatestNudge(),
   ]);
 
   return (
@@ -83,6 +86,24 @@ export default async function InicioPage() {
         </Link>
 
         <QuestionOfTheDay />
+
+        <SectionCard>
+          <SectionLabel>Cariño</SectionLabel>
+          {latestNudge ? (
+            <p className="mt-1.5 text-sm" style={{ color: "var(--color-ink)" }}>
+              {latestNudge.emoji} <b>{latestNudge.senderName}</b>: {latestNudge.label}
+              {" · "}
+              <span style={{ color: "var(--color-muted)" }}>{formatRelative(latestNudge.createdAt)}</span>
+            </p>
+          ) : (
+            <p className="mt-1.5 text-sm" style={{ color: "var(--color-muted)" }}>
+              Mándale un mensajito a tu pareja.
+            </p>
+          )}
+          <div className="mt-3">
+            <NudgeButtons />
+          </div>
+        </SectionCard>
 
         <SectionCard>
           <div className="flex items-center justify-between">

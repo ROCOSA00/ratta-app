@@ -89,11 +89,17 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
 - [x] **Fase 10** — Dashboard (próximo evento, Pregunta del día
   respondible sin salir de Inicio, El Trono con botón +1 y racha, nota
   fijada; probado en vivo)
-- [~] **Fase 11** — Testing, seguridad y pulido (revisión de seguridad
-  hecha: 1 fallo encontrado y corregido — el revelado de "Pregunta del
-  día" solo se aplicaba en el componente, no en la base de datos;
-  cerrado a nivel de RLS, ver `supabase/README.md`; pendiente de
-  aplicar la migración y de los tests automatizados)
+- [~] **Fase 11** — Testing, seguridad y pulido
+  - [x] Revisión de seguridad: 1 fallo encontrado y corregido — el
+    revelado de "Pregunta del día" solo se aplicaba en el componente,
+    no en la base de datos; cerrado a nivel de RLS (ver
+    `supabase/README.md`), pendiente de aplicar esa migración
+  - [x] Pulido divertido (paquete 1): confeti de emojis al registrar
+    en El Trono, mensajitos de cariño entre los dos (reutiliza
+    `activity_log`, sin migración nueva), cambiar tu nombre desde "Más"
+  - [ ] Foto de perfil (avatar) — necesita activar Supabase Storage
+  - [ ] Minijuego (tipo Brick Breaker) con puntuaciones — fase propia
+  - [ ] Tests automatizados (Vitest/Playwright)
 - [ ] **Fase 12** — GitHub + Vercel
 - [ ] **Fase 13** — Dominio en Cloudflare
 - [ ] **Fase 14** — PWA
