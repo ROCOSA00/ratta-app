@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ComponentType, ReactNode } from "react";
-import { BookHeart, ChevronRight, Images, KeyRound, LogOut, UserPen } from "lucide-react";
+import { Bell, BookHeart, ChevronRight, Images, KeyRound, LogOut, UserPen } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
 import { getTogetherInfo } from "@/lib/couple";
@@ -9,6 +9,7 @@ import { RenameForm } from "./RenameForm";
 import { AvatarUpload } from "./AvatarUpload";
 import { CoverUpload } from "./CoverUpload";
 import { ChangePasswordForm } from "./ChangePasswordForm";
+import { NotificationSettings } from "./NotificationSettings";
 
 type ProfileRow = { id: string; display_name: string | null; avatar_url: string | null; cover_url: string | null };
 
@@ -135,6 +136,10 @@ export default async function PerfilPage() {
           title="Cómo funciona Ratta"
           subtitle="Una vuelta rápida por todo"
         />
+
+        <Card icon={Bell} tint="var(--color-accent)" title="Notificaciones">
+          <NotificationSettings />
+        </Card>
 
         <Card icon={UserPen} tint="var(--color-accent-2)" title="Tu nombre">
           <RenameForm currentName={me?.display_name ?? ""} />
