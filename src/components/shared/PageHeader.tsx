@@ -12,9 +12,8 @@ export function PageHeader({
 }) {
   return (
     <header
-      className="sticky z-30 border-b px-5 pb-4"
+      className="sticky top-0 z-30 border-b px-5 pb-4"
       style={{
-        top: "env(safe-area-inset-top, 0px)",
         background: "var(--color-bg)",
         borderColor: "var(--color-line)",
         paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)",
