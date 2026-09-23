@@ -70,11 +70,16 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
 - [x] **Fase 3** — Configuración de Supabase
 - [x] **Fase 4** — Esquema de base de datos y RLS (migraciones en
   `supabase/migrations/`, aplicadas al proyecto Supabase real)
-- [~] **Fase 5** — Autenticación (login, middleware y protección de
-  rutas implementados; falta crear las cuentas reales de Rocco y
-  Giselz y probar el flujo con ellas)
-- [ ] **Fase 6** — Calendario compartido
-- [ ] **Fase 7** — Notas
+- [x] **Fase 5** — Autenticación (login, middleware y protección de
+  rutas; cuentas de Rocco y Giselz creadas y Ratta Space dado de alta
+  en Supabase; probado en vivo en Vercel — StackBlitz no sirve para
+  probar esta parte, ver nota en `supabase/README.md`)
+- [x] **Fase 6** — Calendario compartido (versión mínima: lista de
+  próximos eventos + formulario de título/fecha/hora; probado en vivo;
+  sin editar, borrar ni vista mensual todavía — siguiente iteración)
+- [x] **Fase 7** — Notas (versión mínima: solo texto libre, lista +
+  formulario de título/contenido; probado en vivo; sin checklists,
+  archivar, editar ni borrar todavía — siguiente iteración)
 - [ ] **Fase 8** — El Trono
 - [ ] **Fase 9** — Pregunta del día
 - [ ] **Fase 10** — Dashboard
