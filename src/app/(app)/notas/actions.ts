@@ -62,7 +62,9 @@ export async function createNote(
 ): Promise<NewNoteState> {
   const parsed = newNoteSchema.safeParse({
     title: formData.get("title"),
-    content: formData.get("content"),
+    // En modo "Lista" el campo de contenido no existe en el formulario y
+    // llega como null; para Zod, opcional significa undefined, no null.
+    content: formData.get("content") ?? undefined,
     noteType: formData.get("noteType") || "text",
   });
 
