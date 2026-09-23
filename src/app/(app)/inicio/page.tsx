@@ -6,6 +6,8 @@ import { QuestionOfTheDay } from "@/components/features/QuestionOfTheDay";
 import { LogButton } from "@/components/features/LogButton";
 import { NudgeButtons } from "@/components/features/NudgeButtons";
 import { GuideWelcome } from "@/components/features/GuideWelcome";
+import { SpotifyCard } from "@/components/features/SpotifyCard";
+import { MemoryOfTheDayCard } from "@/components/features/MemoryOfTheDayCard";
 import { getNextEvent } from "@/lib/events/get-next-event";
 import { getPinnedNote } from "@/lib/notes/get-pinned-note";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
@@ -180,6 +182,8 @@ export default async function InicioPage() {
           </SectionCard>
         </Link>
 
+        <MemoryOfTheDayCard />
+
         <QuestionOfTheDay />
 
         <SectionCard tint="var(--color-accent)">
@@ -199,6 +203,8 @@ export default async function InicioPage() {
             <NudgeButtons />
           </div>
         </SectionCard>
+
+        <SpotifyCard />
 
         <SectionCard tint="var(--color-gold)">
           <SectionHeader
