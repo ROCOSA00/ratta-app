@@ -20,6 +20,45 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Migración pendiente de aplicar: chat + notificaciones
+
+`20260924140000_chat_and_push.sql`. **Hay que aplicarla antes de
+publicar el código que la usa.**
+
+- Tabla `messages` (chat) añadida a la publicación `supabase_realtime`:
+  Supabase Realtime solo emite a cada persona los cambios que su RLS de
+  `SELECT` le deja ver. Nadie edita mensajes; cada uno borra los suyos.
+- Tabla `push_subscriptions` (una fila por dispositivo). Directamente,
+  cada uno solo ve y borra las suyas. Tres funciones `SECURITY DEFINER`
+  (solo para usuarios con sesión, revocadas para `anon`):
+  `save_push_subscription` (si el mismo móvil ya estaba suscrito con la
+  otra cuenta, pasa a quien tiene la sesión ahora),
+  `partner_push_subscriptions` (solo las de quien comparte espacio
+  contigo, nunca las tuyas ni las de nadie más) y
+  `forget_partner_push_subscription` (limpia las caducadas).
+- Esos datos no bastan para mandar notificaciones: hace falta la clave
+  privada VAPID, que solo está en la variable `VAPID_PRIVATE_KEY` de
+  Vercel.
+
+Validada en Postgres 16 local (con un stub de la publicación
+`supabase_realtime`), como Rokito, una persona de otro espacio y un
+usuario sin sesión:
+
+| Caso | Resultado |
+|---|---|
+| Leer / escribir en vuestro chat | 1 fila / permitido |
+| Escribir como tu pareja | rechazado por RLS |
+| Mensaje vacío | rechazado por la restricción `check` |
+| Borrar o editar un mensaje de tu pareja | 0 filas |
+| Ver suscripciones directamente | solo las tuyas |
+| Destinos para avisar a la pareja | solo los de tu pareja |
+| Borrar la suscripción de alguien de fuera | no la toca |
+| Endpoint que no es `https://` | rechazado |
+| Persona de fuera: leer chat / obtener destinos / escribir | 0 / ninguno / rechazado |
+| Sin sesión (`anon`) llama a las funciones | permiso denegado |
+
+Pégala en el SQL Editor como las anteriores.
+
 ## Portada del perfil + Recuerdos — ✅ ya aplicada
 
 `20260924120000_profile_cover_and_memories.sql`. Aplicada en producción
