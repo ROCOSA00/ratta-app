@@ -20,7 +20,7 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Dar de alta el Ratta Space (una sola vez)
+## Dar de alta el Ratta Space (una sola vez) — ✅ ya hecho
 
 `spaces` y `space_members` no tienen políticas de `INSERT` para la app:
 la membresía se gestiona a mano, ya que solo existen dos personas y no
@@ -37,6 +37,24 @@ insert into public.space_members (space_id, user_id, role) values
   ('<id del space anterior>', '<uuid de Rocco>', 'owner'),
   ('<id del space anterior>', '<uuid de Giselz>', 'member');
 ```
+
+## Nota: prueba en vivo del login pendiente (StackBlitz)
+
+El login (Fase 5) está implementado y verificado con un navegador real
+en un entorno de desarrollo estándar (carga, hidratación, envío del
+formulario y manejo de errores, todo correcto). Sin embargo, probarlo
+en **StackBlitz** (que simula Node.js dentro del navegador vía
+WebContainers) produce un error interno de Next.js
+(`Invariant: Expected workUnitAsyncStorage to have a store`) en cuanto
+`middleware.ts` hace una llamada real a `supabase.auth.getUser()`. Es
+un fallo de compatibilidad conocido entre WebContainers y las APIs
+internas de Next.js 15 relacionadas con `AsyncLocalStorage`, no un bug
+en este código.
+
+Se decidió aparcar la prueba en vivo hasta la Fase 12 (despliegue en
+Vercel), donde se ejecuta Node.js real y este problema no debería
+aparecer, en vez de seguir peleando con las limitaciones de StackBlitz
+para esta parte concreta de la app.
 
 ## Cómo se probaron estas migraciones
 
