@@ -20,6 +20,43 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Migración pendiente de aplicar: portada del perfil + Recuerdos
+
+`20260924120000_profile_cover_and_memories.sql`. **Hay que aplicarla
+antes de publicar el código que la usa** (el Perfil lee `cover_url` y
+Recuerdos usa la tabla y el bucket nuevos).
+
+- `profiles.cover_url`: la foto de portada. La imagen va al bucket
+  `avatars` (`<uuid>/cover`), que ya solo deja escribir en tu carpeta.
+- Tabla `memories` + bucket **privado** `memories` (`<space_id>/<uuid>.jpg`):
+  las fotos solo se ven con enlaces firmados y temporales que genera la
+  app, nunca con una URL pública. Los dos veis todo; cada uno solo
+  edita/borra lo que ha subido. La tabla además exige que la ruta de la
+  foto esté en la carpeta de su propio espacio.
+- `is_space_member_folder(text)`: como `is_space_member()` pero
+  comparando como texto, para que una ruta con una carpeta que no es un
+  uuid simplemente no coincida en vez de dar error.
+
+Validada en Postgres 16 local con un *stub* de Supabase Storage
+(`storage.buckets`, `storage.objects` con `owner_id`,
+`storage.foldername()`), como Rokito, Giselz y una tercera persona de
+otro espacio, cada caso en su propia transacción:
+
+| Caso | Resultado |
+|---|---|
+| Subir foto a vuestra carpeta | permitido |
+| Subir a la carpeta de otro espacio / a una ruta basura | rechazado (sin error de tipos) |
+| Giselz ve la foto de Rokito | 1 fila |
+| Giselz borra la foto / el recuerdo de Rokito | 0 filas |
+| Giselz edita el pie de foto de Rokito | 0 filas |
+| Rokito borra su propia foto / edita su pie | 1 fila |
+| Crear un recuerdo a nombre de la pareja | rechazado por RLS |
+| Recuerdo con ruta de otro espacio | rechazado por la restricción `check` |
+| Persona de fuera ve fotos o recuerdos | 0 filas |
+| Cambiar tu portada / la de tu pareja | 1 fila / 0 filas |
+
+Pégala en el SQL Editor como las anteriores.
+
 ## El Trono, solo tus propios registros — ✅ ya aplicada
 
 `20260924100000_poop_entries_own_only.sql`. Las políticas de `UPDATE`
