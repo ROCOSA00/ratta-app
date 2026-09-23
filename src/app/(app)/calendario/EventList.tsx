@@ -28,15 +28,29 @@ export function EventList({ events }: { events: EventRow[] }) {
       {events.map((event) => (
         <li
           key={event.id}
-          className="rounded-2xl border p-4"
-          style={{ background: "var(--color-surface)", borderColor: "var(--color-line)" }}
+          className="flex items-center gap-3 rounded-2xl border p-4"
+          style={{
+            background: "color-mix(in srgb, var(--color-accent-2) 6%, var(--color-surface))",
+            borderColor: "color-mix(in srgb, var(--color-accent-2) 18%, var(--color-line))",
+          }}
         >
-          <p className="text-sm font-medium" style={{ color: "var(--color-ink)" }}>
-            {event.title}
-          </p>
-          <p className="mt-0.5 text-xs" style={{ color: "var(--color-muted)" }}>
-            {event.all_day ? formatDate(event.start_at) : formatDateTime(event.start_at)}
-          </p>
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+            style={{
+              background: "color-mix(in srgb, var(--color-accent-2) 18%, var(--color-surface))",
+              color: "var(--color-accent-2)",
+            }}
+          >
+            <CalendarDays size={16} strokeWidth={2.3} />
+          </span>
+          <div>
+            <p className="text-sm font-medium" style={{ color: "var(--color-ink)" }}>
+              {event.title}
+            </p>
+            <p className="mt-0.5 text-xs" style={{ color: "var(--color-muted)" }}>
+              {event.all_day ? formatDate(event.start_at) : formatDateTime(event.start_at)}
+            </p>
+          </div>
         </li>
       ))}
     </ul>

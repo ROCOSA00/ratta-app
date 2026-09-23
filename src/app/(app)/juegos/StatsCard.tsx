@@ -16,7 +16,10 @@ export function StatsCard({ name, stats }: { name: string; stats: UserStats | un
   return (
     <div
       className="rounded-2xl border p-4"
-      style={{ background: "var(--color-surface)", borderColor: "var(--color-line)" }}
+      style={{
+        background: "color-mix(in srgb, var(--color-gold) 7%, var(--color-surface))",
+        borderColor: "color-mix(in srgb, var(--color-gold) 20%, var(--color-line))",
+      }}
     >
       <p className="text-sm font-semibold" style={{ color: "var(--color-ink)" }}>
         {name}

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ChevronRight, Flame } from "lucide-react";
+import { CalendarDays, ChevronRight, Crown, Flame, Heart, Pin } from "lucide-react";
+import type { ComponentType } from "react";
 import { RattaLogo } from "@/components/shared/RattaLogo";
 import { QuestionOfTheDay } from "@/components/features/QuestionOfTheDay";
 import { LogButton } from "@/components/features/LogButton";
@@ -10,22 +11,46 @@ import { getPoopSummary } from "@/lib/poop/get-poop-summary";
 import { getLatestNudge } from "@/lib/nudges/get-latest-nudge";
 import { formatDate, formatDateTime, formatRelative } from "@/lib/format-date";
 
-function SectionCard({ children }: { children: React.ReactNode }) {
+function SectionCard({ tint, children }: { tint: string; children: React.ReactNode }) {
   return (
     <div
       className="mx-5 rounded-2xl border p-4"
-      style={{ background: "var(--color-surface)", borderColor: "var(--color-line)" }}
+      style={{
+        background: `color-mix(in srgb, ${tint} 7%, var(--color-surface))`,
+        borderColor: `color-mix(in srgb, ${tint} 20%, var(--color-line))`,
+      }}
     >
       {children}
     </div>
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function SectionHeader({
+  icon: Icon,
+  tint,
+  label,
+  right,
+}: {
+  icon: ComponentType<{ size?: number; strokeWidth?: number }>;
+  tint: string;
+  label: string;
+  right?: React.ReactNode;
+}) {
   return (
-    <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "var(--color-accent)" }}>
-      {children}
-    </p>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <span
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+          style={{ background: `color-mix(in srgb, ${tint} 18%, var(--color-surface))`, color: tint }}
+        >
+          <Icon size={15} strokeWidth={2.3} />
+        </span>
+        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: tint }}>
+          {label}
+        </p>
+      </div>
+      {right}
+    </div>
   );
 }
 
@@ -40,8 +65,12 @@ export default async function InicioPage() {
   return (
     <>
       <header
-        className="px-5 pb-5"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)" }}
+        className="px-5 pb-6"
+        style={{
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.5rem)",
+          background:
+            "linear-gradient(180deg, color-mix(in srgb, var(--color-accent-2) 10%, var(--color-bg)) 0%, var(--color-bg) 100%)",
+        }}
       >
         <div className="flex flex-col items-center gap-3 text-center">
           <span
@@ -63,14 +92,16 @@ export default async function InicioPage() {
 
       <div className="flex flex-col gap-4 pb-2">
         <Link href="/calendario">
-          <SectionCard>
-            <div className="flex items-center justify-between">
-              <SectionLabel>Próximo evento</SectionLabel>
-              <ChevronRight size={16} style={{ color: "var(--color-muted)" }} />
-            </div>
+          <SectionCard tint="var(--color-accent-2)">
+            <SectionHeader
+              icon={CalendarDays}
+              tint="var(--color-accent-2)"
+              label="Próximo evento"
+              right={<ChevronRight size={16} style={{ color: "var(--color-muted)" }} />}
+            />
             {nextEvent ? (
               <>
-                <p className="mt-1.5 text-base font-semibold" style={{ color: "var(--color-ink)" }}>
+                <p className="mt-2 text-base font-semibold" style={{ color: "var(--color-ink)" }}>
                   {nextEvent.title}
                 </p>
                 <p className="mt-0.5 text-sm" style={{ color: "var(--color-muted)" }}>
@@ -78,7 +109,7 @@ export default async function InicioPage() {
                 </p>
               </>
             ) : (
-              <p className="mt-1.5 text-sm" style={{ color: "var(--color-muted)" }}>
+              <p className="mt-2 text-sm" style={{ color: "var(--color-muted)" }}>
                 No hay ningún evento próximo.
               </p>
             )}
@@ -87,16 +118,16 @@ export default async function InicioPage() {
 
         <QuestionOfTheDay />
 
-        <SectionCard>
-          <SectionLabel>Cariño</SectionLabel>
+        <SectionCard tint="var(--color-accent)">
+          <SectionHeader icon={Heart} tint="var(--color-accent)" label="Cariño" />
           {latestNudge ? (
-            <p className="mt-1.5 text-sm" style={{ color: "var(--color-ink)" }}>
+            <p className="mt-2 text-sm" style={{ color: "var(--color-ink)" }}>
               {latestNudge.emoji} <b>{latestNudge.senderName}</b>: {latestNudge.label}
               {" · "}
               <span style={{ color: "var(--color-muted)" }}>{formatRelative(latestNudge.createdAt)}</span>
             </p>
           ) : (
-            <p className="mt-1.5 text-sm" style={{ color: "var(--color-muted)" }}>
+            <p className="mt-2 text-sm" style={{ color: "var(--color-muted)" }}>
               Mándale un mensajito a tu pareja.
             </p>
           )}
@@ -105,17 +136,21 @@ export default async function InicioPage() {
           </div>
         </SectionCard>
 
-        <SectionCard>
-          <div className="flex items-center justify-between">
-            <SectionLabel>El Trono</SectionLabel>
-            <Link
-              href="/juegos"
-              className="flex items-center gap-0.5 text-xs"
-              style={{ color: "var(--color-muted)" }}
-            >
-              Ver más <ChevronRight size={14} />
-            </Link>
-          </div>
+        <SectionCard tint="var(--color-gold)">
+          <SectionHeader
+            icon={Crown}
+            tint="var(--color-gold)"
+            label="El Trono"
+            right={
+              <Link
+                href="/juegos"
+                className="flex items-center gap-0.5 text-xs"
+                style={{ color: "var(--color-muted)" }}
+              >
+                Ver más <ChevronRight size={14} />
+              </Link>
+            }
+          />
 
           {poopSummary ? (
             <>
@@ -133,7 +168,7 @@ export default async function InicioPage() {
                     <div
                       key={id}
                       className="rounded-xl p-2.5 text-center"
-                      style={{ background: "var(--color-bg)" }}
+                      style={{ background: "color-mix(in srgb, var(--color-gold) 10%, var(--color-surface))" }}
                     >
                       <p className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
                         {name}
@@ -146,7 +181,7 @@ export default async function InicioPage() {
                       </p>
                       {s && s.streak > 0 ? (
                         <p
-                          className="mt-0.5 flex items-center justify-center gap-0.5 text-[11px] font-medium"
+                          className="mt-0.5 flex items-center justify-center gap-0.5 text-[11px] font-semibold"
                           style={{ color: "var(--color-gold)" }}
                         >
                           <Flame size={11} /> {s.streak}
@@ -163,21 +198,23 @@ export default async function InicioPage() {
               ) : null}
             </>
           ) : (
-            <p className="mt-1.5 text-sm" style={{ color: "var(--color-muted)" }}>
+            <p className="mt-2 text-sm" style={{ color: "var(--color-muted)" }}>
               No perteneces a ningún espacio todavía.
             </p>
           )}
         </SectionCard>
 
         <Link href="/notas">
-          <SectionCard>
-            <div className="flex items-center justify-between">
-              <SectionLabel>Tu nota fijada</SectionLabel>
-              <ChevronRight size={16} style={{ color: "var(--color-muted)" }} />
-            </div>
+          <SectionCard tint="var(--color-accent-2)">
+            <SectionHeader
+              icon={Pin}
+              tint="var(--color-accent-2)"
+              label="Tu nota fijada"
+              right={<ChevronRight size={16} style={{ color: "var(--color-muted)" }} />}
+            />
             {pinnedNote ? (
               <>
-                <p className="mt-1.5 text-base font-semibold" style={{ color: "var(--color-ink)" }}>
+                <p className="mt-2 text-base font-semibold" style={{ color: "var(--color-ink)" }}>
                   {pinnedNote.title}
                 </p>
                 <p className="mt-0.5 line-clamp-2 text-sm" style={{ color: "var(--color-muted)" }}>
@@ -185,7 +222,7 @@ export default async function InicioPage() {
                 </p>
               </>
             ) : (
-              <p className="mt-1.5 text-sm" style={{ color: "var(--color-muted)" }}>
+              <p className="mt-2 text-sm" style={{ color: "var(--color-muted)" }}>
                 No tienes ninguna nota fijada. Ve a Notas y fija una con el
                 icono de chincheta.
               </p>
