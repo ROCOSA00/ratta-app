@@ -14,30 +14,53 @@ público; las cuentas se crean manualmente.
 - **Supabase** (PostgreSQL + Auth + Storage) — cliente conectado en la
   Fase 3, esquema y RLS en la Fase 4
 - **Vercel** para el despliegue — Fase 12
-- **Cloudflare** para el DNS del dominio `ratta.servidorcomponentes.com` — Fase 13
+- **Cloudflare** para el DNS de un dominio propio — Fase 13, aparcada
+  por ahora (la URL de Vercel es suficiente)
 
-## Cómo ejecutar el proyecto (sin instalar nada en tu ordenador)
+## Arquitectura: cómo encaja todo
 
-Este proyecto está pensado para ejecutarse en **StackBlitz**, que corre
-Next.js completo dentro del navegador:
+```
+   tú escribes en el chat de Claude Code
+                  │
+                  ▼
+   Claude edita el código en este repositorio
+                  │
+                  ▼ (git push a una rama, luego PR a main)
+              GitHub  ── guarda todo el código y su historial
+                  │
+                  ▼ (cada merge a main dispara un despliegue)
+              Vercel  ── construye la app y la sirve en
+                         ratta-app.vercel.app
+                  │
+                  ▼ (la app llama a Supabase desde el navegador/servidor)
+             Supabase  ── base de datos (Postgres + RLS), login,
+                         y las fotos de avatar (Storage)
+```
 
-1. Sube este proyecto a un repositorio **privado** de GitHub llamado
-   `ratta-app`.
-2. Abre en el navegador:
-   `https://stackblitz.com/github/TU-USUARIO/ratta-app`
-3. StackBlitz instalará las dependencias y arrancará el servidor de
-   desarrollo automáticamente. Verás la app en una vista previa dentro
-   de la misma página.
+Ni tú ni Claude tocáis nunca la base de datos a mano desde el panel de
+Supabase para cambios de esquema: cada cambio es una migración nueva
+en `supabase/migrations/`, así que el repositorio de GitHub siempre
+puede reconstruir el proyecto entero desde cero (ver "Backups y
+restauración" en `supabase/README.md`).
 
-Si en el futuro tienes Node.js instalado localmente, también funciona
-de la forma tradicional:
+## Cómo ejecutar el proyecto
+
+El desarrollo real de este proyecto lo hace Claude Code directamente
+contra GitHub y Vercel, así que normalmente no hace falta instalar
+nada — abres `ratta-app.vercel.app` (o la URL de vista previa de la
+rama en la que se esté trabajando) y ya está.
+
+Si alguna vez quieres correrlo tú en tu propio ordenador:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Luego abre `http://localhost:3000`.
+Luego abre `http://localhost:3000`. (StackBlitz, que corre Next.js
+dentro del navegador sin instalar nada, funciona para páginas simples,
+pero **no** para el login ni ninguna página que requiera sesión — ver
+la nota al respecto en `supabase/README.md`.)
 
 ## Variables de entorno
 
@@ -49,18 +72,29 @@ excluido en `.gitignore`).
 
 ```
 ratta-app/
-├── public/               # archivos estáticos
+├── public/              # iconos, manifest.json, logo
+├── scripts/
+│   └── backup.sh        # copia de seguridad de los datos (Fase 15)
+├── supabase/
+│   ├── migrations/      # esquema y RLS, versionados
+│   ├── seed.sql         # banco de preguntas de "Pregunta del día"
+│   └── README.md        # cómo aplicar migraciones, backups, notas operativas
 ├── src/
-│   ├── app/              # rutas (App Router de Next.js)
-│   ├── components/       # componentes compartidos y de navegación
-│   └── lib/
-│       └── supabase/     # clientes de Supabase (browser y server)
-├── .env.example          # plantilla de variables de entorno (sin secretos)
+│   ├── app/
+│   │   ├── (app)/       # páginas protegidas: inicio, calendario, notas,
+│   │   │                #   juegos (El Trono), mas
+│   │   └── login/       # página de acceso
+│   ├── components/
+│   │   ├── features/    # componentes compartidos entre Inicio y sus páginas
+│   │   ├── navigation/  # barra inferior
+│   │   └── shared/      # cabecera, logo
+│   └── lib/             # lógica de servidor por dominio: auth, events,
+│                        #   notes, nudges, poop, profile, questions,
+│                        #   spaces, supabase (clientes browser/server)
+├── middleware.ts        # protección de rutas + refresco de sesión
+├── .env.example         # plantilla de variables de entorno (sin secretos)
 └── README.md
 ```
-
-A medida que avancen las fases se añadirán las carpetas `features/`,
-`server/` y `types/`.
 
 ## Progreso del proyecto
 
@@ -128,7 +162,12 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
   cabeceras y nav) — instalable desde "Compartir → Añadir a pantalla
   de inicio" en iOS; sin caché offline (fuera de alcance, decisión
   del usuario)
-- [ ] **Fase 15** — Backups y documentación
+- [x] **Fase 15** — Backups y documentación: el esquema ya vivía en
+  git (`supabase/migrations/`); se añadió `scripts/backup.sh` para
+  respaldar los datos (con alternativa sin terminal vía Table Editor),
+  instrucciones de restauración, y una sección de arquitectura en
+  este README explicando cómo encajan GitHub, Vercel y Supabase —
+  ver el detalle completo en `supabase/README.md`
 
 ## Notas de seguridad
 

@@ -27,3 +27,6 @@ yarn-error.log*
 # editor / os
 .DS_Store
 *.pem
+
+# copias de seguridad (datos personales, nunca a git)
+ratta-backup-*.sql
