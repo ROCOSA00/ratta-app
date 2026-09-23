@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
+import { zonedInputToUTC } from "@/lib/format-date";
 
 const newEventSchema = z
   .object({
@@ -47,10 +48,10 @@ export async function createEvent(
   let endAt: Date;
 
   if (isAllDay) {
-    startAt = new Date(`${parsed.data.date}T00:00:00`);
-    endAt = new Date(`${parsed.data.date}T23:59:59`);
+    startAt = zonedInputToUTC(`${parsed.data.date}T00:00`);
+    endAt = zonedInputToUTC(`${parsed.data.date}T23:59`);
   } else {
-    startAt = new Date(`${parsed.data.date}T${parsed.data.time}`);
+    startAt = zonedInputToUTC(`${parsed.data.date}T${parsed.data.time}`);
     endAt = new Date(startAt.getTime() + 60 * 60 * 1000);
   }
 
