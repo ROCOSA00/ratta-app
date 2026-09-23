@@ -11,6 +11,7 @@ import { getPoopSummary } from "@/lib/poop/get-poop-summary";
 import { getLatestNudge } from "@/lib/nudges/get-latest-nudge";
 import { formatDate, formatDateTime, formatRelative } from "@/lib/format-date";
 import { daysBetween, madridHour, todayKey, toDateKey } from "@/lib/calendar/date-utils";
+import { getTogetherInfo } from "@/lib/couple";
 
 function greetingFor(hour: number): string {
   if (hour >= 6 && hour < 13) return "Buenos días";
@@ -78,6 +79,7 @@ export default async function InicioPage() {
 
   const myName = poopSummary ? poopSummary.displayNameById.get(poopSummary.currentUserId) : undefined;
   const greeting = greetingFor(madridHour(new Date()));
+  const together = getTogetherInfo();
 
   return (
     <>
@@ -102,6 +104,40 @@ export default async function InicioPage() {
             </h1>
             <p className="text-sm" style={{ color: "var(--color-muted)" }}>
               Nuestro pequeño mundo para dos.
+            </p>
+          </div>
+
+          <div
+            className="mt-1 w-full max-w-xs rounded-2xl border px-4 py-3"
+            style={{
+              background: "color-mix(in srgb, var(--color-accent) 7%, var(--color-surface))",
+              borderColor: "color-mix(in srgb, var(--color-accent) 22%, var(--color-line))",
+            }}
+          >
+            <p className="flex items-baseline justify-center gap-1.5">
+              <span
+                className="font-mono-nums text-3xl font-bold"
+                style={{
+                  backgroundImage: "var(--color-gradient)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                {together.days}
+              </span>
+              <span className="text-sm font-semibold" style={{ color: "var(--color-ink)" }}>
+                {together.days === 1 ? "día juntos" : "días juntos"} 💞
+              </span>
+            </p>
+            <p className="mt-0.5 text-xs" style={{ color: "var(--color-muted)" }}>
+              {together.breakdown}
+            </p>
+            <p
+              className="mt-1.5 text-xs font-semibold"
+              style={{ color: together.milestone ? "var(--color-accent)" : "var(--color-muted)" }}
+            >
+              {together.milestone ?? together.nextLabel}
             </p>
           </div>
         </div>
