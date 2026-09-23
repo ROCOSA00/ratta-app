@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
-import { zonedInputToUTC } from "@/lib/format-date";
+import { formatDate, formatDateTime, zonedInputToUTC } from "@/lib/format-date";
+import { notifyPartner } from "@/lib/push/notify";
 
 const newEventSchema = z
   .object({
@@ -92,6 +93,14 @@ export async function createEvent(
   if (error) {
     return { error: "No se pudo guardar el evento. Inténtalo de nuevo." };
   }
+
+  const eventTitle = parsed.data.title;
+  const when = isAllDay ? formatDate(startAt.toISOString()) : formatDateTime(startAt.toISOString());
+  await notifyPartner((me) => ({
+    title: "📅 Nuevo plan",
+    body: `${me} ha añadido: ${eventTitle} (${when})`,
+    url: "/calendario",
+  }));
 
   revalidatePath("/calendario");
   revalidatePath("/inicio");

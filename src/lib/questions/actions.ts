@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { notifyPartner } from "@/lib/push/notify";
 
 const answerSchema = z.object({
   roundId: z.string().uuid("Ronda no válida."),
@@ -46,6 +47,15 @@ export async function submitAnswer(
   if (error) {
     return { error: "No se pudo guardar tu respuesta. Inténtalo de nuevo." };
   }
+
+  // Solo se avisa de que ha respondido, nunca de QUÉ: la respuesta se
+  // revela en la app cuando respondáis los dos.
+  await notifyPartner((me) => ({
+    title: "❓ Pregunta del día",
+    body: `${me} ya ha respondido. ¡Te toca!`,
+    url: "/inicio",
+    tag: "question",
+  }));
 
   // Se usa desde el dashboard de /inicio.
   revalidatePath("/inicio");

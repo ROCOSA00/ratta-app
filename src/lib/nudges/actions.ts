@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
+import { notifyPartner } from "@/lib/push/notify";
 
 const NUDGE_KEYS = ["te_quiero", "te_echo_de_menos", "pienso_en_ti", "buenas_noches"] as const;
 
@@ -55,6 +56,9 @@ export async function sendNudge(
   if (error) {
     return { error: "No se pudo enviar. Inténtalo de nuevo.", sent: false };
   }
+
+  const { emoji, label } = parsed.data;
+  await notifyPartner((me) => ({ title: `${emoji} ${me}`, body: label, url: "/inicio", tag: "nudge" }));
 
   revalidatePath("/inicio");
   return { error: null, sent: true };

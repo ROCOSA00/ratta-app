@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
+import { notifyPartner } from "@/lib/push/notify";
 
 const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const PATH_RE = new RegExp(`^${UUID}/${UUID}\\.jpg$`);
@@ -51,6 +52,13 @@ export async function addMemory(input: { path: string; caption?: string; takenOn
     taken_on: parsed.data.takenOn || null,
   });
   if (error) return { error: "No se pudo guardar el recuerdo. Inténtalo de nuevo." };
+
+  const caption = parsed.data.caption;
+  await notifyPartner((me) => ({
+    title: "📸 Nuevo recuerdo",
+    body: caption ? `${me} ha subido una foto: ${caption}` : `${me} ha subido una foto`,
+    url: "/recuerdos",
+  }));
 
   revalidatePath("/recuerdos");
   revalidatePath("/inicio");

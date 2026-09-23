@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Home, NotebookPen, Sparkles, UserRound } from "lucide-react";
+import { CalendarDays, Home, MessageCircleHeart, NotebookPen, Sparkles, UserRound } from "lucide-react";
 import type { ComponentType } from "react";
 
 type Tab = {
@@ -13,6 +13,7 @@ type Tab = {
 
 const TABS: Tab[] = [
   { href: "/inicio", label: "Inicio", icon: Home },
+  { href: "/chat", label: "Chat", icon: MessageCircleHeart },
   { href: "/calendario", label: "Calendario", icon: CalendarDays },
   { href: "/notas", label: "Notas", icon: NotebookPen },
   { href: "/juegos", label: "Juegos", icon: Sparkles },
@@ -39,7 +40,7 @@ export function BottomNav() {
             <li key={href} className="flex-1">
               <Link
                 href={href}
-                className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl py-1.5 text-[11px] font-medium transition-all duration-150"
+                className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl py-1.5 text-[10.5px] font-medium transition-all duration-150"
                 style={{
                   color: isActive ? "var(--color-accent)" : "var(--color-muted)",
                   background: isActive
