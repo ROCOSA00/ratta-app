@@ -20,7 +20,7 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Migración pendiente de aplicar: almacenamiento de avatares
+## Almacenamiento de avatares — ✅ ya aplicada
 
 `20260923140000_avatar_storage.sql` (Fase 11) crea el bucket
 `avatars` de Supabase Storage (público para lectura, solo fotos de
@@ -39,8 +39,6 @@ de tu pareja no afecta ninguna fila. El primer intento tenía un fallo
 (faltaba la política de `SELECT`, y sin ella ni siquiera veías tu
 propia foto) — se detectó y corrigió antes de dar la migración por
 buena, no después.
-
-Pégala en el SQL Editor como las anteriores.
 
 ## Dar de alta el Ratta Space (una sola vez) — ✅ ya hecho
 
@@ -67,7 +65,7 @@ insert into public.space_members (space_id, user_id, role) values
 aplicarla (migración + `UPDATE` respetando RLS), y confirmada
 funcionando en producción.
 
-## Migración pendiente de aplicar: cierre de seguridad en "Pregunta del día"
+## Cierre de seguridad en "Pregunta del día" — ✅ ya aplicada
 
 `20260923130000_gate_question_answers_reveal.sql` (Fase 11, revisión
 de seguridad). Hallazgo: el revelado de respuestas ("solo ves la de tu
@@ -91,8 +89,6 @@ revisión: antes del fix, un usuario sin responder consultando
 filas esperadas, filas reales encontradas); tras aplicar la migración,
 la misma consulta devuelve 0 filas hasta que responde, y las 2
 correctas después. No requiere ningún cambio en el código de la app.
-
-Pégala en el SQL Editor como las anteriores.
 
 ## Cargar el banco de preguntas (una sola vez) — ✅ ya hecho
 
