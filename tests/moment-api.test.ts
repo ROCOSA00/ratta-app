@@ -39,6 +39,11 @@ describe("Aviso del Momento Ratta (/api/momento)", () => {
     expect(push.calls[0]?.payload).toMatchObject({ title: "📸 ¡Es la hora del Momento Ratta!", url: "/momento" });
   });
 
+  it("acepta la clave aunque en Vercel se pegara con espacios o un salto de línea", async () => {
+    vi.stubEnv("MOMENT_CRON_SECRET", "  clave-del-despertador\n");
+    expect((await POST(request({ targets: [target] }, "Bearer clave-del-despertador"))).status).toBe(200);
+  });
+
   it("sin clave o con una clave falsa, no hace nada", async () => {
     expect((await POST(request({ targets: [target] }))).status).toBe(401);
     expect((await POST(request({ targets: [target] }, "Bearer adivinando"))).status).toBe(401);
