@@ -189,6 +189,19 @@ puntuales según se van usando:
   solo se veían 3 líneas sin poder editar), y un nuevo tipo "lista"
   con casillas, usando la tabla `note_items` que existía desde la
   Fase 4 sin usarse.
+- **Fuente y cabecera**: títulos en Quicksand (redondeada) en vez de
+  Fraunces; corregido que la cabecera tapaba el principio de cada
+  pantalla en iOS; cabecera translúcida y respuesta táctil al pulsar
+  ([PR #12](https://github.com/ROCOSA00/ratta-app/pull/12)).
+- **El Trono**: "Deshacer" durante 8 s tras registrar, gráfica de los
+  últimos 7 días, récord diario y logros nuevos; estadísticas por día
+  de Madrid (antes "hoy" y la racha cambiaban a la 01:00-02:00 UTC).
+  Inicio saluda por tu nombre y cuenta los días hasta el próximo plan;
+  Notas tiene buscador y progreso de las listas
+  ([PR #13](https://github.com/ROCOSA00/ratta-app/pull/13)).
+- **Seguridad**: en El Trono cada uno solo puede editar o borrar sus
+  propios registros, también a nivel de base de datos (RLS)
+  ([PR #14](https://github.com/ROCOSA00/ratta-app/pull/14)).
 
 ## Notas de seguridad
 
