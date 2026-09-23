@@ -7,6 +7,8 @@ import { NewEventForm } from "./NewEventForm";
 import { ViewToggle } from "./ViewToggle";
 import { MonthView } from "./MonthView";
 import { WeekView } from "./WeekView";
+import { MomentPhotos } from "@/components/features/MomentPhotos";
+import { getMomentDaysInRange, getMomentForDay, type MomentPhoto } from "@/lib/moments/get-moments";
 
 // event_photos(count): cuántas fotos tiene cada plan, en la misma consulta.
 const EVENT_COLUMNS = "id, title, start_at, end_at, all_day, location, description, event_photos(count)";
@@ -32,6 +34,8 @@ export default async function CalendarioPage({
 
   const spaceId = await getCurrentSpaceId();
   let events: EventRow[] = [];
+  let momentDays = new Set<string>();
+  let dayMoment: { photos: MomentPhoto[]; names: Record<string, string> } | null = null;
 
   if (spaceId) {
     const supabase = await createClient();
@@ -60,6 +64,13 @@ export default async function CalendarioPage({
         .lt("start_at", `${rangeEnd}T00:00:00.000Z`)
         .order("start_at", { ascending: true });
       events = toEventRows(data);
+
+      if (view === "month") {
+        [momentDays, dayMoment] = await Promise.all([
+          getMomentDaysInRange(spaceId, keys[0]!, keys[keys.length - 1]!),
+          getMomentForDay(spaceId, refKey),
+        ]);
+      }
     }
   }
 
@@ -73,7 +84,18 @@ export default async function CalendarioPage({
 
         {view === "month" ? (
           <>
-            <MonthView refKey={refKey} events={events} />
+            <MonthView refKey={refKey} events={events} momentDays={momentDays} />
+            {dayMoment && dayMoment.photos.length > 0 ? (
+              <div className="mx-5">
+                <p
+                  className="mb-1.5 text-xs font-semibold uppercase tracking-wide"
+                  style={{ color: "var(--color-muted)" }}
+                >
+                  📸 Momento Ratta
+                </p>
+                <MomentPhotos photos={dayMoment.photos} names={dayMoment.names} />
+              </div>
+            ) : null}
             <div>
               <p className="mx-5 mb-1.5 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--color-muted)" }}>
                 {dayLabel(refKey)}

@@ -12,7 +12,16 @@ import {
 } from "@/lib/calendar/date-utils";
 import type { EventRow } from "./EventList";
 
-export function MonthView({ refKey, events }: { refKey: string; events: EventRow[] }) {
+export function MonthView({
+  refKey,
+  events,
+  momentDays,
+}: {
+  refKey: string;
+  events: EventRow[];
+  /** Días con fotos del Momento Ratta. */
+  momentDays: Set<string>;
+}) {
   const grid = monthGridKeys(refKey);
   const today = todayKey();
   const eventDays = new Set(events.map((e) => toDateKey(new Date(e.start_at))));
@@ -61,6 +70,7 @@ export function MonthView({ refKey, events }: { refKey: string; events: EventRow
           const isToday = key === today;
           const isSelected = key === refKey;
           const hasEvents = eventDays.has(key);
+          const hasMoment = momentDays.has(key);
 
           return (
             <Link
@@ -79,12 +89,19 @@ export function MonthView({ refKey, events }: { refKey: string; events: EventRow
               }}
             >
               {dayNumber(key)}
-              <span
-                className="h-1 w-1 rounded-full"
-                style={{
-                  background: hasEvents ? (isSelected ? "#ffffff" : "var(--color-accent)") : "transparent",
-                }}
-              />
+              <span className="flex h-2.5 items-center gap-0.5">
+                <span
+                  className="h-1 w-1 rounded-full"
+                  style={{
+                    background: hasEvents ? (isSelected ? "#ffffff" : "var(--color-accent)") : "transparent",
+                  }}
+                />
+                {hasMoment ? (
+                  <span className="text-[8px] leading-none" aria-label="Momento Ratta">
+                    📸
+                  </span>
+                ) : null}
+              </span>
             </Link>
           );
         })}

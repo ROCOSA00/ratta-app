@@ -262,6 +262,13 @@ puntuales según se van usando:
   y, desde el día del plan, se le pueden añadir varias fotos (almacén
   privado `event-photos`). Las tarjetas de plan muestran "📸 N fotos".
   Migración `20260926100000_event_photos.sql`.
+- **Momento Ratta** (BeReal): cada día, a una hora al azar entre las
+  10:00 y las 22:00, suena para los dos y hay 10 minutos para subir una
+  foto (solo cámara) de lo que estáis haciendo. La de tu pareja no se ve
+  hasta que subes la tuya. Página `/momento`, aviso en Inicio y los días
+  con 📸 en el calendario. El despertador es `pg_cron` en Supabase, que
+  llama a `/api/momento` con una clave compartida (`MOMENT_CRON_SECRET`).
+  Migración `20260927100000_momento_ratta.sql` + `setup/momento_despertador.sql`.
 
 ## Notas de seguridad
 

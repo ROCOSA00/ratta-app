@@ -5,6 +5,7 @@ import { zonedInputToUTC, formatDateTime } from "@/lib/format-date";
 import { monthGridKeys, toDateKey, weekKeys } from "@/lib/calendar/date-utils";
 import { NUDGE_GROUPS, findNudge } from "@/lib/nudges/options";
 import { computeHeartStats } from "@/lib/hearts/stats";
+import { lateLabel } from "@/lib/moments/config";
 
 describe("Hora de Madrid", () => {
   it("convierte la hora escrita en el formulario al instante UTC correcto (verano, invierno, medianoche)", () => {
@@ -153,5 +154,17 @@ describe("Ranking de corazones", () => {
     const stats = computeHeartStats([], ["yo", "ella"], today);
     expect(stats.totals.yo).toEqual({ today: 0, week: 0, month: 0, total: 0 });
     expect(stats.record).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------- Momento Ratta
+
+describe("Etiqueta de retraso del Momento", () => {
+  it("a tiempo, minutos y horas", () => {
+    expect(lateLabel(0)).toBe("✅ A tiempo");
+    expect(lateLabel(20)).toBe("⏰ 1 min tarde");
+    expect(lateLabel(754)).toBe("⏰ 13 min tarde");
+    expect(lateLabel(3600)).toBe("⏰ 1 h tarde");
+    expect(lateLabel(5400)).toBe("⏰ 1 h 30 min tarde");
   });
 });

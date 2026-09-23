@@ -8,6 +8,8 @@ import { NudgeButtons } from "@/components/features/NudgeButtons";
 import { GuideWelcome } from "@/components/features/GuideWelcome";
 import { SpotifyCard } from "@/components/features/SpotifyCard";
 import { MemoryOfTheDayCard } from "@/components/features/MemoryOfTheDayCard";
+import { MomentBanner } from "@/components/features/MomentBanner";
+import { getTodayMoment } from "@/lib/moments/get-moments";
 import { getNextEvent } from "@/lib/events/get-next-event";
 import { getPinnedNote } from "@/lib/notes/get-pinned-note";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
@@ -73,11 +75,12 @@ function SectionHeader({
 }
 
 export default async function InicioPage() {
-  const [nextEvent, pinnedNote, poopSummary, latestNudge] = await Promise.all([
+  const [nextEvent, pinnedNote, poopSummary, latestNudge, todayMoment] = await Promise.all([
     getNextEvent(),
     getPinnedNote(),
     getPoopSummary(),
     getLatestNudge(),
+    getTodayMoment(),
   ]);
 
   const myName = poopSummary ? poopSummary.displayNameById.get(poopSummary.currentUserId) : undefined;
@@ -147,6 +150,7 @@ export default async function InicioPage() {
       </header>
 
       <div className="flex flex-col gap-4 pb-2">
+        <MomentBanner moment={todayMoment} />
         <GuideWelcome name={myName} />
 
         <Link href="/calendario">

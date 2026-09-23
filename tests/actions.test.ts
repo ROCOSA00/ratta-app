@@ -45,6 +45,8 @@ import { changePassword, signIn } from "@/lib/auth/actions";
 import { addMemory, deleteMemory } from "@/lib/memories/actions";
 import { sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
 import { sendHearts } from "@/lib/hearts/actions";
+import { postMoment } from "@/lib/moments/actions";
+import { todayKey } from "@/lib/calendar/date-utils";
 
 const ok = { error: null };
 const NOTE_ID = "11111111-1111-4111-8111-111111111111";
@@ -632,6 +634,63 @@ describe("Corazones", () => {
     state.spaceId = null;
     expect((await sendHearts(5)).error).toMatch(/espacio/);
     expect(state.fake.rpcCalls).toHaveLength(0);
+  });
+});
+
+// --------------------------------------------------------- Momento Ratta
+
+describe("Momento Ratta", () => {
+  const SPACE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const PATH = `${SPACE}/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee.jpg`;
+  const inserted = (late: number) =>
+    createFakeSupabase({ results: { "moment_photos:insert": { data: { late_seconds: late }, error: null } } });
+
+  beforeEach(() => {
+    state.spaceId = SPACE;
+  });
+
+  it("sube tu Momento de hoy y avisa a tu pareja de que llegaste a tiempo", async () => {
+    state.fake = inserted(0);
+    expect(await postMoment({ path: PATH, caption: " Currando " })).toEqual({ error: null, lateSeconds: 0 });
+    expect(opsOf("moment_photos", "insert")[0]?.payload).toEqual({
+      space_id: SPACE,
+      day: todayKey(),
+      user_id: "user-me",
+      storage_path: PATH,
+      caption: "Currando",
+    });
+    expect(state.notified).toEqual([
+      { title: "📸 Momento Ratta", body: "Rokito ha subido su Momento ¡a tiempo!", url: "/momento", tag: "momento" },
+    ]);
+  });
+
+  it("si llegas tarde, el aviso lo dice (el retraso lo calcula la base de datos)", async () => {
+    state.fake = inserted(754);
+    await postMoment({ path: PATH, caption: "" });
+    expect(opsOf("moment_photos", "insert")[0]?.payload).toMatchObject({ caption: null });
+    expect(state.notified[0]?.body).toBe("Rokito ha subido su Momento (13 min tarde)");
+  });
+
+  it("explica por qué no se pudo: aún no ha sonado, o ya subiste el de hoy", async () => {
+    state.fake = createFakeSupabase({
+      results: { "moment_photos:insert": { data: null, error: { message: "el momento de hoy aun no ha sonado" } } },
+    });
+    expect((await postMoment({ path: PATH, caption: "" })).error).toBe("El Momento de hoy aún no ha sonado.");
+    state.fake = createFakeSupabase({
+      results: {
+        "moment_photos:insert": { data: null, error: { message: "duplicate key value violates unique constraint" } },
+      },
+    });
+    expect((await postMoment({ path: PATH, caption: "" })).error).toBe("Ya has subido tu Momento de hoy.");
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("rechaza fotos de otro espacio, rutas manipuladas y textos largos", async () => {
+    for (const path of ["bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee.jpg", `${SPACE}/x.jpg`]) {
+      expect((await postMoment({ path, caption: "" })).error).toBe("Ruta de foto no válida.");
+    }
+    expect((await postMoment({ path: PATH, caption: "x".repeat(141) })).error).toBe("Máximo 140 caracteres.");
+    expect(state.fake.ops).toHaveLength(0);
   });
 });
 
