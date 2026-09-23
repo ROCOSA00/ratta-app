@@ -92,8 +92,8 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
 - [~] **Fase 11** — Testing, seguridad y pulido
   - [x] Revisión de seguridad: 1 fallo encontrado y corregido — el
     revelado de "Pregunta del día" solo se aplicaba en el componente,
-    no en la base de datos; cerrado a nivel de RLS (ver
-    `supabase/README.md`), pendiente de aplicar esa migración
+    no en la base de datos; cerrado a nivel de RLS y migración
+    aplicada en producción (ver `supabase/README.md`)
   - [x] Pulido divertido (paquete 1): confeti de emojis al registrar
     en El Trono, mensajitos de cariño entre los dos (reutiliza
     `activity_log`, sin migración nueva), cambiar tu nombre desde "Más"
@@ -102,10 +102,10 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
     la sesión abierta pueda cambiarla sin saberla), y cierra la sesión
     al terminar para confirmar que la nueva funciona de verdad. Usa
     `auth.updateUser()` de Supabase, sin tabla ni migración propia
-  - [~] Foto de perfil (avatar): bucket de Storage + subida desde
+  - [x] Foto de perfil (avatar): bucket de Storage + subida desde
     "Más", solo puedes escribir en tu propia carpeta (probado con un
-    stub local de `storage.objects`); pendiente de aplicar la
-    migración
+    stub local de `storage.objects`); migración aplicada y probada
+    en vivo
   - [x] Pulido visual: tarjetas con icono y tinte de color por
     sección (paleta existente, sin colores nuevos) en Inicio,
     Calendario, Notas y El Trono, en vez del blanco plano de antes
