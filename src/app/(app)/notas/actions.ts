@@ -10,6 +10,10 @@ const togglePinSchema = z.object({
   nextPinned: z.enum(["true", "false"]),
 });
 
+const deleteNoteSchema = z.object({
+  noteId: z.string().uuid(),
+});
+
 const newNoteSchema = z.object({
   title: z.string().trim().min(1, "Ponle un título a la nota."),
   content: z.string().trim().min(1, "Escribe algo en la nota."),
@@ -77,6 +81,20 @@ export async function togglePin(formData: FormData): Promise<void> {
     .from("notes")
     .update({ is_pinned: parsed.data.nextPinned === "true" })
     .eq("id", parsed.data.noteId);
+
+  revalidatePath("/notas");
+  revalidatePath("/inicio");
+}
+
+export async function deleteNote(formData: FormData): Promise<void> {
+  const parsed = deleteNoteSchema.safeParse({ noteId: formData.get("noteId") });
+  if (!parsed.success) return;
+
+  const supabase = await createClient();
+  // La RLS de notes ya exige que la nota pertenezca a un espacio del que
+  // el usuario es miembro (igual que en togglePin), así que no hace
+  // falta volver a comprobar el espacio aquí.
+  await supabase.from("notes").delete().eq("id", parsed.data.noteId);
 
   revalidatePath("/notas");
   revalidatePath("/inicio");

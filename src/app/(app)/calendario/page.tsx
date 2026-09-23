@@ -13,7 +13,7 @@ export default async function CalendarioPage() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("events")
-      .select("id, title, start_at, all_day")
+      .select("id, title, start_at, all_day, location, description")
       .eq("space_id", spaceId)
       .gte("end_at", new Date().toISOString())
       .order("start_at", { ascending: true });

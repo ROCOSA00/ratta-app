@@ -1,6 +1,7 @@
 import { NotebookPen, Pin } from "lucide-react";
 import { formatDate } from "@/lib/format-date";
-import { togglePin } from "./actions";
+import { ConfirmDeleteButton } from "@/components/shared/ConfirmDeleteButton";
+import { togglePin, deleteNote } from "./actions";
 
 export type NoteRow = {
   id: string;
@@ -50,18 +51,27 @@ export function NoteList({ notes }: { notes: NoteRow[] }) {
                   {note.title}
                 </p>
               </div>
-              <form action={togglePin}>
-                <input type="hidden" name="noteId" value={note.id} />
-                <input type="hidden" name="nextPinned" value={(!note.is_pinned).toString()} />
-                <button
-                  type="submit"
-                  aria-label={note.is_pinned ? "Desfijar nota" : "Fijar nota"}
-                  className="shrink-0 rounded-full p-1"
-                  style={{ color: note.is_pinned ? "var(--color-gold)" : "var(--color-muted)" }}
-                >
-                  <Pin size={16} fill={note.is_pinned ? "currentColor" : "none"} />
-                </button>
-              </form>
+              <div className="flex shrink-0 items-center">
+                <form action={togglePin}>
+                  <input type="hidden" name="noteId" value={note.id} />
+                  <input type="hidden" name="nextPinned" value={(!note.is_pinned).toString()} />
+                  <button
+                    type="submit"
+                    aria-label={note.is_pinned ? "Desfijar nota" : "Fijar nota"}
+                    className="rounded-full p-1.5"
+                    style={{ color: note.is_pinned ? "var(--color-gold)" : "var(--color-muted)" }}
+                  >
+                    <Pin size={16} fill={note.is_pinned ? "currentColor" : "none"} />
+                  </button>
+                </form>
+                <form action={deleteNote}>
+                  <input type="hidden" name="noteId" value={note.id} />
+                  <ConfirmDeleteButton
+                    label="Borrar nota"
+                    confirmMessage={`¿Borrar la nota "${note.title}"? No se puede deshacer.`}
+                  />
+                </form>
+              </div>
             </div>
             <p className="mt-1.5 line-clamp-3 text-sm" style={{ color: "var(--color-muted)" }}>
               {note.content}
