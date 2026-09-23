@@ -11,7 +11,9 @@ export default function AppLayout({
 }) {
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col">
-      <div className="flex-1 pb-24">{children}</div>
+      <div className="flex-1" style={{ paddingBottom: "calc(var(--nav-gap) + var(--nav-height) + 20px)" }}>
+        {children}
+      </div>
       <BottomNav />
     </div>
   );

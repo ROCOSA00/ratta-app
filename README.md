@@ -245,6 +245,10 @@ puntuales según se van usando:
   botones. La lista vive en `src/lib/nudges/options.ts`; el móvil solo
   envía la clave y el servidor pone el emoji y el texto, así nadie puede
   colar un mensaje inventado en la notificación.
+- **Barra flotante**: la barra de abajo pasa a ser una píldora flotante
+  (tipo "globo") separada de los bordes. Su altura y separación viven en
+  `--nav-height` y `--nav-gap` (`globals.css`), que también usan el
+  hueco final de cada pantalla y la barra de escribir del chat.
 
 ## Notas de seguridad
 

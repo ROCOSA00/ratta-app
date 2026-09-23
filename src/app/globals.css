@@ -52,6 +52,15 @@
   --color-gradient: linear-gradient(135deg, #9d6bff 0%, #ff4d80 55%, #ff9152 100%);
 }
 
+/* Barra de navegación flotante ("globo"): cuánto mide y a qué altura
+   flota. Se usan también para colocar la barra de escribir del chat y
+   dejar hueco al final de cada pantalla. En iPhone flota justo por
+   encima de la rayita de inicio; en el resto, a 12px del borde. */
+:root {
+  --nav-height: 66px;
+  --nav-gap: max(calc(env(safe-area-inset-bottom, 0px) - 8px), 12px);
+}
+
 html,
 body {
   height: 100%;
