@@ -104,9 +104,16 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
   - [x] Pulido visual: tarjetas con icono y tinte de color por
     sección (paleta existente, sin colores nuevos) en Inicio,
     Calendario, Notas y El Trono, en vez del blanco plano de antes
-  - [ ] Minijuego (tipo Brick Breaker) con puntuaciones — fase propia
+    ([PR #5](https://github.com/ROCOSA00/ratta-app/pull/5))
+  - [ ] Minijuego (tipo Brick Breaker) con puntuaciones — descartado
+    por ahora, se retoma si se pide más adelante
   - [ ] Tests automatizados (Vitest/Playwright)
-- [ ] **Fase 12** — GitHub + Vercel
+- [~] **Fase 12** — GitHub + Vercel
+  - [x] Repositorio privado en GitHub, despliegue automático en
+    Vercel siguiendo la rama `main` desde la Fase 5
+  - [x] Historial reconciliado: todo el trabajo de las Fases 6-11
+    fusionado en `main` (PR #4 y PR #5); solo queda confirmar que
+    Vercel recoge el último merge en producción
 - [ ] **Fase 13** — Dominio en Cloudflare
 - [ ] **Fase 14** — PWA
 - [ ] **Fase 15** — Backups y documentación
