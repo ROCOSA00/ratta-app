@@ -20,7 +20,7 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Migración pendiente de aplicar: El Trono, solo tus propios registros
+## El Trono, solo tus propios registros — ✅ ya aplicada
 
 `20260924100000_poop_entries_own_only.sql`. Las políticas de `UPDATE`
 y `DELETE` de `poop_entries` solo exigían ser miembro del espacio, así
@@ -41,7 +41,8 @@ y comparando antes/después con las mismas filas:
 | Editar / borrar uno propio (deshacer) | 1 fila | 1 fila |
 | Ver los registros de los dos | 2 | 2 |
 
-Pégala en el SQL Editor como las anteriores.
+Aplicada en producción y comprobado en vivo que registrar y "Deshacer"
+siguen funcionando.
 
 ## Almacenamiento de avatares — ✅ ya aplicada
 
