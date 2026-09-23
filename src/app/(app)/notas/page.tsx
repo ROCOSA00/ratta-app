@@ -1,18 +1,31 @@
 import { PageHeader } from "@/components/shared/PageHeader";
-import { ComingSoon } from "@/components/shared/ComingSoon";
-import { NotebookPen } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
+import { NoteList, type NoteRow } from "./NoteList";
+import { NewNoteForm } from "./NewNoteForm";
 
-export default function NotasPage() {
+export default async function NotasPage() {
+  const spaceId = await getCurrentSpaceId();
+
+  let notes: NoteRow[] = [];
+
+  if (spaceId) {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("notes")
+      .select("id, title, content, created_at")
+      .eq("space_id", spaceId)
+      .order("created_at", { ascending: false });
+
+    notes = data ?? [];
+  }
+
   return (
     <>
       <PageHeader title="Notas" subtitle="Ideas, listas y recordatorios" />
-      <div className="mt-5">
-        <ComingSoon
-          icon={NotebookPen}
-          title="Las notas llegan en la Fase 7"
-          description="Crear, fijar, archivar y organizar por categorías, con checklists y listas de la compra."
-          phase="Fase 7 · Notas"
-        />
+      <div className="mt-5 flex flex-col gap-5">
+        <NewNoteForm />
+        <NoteList notes={notes} />
       </div>
     </>
   );

@@ -1,23 +1,23 @@
-import { CalendarDays } from "lucide-react";
-import { formatDate, formatDateTime } from "@/lib/format-date";
+import { NotebookPen } from "lucide-react";
+import { formatDate } from "@/lib/format-date";
 
-export type EventRow = {
+export type NoteRow = {
   id: string;
   title: string;
-  start_at: string;
-  all_day: boolean;
+  content: string;
+  created_at: string;
 };
 
-export function EventList({ events }: { events: EventRow[] }) {
-  if (events.length === 0) {
+export function NoteList({ notes }: { notes: NoteRow[] }) {
+  if (notes.length === 0) {
     return (
       <div
         className="mx-5 flex flex-col items-center gap-2 rounded-2xl border p-8 text-center"
         style={{ background: "var(--color-surface)", borderColor: "var(--color-line)" }}
       >
-        <CalendarDays size={24} style={{ color: "var(--color-muted)" }} />
+        <NotebookPen size={24} style={{ color: "var(--color-muted)" }} />
         <p className="text-sm" style={{ color: "var(--color-muted)" }}>
-          No hay eventos próximos todavía.
+          No hay notas todavía.
         </p>
       </div>
     );
@@ -25,17 +25,20 @@ export function EventList({ events }: { events: EventRow[] }) {
 
   return (
     <ul className="mx-5 flex flex-col gap-2">
-      {events.map((event) => (
+      {notes.map((note) => (
         <li
-          key={event.id}
+          key={note.id}
           className="rounded-2xl border p-4"
           style={{ background: "var(--color-surface)", borderColor: "var(--color-line)" }}
         >
           <p className="text-sm font-medium" style={{ color: "var(--color-ink)" }}>
-            {event.title}
+            {note.title}
           </p>
-          <p className="mt-0.5 text-xs" style={{ color: "var(--color-muted)" }}>
-            {event.all_day ? formatDate(event.start_at) : formatDateTime(event.start_at)}
+          <p className="mt-1 line-clamp-3 text-sm" style={{ color: "var(--color-muted)" }}>
+            {note.content}
+          </p>
+          <p className="mt-2 text-xs" style={{ color: "var(--color-muted)" }}>
+            {formatDate(note.created_at)}
           </p>
         </li>
       ))}
