@@ -83,7 +83,10 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
 - [~] **Fase 8** — El Trono (botón +1, estadísticas hoy/semana/mes/año,
   racha y logros humorísticos, comparativa entre los dos; pendiente de
   probar en vivo en Vercel)
-- [ ] **Fase 9** — Pregunta del día
+- [~] **Fase 9** — Pregunta del día (ronda diaria automática, respuesta
+  individual, revelado solo cuando ambos han contestado; banco de 24
+  preguntas en `supabase/seed.sql`, pendiente de cargarlo y de probar
+  en vivo en Vercel)
 - [ ] **Fase 10** — Dashboard
 - [ ] **Fase 11** — Testing, seguridad y pulido
 - [ ] **Fase 12** — GitHub + Vercel

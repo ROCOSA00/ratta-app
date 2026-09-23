@@ -38,6 +38,15 @@ insert into public.space_members (space_id, user_id, role) values
   ('<id del space anterior>', '<uuid de Giselz>', 'member');
 ```
 
+## Cargar el banco de preguntas (una sola vez, pendiente)
+
+`questions` empieza vacía. Pega el contenido de `supabase/seed.sql`
+(24 preguntas variadas) en el **SQL Editor**, una vez. Es contenido
+compartido, no dato personal, pero se gestiona igual que el alta del
+Ratta Space: a mano, nunca automáticamente desde la app. Puedes añadir
+más preguntas después, en cualquier momento, con el mismo patrón
+`insert into public.questions (text, category) values (...)`.
+
 ## Nota: StackBlitz no sirve para probar el login (usar Vercel)
 
 El login (Fase 5) usa `middleware.ts`, que hace una llamada real a
@@ -72,3 +81,11 @@ imitando lo que Supabase provee de serie): las 3 migraciones aplican
 sin errores, y una prueba de humo con tres usuarios en dos espacios
 distintos confirmó el aislamiento por RLS (un usuario no ve ni puede
 insertar datos en un espacio del que no es miembro).
+
+Para la Fase 9 (Pregunta del día) se repitió el mismo método: se
+aplicaron migraciones + `seed.sql` y se comprobó que las dos
+restricciones clave de la lógica de "una ronda al día, una respuesta
+por persona" funcionan de verdad a nivel de base de datos (no solo en
+el código de la app): no se puede crear una segunda ronda el mismo día
+para el mismo espacio, y no se puede responder dos veces a la misma
+ronda.
