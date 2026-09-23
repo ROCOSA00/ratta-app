@@ -80,7 +80,9 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
 - [x] **Fase 7** — Notas (versión mínima: solo texto libre, lista +
   formulario de título/contenido; probado en vivo; sin checklists,
   archivar, editar ni borrar todavía — siguiente iteración)
-- [ ] **Fase 8** — El Trono
+- [~] **Fase 8** — El Trono (botón +1, estadísticas hoy/semana/mes/año,
+  racha y logros humorísticos, comparativa entre los dos; pendiente de
+  probar en vivo en Vercel)
 - [ ] **Fase 9** — Pregunta del día
 - [ ] **Fase 10** — Dashboard
 - [ ] **Fase 11** — Testing, seguridad y pulido
