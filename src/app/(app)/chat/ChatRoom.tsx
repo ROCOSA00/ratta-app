@@ -202,11 +202,12 @@ export function ChatRoom({
 
       <form
         onSubmit={submit}
-        className="fixed inset-x-0 z-30 mx-auto flex max-w-md items-end gap-2 border-t px-3 py-2 backdrop-blur-xl"
+        className="fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-md items-end gap-2 px-3 pt-2 backdrop-blur-xl"
         style={{
-          bottom: "calc(env(safe-area-inset-bottom, 0px) + 69px)",
+          // El fondo llega hasta abajo del todo y la barra flotante (z-40)
+          // queda por encima; así no se ven mensajes alrededor de la barra.
+          paddingBottom: "calc(var(--nav-gap) + var(--nav-height) + 8px)",
           background: "color-mix(in srgb, var(--color-bg) 88%, transparent)",
-          borderColor: "var(--color-line)",
         }}
       >
         <div className="flex flex-1 flex-col">
