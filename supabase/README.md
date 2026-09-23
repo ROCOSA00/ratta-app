@@ -20,6 +20,29 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Migración pendiente de aplicar: El Trono, solo tus propios registros
+
+`20260924100000_poop_entries_own_only.sql`. Las políticas de `UPDATE`
+y `DELETE` de `poop_entries` solo exigían ser miembro del espacio, así
+que cualquiera de los dos podía borrar, editar o "regalar" registros
+del otro llamando directamente a la API de Supabase (la app nunca lo
+hacía, pero la base de datos lo permitía). Ahora además exigen
+`user_id = auth.uid()`. Ver los registros de los dos no cambia (hace
+falta para comparar estadísticas).
+
+Validada en un Postgres 16 local, cada prueba en su propia transacción
+y comparando antes/después con las mismas filas:
+
+| Acción (como Rokito) | Antes | Después |
+|---|---|---|
+| Borrar un registro de Giselz | 1 fila | 0 filas |
+| Editar un registro de Giselz | 1 fila | 0 filas |
+| Pasarle un registro propio a Giselz | 1 fila | rechazado por RLS |
+| Editar / borrar uno propio (deshacer) | 1 fila | 1 fila |
+| Ver los registros de los dos | 2 | 2 |
+
+Pégala en el SQL Editor como las anteriores.
+
 ## Almacenamiento de avatares — ✅ ya aplicada
 
 `20260923140000_avatar_storage.sql` (Fase 11) crea el bucket
