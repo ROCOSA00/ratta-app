@@ -207,6 +207,7 @@ export async function addNoteItem(formData: FormData): Promise<void> {
   });
 
   revalidatePath(`/notas/${parsed.data.noteId}`);
+  revalidatePath("/notas");
 }
 
 export async function toggleNoteItem(formData: FormData): Promise<void> {
@@ -224,6 +225,7 @@ export async function toggleNoteItem(formData: FormData): Promise<void> {
     .eq("id", parsed.data.itemId);
 
   revalidatePath(`/notas/${parsed.data.noteId}`);
+  revalidatePath("/notas");
 }
 
 export async function deleteNoteItem(formData: FormData): Promise<void> {
@@ -237,4 +239,5 @@ export async function deleteNoteItem(formData: FormData): Promise<void> {
   await supabase.from("note_items").delete().eq("id", parsed.data.itemId);
 
   revalidatePath(`/notas/${parsed.data.noteId}`);
+  revalidatePath("/notas");
 }

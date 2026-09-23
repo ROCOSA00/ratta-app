@@ -12,9 +12,9 @@ export function PageHeader({
 }) {
   return (
     <header
-      className="sticky top-0 z-30 border-b px-5 pb-4"
+      className="sticky top-0 z-30 border-b px-5 pb-4 backdrop-blur-xl"
       style={{
-        background: "var(--color-bg)",
+        background: "color-mix(in srgb, var(--color-bg) 82%, transparent)",
         borderColor: "var(--color-line)",
         paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)",
       }}

@@ -1,8 +1,22 @@
 import { TIME_ZONE } from "@/lib/format-date";
 
+// Crear un Intl.DateTimeFormat es caro; se reutiliza uno solo para no
+// pagarlo por cada entrada al agrupar cientos de registros.
+const dateKeyFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE });
+const hourFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: TIME_ZONE,
+  hour: "2-digit",
+  hourCycle: "h23",
+});
+
 /** "YYYY-MM-DD" del instante dado, en la zona horaria de Madrid. */
 export function toDateKey(date: Date): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(date);
+  return dateKeyFormatter.format(date);
+}
+
+/** Hora (0-23) del instante dado, en la zona horaria de Madrid. */
+export function madridHour(date: Date): number {
+  return Number(hourFormatter.format(date));
 }
 
 export function todayKey(): string {
@@ -39,7 +53,7 @@ export function addMonths(key: string, months: number): string {
 }
 
 /** 0 = lunes .. 6 = domingo (la semana empieza en lunes). */
-function weekdayMon0(key: string): number {
+export function weekdayMon0(key: string): number {
   const jsDay = keyToUTC(key).getUTCDay(); // 0 = domingo .. 6 = sábado
   return (jsDay + 6) % 7;
 }
@@ -93,4 +107,9 @@ export function dayLabel(key: string): string {
     day: "numeric",
     month: "short",
   }).format(keyToUTC(key));
+}
+
+/** Días de calendario entre dos keys (b - a); negativo si b es anterior. */
+export function daysBetween(a: string, b: string): number {
+  return Math.round((keyToUTC(b).getTime() - keyToUTC(a).getTime()) / 86_400_000);
 }

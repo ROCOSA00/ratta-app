@@ -7,6 +7,8 @@ const emptyStats: Omit<UserStats, "userId"> = {
   year: 0,
   total: 0,
   streak: 0,
+  bestDay: 0,
+  last7: [],
   badges: [],
 };
 
@@ -49,6 +51,12 @@ export function StatsCard({ name, stats }: { name: string; stats: UserStats | un
       {s.streak > 0 ? (
         <p className="mt-2 text-xs font-medium" style={{ color: "var(--color-gold)" }}>
           🔥 Racha de {s.streak} día{s.streak === 1 ? "" : "s"}
+        </p>
+      ) : null}
+
+      {s.bestDay > 0 ? (
+        <p className="mt-1 text-xs font-medium" style={{ color: "var(--color-muted)" }}>
+          🏆 Récord: {s.bestDay} en un día
         </p>
       ) : null}
 

@@ -13,7 +13,15 @@ export type NoteRow = {
   is_pinned: boolean;
 };
 
-export function NoteList({ notes }: { notes: NoteRow[] }) {
+export type ChecklistProgress = { done: number; total: number };
+
+export function NoteList({
+  notes,
+  progress,
+}: {
+  notes: NoteRow[];
+  progress: Map<string, ChecklistProgress>;
+}) {
   if (notes.length === 0) {
     return (
       <div
@@ -77,9 +85,13 @@ export function NoteList({ notes }: { notes: NoteRow[] }) {
               </div>
             </div>
             <Link href={`/notas/${note.id}`} className="block">
-              <p className="mt-1.5 line-clamp-3 text-sm" style={{ color: "var(--color-muted)" }}>
-                {note.note_type === "checklist" ? "Lista de tareas · toca para ver" : note.content}
-              </p>
+              {note.note_type === "checklist" ? (
+                <ChecklistSummary progress={progress.get(note.id)} tint={tint} />
+              ) : (
+                <p className="mt-1.5 line-clamp-3 text-sm" style={{ color: "var(--color-muted)" }}>
+                  {note.content}
+                </p>
+              )}
               <p className="mt-2 text-xs" style={{ color: "var(--color-muted)" }}>
                 {formatDate(note.created_at)}
               </p>
@@ -88,5 +100,29 @@ export function NoteList({ notes }: { notes: NoteRow[] }) {
         );
       })}
     </ul>
+  );
+}
+
+function ChecklistSummary({ progress, tint }: { progress: ChecklistProgress | undefined; tint: string }) {
+  if (!progress || progress.total === 0) {
+    return (
+      <p className="mt-1.5 text-sm" style={{ color: "var(--color-muted)" }}>
+        Lista vacía · toca para añadir
+      </p>
+    );
+  }
+
+  const pct = Math.round((progress.done / progress.total) * 100);
+  const allDone = progress.done === progress.total;
+
+  return (
+    <div className="mt-2">
+      <p className="text-sm" style={{ color: "var(--color-muted)" }}>
+        {allDone ? "¡Todo hecho! 🎉" : `${progress.done} de ${progress.total} hechas`}
+      </p>
+      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full" style={{ background: "var(--color-line)" }}>
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: tint }} />
+      </div>
+    </div>
   );
 }

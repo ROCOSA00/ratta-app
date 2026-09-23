@@ -1,7 +1,11 @@
 import { PageHeader } from "@/components/shared/PageHeader";
 import { LogButton } from "@/components/features/LogButton";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
+import { addDays, todayKey, WEEKDAY_LABELS, weekdayMon0 } from "@/lib/calendar/date-utils";
 import { StatsCard } from "./StatsCard";
+import { WeekChart } from "./WeekChart";
+
+const SERIES_COLORS = ["var(--color-accent)", "var(--color-accent-2)"];
 
 export default async function JuegosPage() {
   const summary = await getPoopSummary();
@@ -18,6 +22,10 @@ export default async function JuegosPage() {
   }
 
   const { currentUserId, orderedIds, stats, displayNameById, comparison } = summary;
+  const nameOf = (id: string) => (id === currentUserId ? "Tú" : (displayNameById.get(id) ?? "Compañero/a"));
+
+  const today = todayKey();
+  const dayLabels = Array.from({ length: 7 }, (_, i) => WEEKDAY_LABELS[weekdayMon0(addDays(today, i - 6))]!);
 
   return (
     <>
@@ -33,13 +41,18 @@ export default async function JuegosPage() {
 
         <div className="mx-5 grid grid-cols-2 gap-3">
           {orderedIds.map((id) => (
-            <StatsCard
-              key={id}
-              name={id === currentUserId ? "Tú" : (displayNameById.get(id) ?? "Compañero/a")}
-              stats={stats[id]}
-            />
+            <StatsCard key={id} name={nameOf(id)} stats={stats[id]} />
           ))}
         </div>
+
+        <WeekChart
+          labels={dayLabels}
+          series={orderedIds.map((id, i) => ({
+            name: nameOf(id),
+            values: stats[id]?.last7 ?? [],
+            color: SERIES_COLORS[i % SERIES_COLORS.length]!,
+          }))}
+        />
       </div>
     </>
   );
