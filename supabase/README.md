@@ -20,10 +20,10 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Migración pendiente de aplicar: portada del perfil + Recuerdos
+## Portada del perfil + Recuerdos — ✅ ya aplicada
 
-`20260924120000_profile_cover_and_memories.sql`. **Hay que aplicarla
-antes de publicar el código que la usa** (el Perfil lee `cover_url` y
+`20260924120000_profile_cover_and_memories.sql`. Aplicada en producción
+antes de publicar el código que la usa (el Perfil lee `cover_url` y
 Recuerdos usa la tabla y el bucket nuevos).
 
 - `profiles.cover_url`: la foto de portada. La imagen va al bucket
@@ -54,8 +54,6 @@ otro espacio, cada caso en su propia transacción:
 | Recuerdo con ruta de otro espacio | rechazado por la restricción `check` |
 | Persona de fuera ve fotos o recuerdos | 0 filas |
 | Cambiar tu portada / la de tu pareja | 1 fila / 0 filas |
-
-Pégala en el SQL Editor como las anteriores.
 
 ## El Trono, solo tus propios registros — ✅ ya aplicada
 
