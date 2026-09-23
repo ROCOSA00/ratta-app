@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { LogOut } from "lucide-react";
+import { BookHeart, ChevronRight, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
 import { QuestionOfTheDay } from "@/components/features/QuestionOfTheDay";
@@ -29,8 +30,36 @@ export default async function MasPage() {
     <>
       <PageHeader title="Más" subtitle="Pregunta del día y ajustes" />
 
+      <Link
+        href="/mas/guia"
+        className="mx-5 mt-5 flex items-center gap-3 rounded-2xl border p-4"
+        style={{
+          background: "color-mix(in srgb, var(--color-accent) 7%, var(--color-surface))",
+          borderColor: "color-mix(in srgb, var(--color-accent) 20%, var(--color-line))",
+        }}
+      >
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+          style={{
+            background: "color-mix(in srgb, var(--color-accent) 18%, var(--color-surface))",
+            color: "var(--color-accent)",
+          }}
+        >
+          <BookHeart size={17} strokeWidth={2.3} />
+        </span>
+        <span className="flex-1">
+          <span className="block text-sm font-semibold" style={{ color: "var(--color-ink)" }}>
+            Cómo funciona Ratta
+          </span>
+          <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
+            Una vuelta rápida por todo
+          </span>
+        </span>
+        <ChevronRight size={16} style={{ color: "var(--color-muted)" }} />
+      </Link>
+
       <div
-        className="mx-5 mt-5 flex flex-col gap-4 rounded-2xl border p-4"
+        className="mx-5 mt-4 flex flex-col gap-4 rounded-2xl border p-4"
         style={{
           background: "color-mix(in srgb, var(--color-accent-2) 6%, var(--color-surface))",
           borderColor: "color-mix(in srgb, var(--color-accent-2) 18%, var(--color-line))",

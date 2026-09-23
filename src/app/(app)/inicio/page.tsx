@@ -5,6 +5,7 @@ import { RattaLogo } from "@/components/shared/RattaLogo";
 import { QuestionOfTheDay } from "@/components/features/QuestionOfTheDay";
 import { LogButton } from "@/components/features/LogButton";
 import { NudgeButtons } from "@/components/features/NudgeButtons";
+import { GuideWelcome } from "@/components/features/GuideWelcome";
 import { getNextEvent } from "@/lib/events/get-next-event";
 import { getPinnedNote } from "@/lib/notes/get-pinned-note";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
@@ -144,6 +145,8 @@ export default async function InicioPage() {
       </header>
 
       <div className="flex flex-col gap-4 pb-2">
+        <GuideWelcome name={myName} />
+
         <Link href="/calendario">
           <SectionCard tint="var(--color-accent-2)">
             <SectionHeader
