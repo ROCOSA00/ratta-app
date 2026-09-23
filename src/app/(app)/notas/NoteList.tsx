@@ -1,11 +1,13 @@
-import { NotebookPen } from "lucide-react";
+import { NotebookPen, Pin } from "lucide-react";
 import { formatDate } from "@/lib/format-date";
+import { togglePin } from "./actions";
 
 export type NoteRow = {
   id: string;
   title: string;
   content: string;
   created_at: string;
+  is_pinned: boolean;
 };
 
 export function NoteList({ notes }: { notes: NoteRow[] }) {
@@ -31,9 +33,23 @@ export function NoteList({ notes }: { notes: NoteRow[] }) {
           className="rounded-2xl border p-4"
           style={{ background: "var(--color-surface)", borderColor: "var(--color-line)" }}
         >
-          <p className="text-sm font-medium" style={{ color: "var(--color-ink)" }}>
-            {note.title}
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-sm font-medium" style={{ color: "var(--color-ink)" }}>
+              {note.title}
+            </p>
+            <form action={togglePin}>
+              <input type="hidden" name="noteId" value={note.id} />
+              <input type="hidden" name="nextPinned" value={(!note.is_pinned).toString()} />
+              <button
+                type="submit"
+                aria-label={note.is_pinned ? "Desfijar nota" : "Fijar nota"}
+                className="shrink-0 rounded-full p-1"
+                style={{ color: note.is_pinned ? "var(--color-accent)" : "var(--color-muted)" }}
+              >
+                <Pin size={16} fill={note.is_pinned ? "currentColor" : "none"} />
+              </button>
+            </form>
+          </div>
           <p className="mt-1 line-clamp-3 text-sm" style={{ color: "var(--color-muted)" }}>
             {note.content}
           </p>

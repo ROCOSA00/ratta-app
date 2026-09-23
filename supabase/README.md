@@ -20,6 +20,28 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Migración pendiente de aplicar: almacenamiento de avatares
+
+`20260923140000_avatar_storage.sql` (Fase 11) crea el bucket
+`avatars` de Supabase Storage (público para lectura, solo fotos de
+perfil, no datos sensibles) y las políticas RLS de `storage.objects`:
+cada persona solo puede subir/reemplazar/borrar dentro de su propia
+carpeta (`avatars/<su-uuid>/...`), nunca en la de su pareja. También
+limita el tamaño (3 MB) y el tipo de archivo (solo imágenes) a nivel
+de Supabase, no solo en el navegador.
+
+`storage.objects` no la creamos nosotros (es infraestructura propia
+de Supabase), así que para validarla se montó un *stub* local de esa
+tabla + la función `storage.foldername()` que usa Supabase de verdad,
+y se comprobó con datos reales: subir a tu propia carpeta funciona,
+subir a la ajena falla, reemplazar tu propia foto funciona, borrar la
+de tu pareja no afecta ninguna fila. El primer intento tenía un fallo
+(faltaba la política de `SELECT`, y sin ella ni siquiera veías tu
+propia foto) — se detectó y corrigió antes de dar la migración por
+buena, no después.
+
+Pégala en el SQL Editor como las anteriores.
+
 ## Dar de alta el Ratta Space (una sola vez) — ✅ ya hecho
 
 `spaces` y `space_members` no tienen políticas de `INSERT` para la app:
@@ -37,6 +59,49 @@ insert into public.space_members (space_id, user_id, role) values
   ('<id del space anterior>', '<uuid de Rocco>', 'owner'),
   ('<id del space anterior>', '<uuid de Giselz>', 'member');
 ```
+
+## `is_pinned` en `notes` — ✅ ya aplicada
+
+`20260923120000_notes_pinning.sql` (Fase 10) añadió `is_pinned` a
+`notes` para la función de fijar. Validada localmente antes de
+aplicarla (migración + `UPDATE` respetando RLS), y confirmada
+funcionando en producción.
+
+## Migración pendiente de aplicar: cierre de seguridad en "Pregunta del día"
+
+`20260923130000_gate_question_answers_reveal.sql` (Fase 11, revisión
+de seguridad). Hallazgo: el revelado de respuestas ("solo ves la de tu
+pareja si ya has respondido tú") solo se aplicaba en
+`QuestionOfTheDay.tsx`, no en la base de datos — la política
+`question_answers_select_member` original solo comprobaba pertenencia
+al espacio. Como la anon key es pública y cada usuario tiene su propio
+token de sesión, cualquiera podía llamar a la API REST de Supabase
+directamente y leer la respuesta ajena antes de responder, saltándose
+la app por completo.
+
+La migración añade una función `has_answered_round()` (`SECURITY
+DEFINER`, mismo patrón que `is_space_member()`, necesaria para evitar
+"infinite recursion detected in policy" al consultar `question_answers`
+desde su propia política) y ajusta la política de `SELECT` para exigir
+también que el usuario ya tenga su propia respuesta en esa ronda.
+
+Validada localmente simulando el ataque exacto que encontró la
+revisión: antes del fix, un usuario sin responder consultando
+`question_answers` directamente veía la respuesta de su pareja (0
+filas esperadas, filas reales encontradas); tras aplicar la migración,
+la misma consulta devuelve 0 filas hasta que responde, y las 2
+correctas después. No requiere ningún cambio en el código de la app.
+
+Pégala en el SQL Editor como las anteriores.
+
+## Cargar el banco de preguntas (una sola vez) — ✅ ya hecho
+
+`questions` empieza vacía. Pega el contenido de `supabase/seed.sql`
+(24 preguntas variadas) en el **SQL Editor**, una vez. Es contenido
+compartido, no dato personal, pero se gestiona igual que el alta del
+Ratta Space: a mano, nunca automáticamente desde la app. Puedes añadir
+más preguntas después, en cualquier momento, con el mismo patrón
+`insert into public.questions (text, category) values (...)`.
 
 ## Nota: StackBlitz no sirve para probar el login (usar Vercel)
 
@@ -72,3 +137,11 @@ imitando lo que Supabase provee de serie): las 3 migraciones aplican
 sin errores, y una prueba de humo con tres usuarios en dos espacios
 distintos confirmó el aislamiento por RLS (un usuario no ve ni puede
 insertar datos en un espacio del que no es miembro).
+
+Para la Fase 9 (Pregunta del día) se repitió el mismo método: se
+aplicaron migraciones + `seed.sql` y se comprobó que las dos
+restricciones clave de la lógica de "una ronda al día, una respuesta
+por persona" funcionan de verdad a nivel de base de datos (no solo en
+el código de la app): no se puede crear una segunda ronda el mismo día
+para el mismo espacio, y no se puede responder dos veces a la misma
+ronda.

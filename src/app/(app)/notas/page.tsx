@@ -13,8 +13,9 @@ export default async function NotasPage() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("notes")
-      .select("id, title, content, created_at")
+      .select("id, title, content, created_at, is_pinned")
       .eq("space_id", spaceId)
+      .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false });
 
     notes = data ?? [];

@@ -77,13 +77,32 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
 - [x] **Fase 6** — Calendario compartido (versión mínima: lista de
   próximos eventos + formulario de título/fecha/hora; probado en vivo;
   sin editar, borrar ni vista mensual todavía — siguiente iteración)
-- [x] **Fase 7** — Notas (versión mínima: solo texto libre, lista +
-  formulario de título/contenido; probado en vivo; sin checklists,
-  archivar, editar ni borrar todavía — siguiente iteración)
-- [ ] **Fase 8** — El Trono
-- [ ] **Fase 9** — Pregunta del día
-- [ ] **Fase 10** — Dashboard
-- [ ] **Fase 11** — Testing, seguridad y pulido
+- [x] **Fase 7** — Notas (texto libre, lista + formulario de
+  título/contenido, y fijar/desfijar una nota desde la Fase 10; sin
+  checklists, archivar, editar ni borrar todavía — siguiente iteración)
+- [x] **Fase 8** — El Trono (botón +1, estadísticas hoy/semana/mes/año,
+  racha y logros humorísticos, comparativa entre los dos; probado en
+  vivo)
+- [x] **Fase 9** — Pregunta del día (ronda diaria automática, respuesta
+  individual, revelado solo cuando ambos han contestado; banco de 24
+  preguntas cargado y probado en vivo con las dos cuentas reales)
+- [x] **Fase 10** — Dashboard (próximo evento, Pregunta del día
+  respondible sin salir de Inicio, El Trono con botón +1 y racha, nota
+  fijada; probado en vivo)
+- [~] **Fase 11** — Testing, seguridad y pulido
+  - [x] Revisión de seguridad: 1 fallo encontrado y corregido — el
+    revelado de "Pregunta del día" solo se aplicaba en el componente,
+    no en la base de datos; cerrado a nivel de RLS (ver
+    `supabase/README.md`), pendiente de aplicar esa migración
+  - [x] Pulido divertido (paquete 1): confeti de emojis al registrar
+    en El Trono, mensajitos de cariño entre los dos (reutiliza
+    `activity_log`, sin migración nueva), cambiar tu nombre desde "Más"
+  - [~] Foto de perfil (avatar): bucket de Storage + subida desde
+    "Más", solo puedes escribir en tu propia carpeta (probado con un
+    stub local de `storage.objects`); pendiente de aplicar la
+    migración
+  - [ ] Minijuego (tipo Brick Breaker) con puntuaciones — fase propia
+  - [ ] Tests automatizados (Vitest/Playwright)
 - [ ] **Fase 12** — GitHub + Vercel
 - [ ] **Fase 13** — Dominio en Cloudflare
 - [ ] **Fase 14** — PWA
