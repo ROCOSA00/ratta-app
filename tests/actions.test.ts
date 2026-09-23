@@ -5,6 +5,7 @@ const state = vi.hoisted(() => ({
   fake: null as unknown as FakeSupabase,
   spaceId: "space-1" as string | null,
   revalidated: [] as string[],
+  notified: [] as { title: string; body: string; url: string; tag?: string }[],
 }));
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => state.fake.client }));
@@ -12,6 +13,11 @@ vi.mock("@/lib/spaces/get-current-space", () => ({ getCurrentSpaceId: async () =
 vi.mock("next/cache", () => ({
   revalidatePath: (path: string) => {
     state.revalidated.push(path);
+  },
+}));
+vi.mock("@/lib/push/notify", () => ({
+  notifyPartner: async (build: (me: string) => { title: string; body: string; url: string; tag?: string }) => {
+    state.notified.push(build("Rokito"));
   },
 }));
 vi.mock("next/navigation", () => ({
@@ -37,6 +43,7 @@ import { sendNudge } from "@/lib/nudges/actions";
 import { updateDisplayName } from "@/lib/profile/actions";
 import { changePassword, signIn } from "@/lib/auth/actions";
 import { addMemory, deleteMemory } from "@/lib/memories/actions";
+import { sendMessage } from "@/lib/chat/actions";
 
 const ok = { error: null };
 const NOTE_ID = "11111111-1111-4111-8111-111111111111";
@@ -48,6 +55,7 @@ beforeEach(() => {
   state.fake = createFakeSupabase();
   state.spaceId = "space-1";
   state.revalidated = [];
+  state.notified = [];
 });
 
 const opsOf = (table: string, kind: string) => state.fake.ops.filter((o) => o.table === table && o.kind === kind);
@@ -395,5 +403,76 @@ describe("Recuerdos", () => {
     state.fake = createFakeSupabase({ results: { "memories:delete": { data: null, error: null } } });
     await expect(deleteMemory(form({ memoryId: MEMORY_ID }))).rejects.toThrow("NEXT_REDIRECT:/recuerdos");
     expect(state.fake.storage.removed).toHaveLength(0);
+  });
+});
+
+// ------------------------------------------------------------------ Chat
+
+describe("Chat", () => {
+  it("envía un mensaje y avisa a tu pareja con el texto", async () => {
+    state.fake = createFakeSupabase({
+      results: {
+        "messages:insert": {
+          data: { id: "m1", sender_id: "user-me", body: "Te quiero", created_at: "2026-09-23T18:00:00Z" },
+          error: null,
+        },
+      },
+    });
+    const res = await sendMessage("  Te quiero  ");
+    expect(res.error).toBeNull();
+    expect(res.message?.id).toBe("m1");
+    expect(opsOf("messages", "insert")[0]?.payload).toEqual({
+      space_id: "space-1",
+      sender_id: "user-me",
+      body: "Te quiero",
+    });
+    expect(state.notified).toEqual([{ title: "💬 Rokito", body: "Te quiero", url: "/chat", tag: "chat" }]);
+  });
+
+  it("no envía mensajes vacíos ni gigantes, y no avisa", async () => {
+    expect((await sendMessage("   ")).error).toBe("Escribe algo.");
+    expect((await sendMessage("x".repeat(2001))).error).toBe("Máximo 2000 caracteres.");
+    expect(state.fake.ops).toHaveLength(0);
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("si falla al guardar, no avisa", async () => {
+    state.fake = createFakeSupabase({ results: { "messages:insert": { data: null, error: { message: "x" } } } });
+    expect((await sendMessage("hola")).error).toMatch(/No se pudo enviar/);
+    expect(state.notified).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------- Notificaciones
+
+describe("Notificaciones a la pareja", () => {
+  it("cada acción que crea algo avisa con su texto", async () => {
+    await sendNudge({ error: null, sent: false }, form({ key: "te_echo_de_menos", emoji: "🥺", label: "Te echo de menos" }));
+    await logEntry();
+    await createEvent(ok, form({ title: "Cena", date: "2026-09-25", time: "20:00", location: "", description: "" }));
+    await createNote(ok, form({ noteType: "text", title: "Ideas", content: "Roma" }));
+    await submitAnswer(ok, form({ roundId: ROUND_ID, answer: "Secreto" }));
+    state.spaceId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    await addMemory({ path: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.jpg", caption: "Playa" });
+
+    expect(state.notified.map((n) => `${n.title} | ${n.body} | ${n.url}`)).toEqual([
+      "🥺 Rokito | Te echo de menos | /inicio",
+      "👑 El Trono | Rokito acaba de visitar El Trono 💩 | /juegos",
+      expect.stringMatching(/^📅 Nuevo plan \| Rokito ha añadido: Cena \(vie, 25 sept?, 20:00\) \| \/calendario$/),
+      "📝 Nueva nota | Rokito: Ideas | /notas/new-id",
+      "❓ Pregunta del día | Rokito ya ha respondido. ¡Te toca! | /inicio",
+      "📸 Nuevo recuerdo | Rokito ha subido una foto: Playa | /recuerdos",
+    ]);
+  });
+
+  it("la notificación de la pregunta del día NUNCA incluye la respuesta", async () => {
+    await submitAnswer(ok, form({ roundId: ROUND_ID, answer: "Mi respuesta secreta" }));
+    expect(JSON.stringify(state.notified)).not.toContain("secreta");
+  });
+
+  it("si la acción falla por validación, no se avisa", async () => {
+    await createNote(ok, form({ noteType: "text", title: "", content: "x" }));
+    await createEvent(ok, form({ title: "Cena", date: "2026-09-25", time: "", location: "", description: "" }));
+    expect(state.notified).toHaveLength(0);
   });
 });

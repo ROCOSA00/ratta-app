@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
+import { notifyPartner } from "@/lib/push/notify";
 
 export type LogEntryState = { error: string | null; entryId?: string };
 
@@ -33,6 +34,13 @@ export async function logEntry(): Promise<LogEntryState> {
   if (error || !data) {
     return { error: "No se pudo registrar. Inténtalo de nuevo." };
   }
+
+  await notifyPartner((me) => ({
+    title: "👑 El Trono",
+    body: `${me} acaba de visitar El Trono 💩`,
+    url: "/juegos",
+    tag: "trono",
+  }));
 
   // Se usa desde /juegos y desde el dashboard de /inicio.
   revalidatePath("/juegos");

@@ -11,6 +11,19 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // El service worker no debe quedarse en caché: si no, un cambio en él
+  // tardaría días en llegar a los móviles.
+  async headers() {
+    return [
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+        ],
+      },
+    ];
+  },
   // "Más" pasó a llamarse "Perfil": los enlaces antiguos (o una app ya
   // instalada que recuerde la ruta vieja) siguen funcionando.
   async redirects() {

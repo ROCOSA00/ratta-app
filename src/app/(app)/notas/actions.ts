@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
+import { notifyPartner } from "@/lib/push/notify";
 
 const togglePinSchema = z.object({
   noteId: z.string().uuid(),
@@ -104,9 +105,17 @@ export async function createNote(
     return { error: "No se pudo guardar la nota. Inténtalo de nuevo." };
   }
 
+  const isChecklist = parsed.data.noteType === "checklist";
+  const noteTitle = parsed.data.title;
+  await notifyPartner((me) => ({
+    title: isChecklist ? "☑️ Nueva lista" : "📝 Nueva nota",
+    body: `${me}: ${noteTitle}`,
+    url: `/notas/${inserted.id}`,
+  }));
+
   revalidatePath("/notas");
 
-  if (parsed.data.noteType === "checklist") {
+  if (isChecklist) {
     redirect(`/notas/${inserted.id}`);
   }
 

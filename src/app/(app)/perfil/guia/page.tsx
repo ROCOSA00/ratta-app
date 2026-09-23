@@ -3,6 +3,7 @@ import {
   CalendarDays,
   Crown,
   Heart,
+  MessageCircleHeart,
   Home,
   Images,
   Music,
@@ -104,6 +105,13 @@ export default function GuiaPage() {
           </p>
         </Section>
 
+        <Section icon={MessageCircleHeart} tint="var(--color-accent)" title="Chat">
+          <p>
+            Vuestro chat privado, en la pestaña <B>Chat</B>. Los mensajes llegan al instante, y si tenéis las
+            notificaciones activadas, os avisa aunque la app esté cerrada.
+          </p>
+        </Section>
+
         <Section icon={MessageCircleQuestion} tint="var(--color-accent)" title="Pregunta del día">
           <p>
             Cada día sale una pregunta nueva para los dos. Tú respondes la tuya, y la respuesta de tu pareja{" "}
@@ -189,6 +197,11 @@ export default function GuiaPage() {
           <p>
             Tu <B>foto de perfil</B> y tu <B>foto de portada</B> (toca cualquiera de las dos para cambiarla), tu{" "}
             <B>nombre</B> (el que ve tu pareja), <B>cambiar la contraseña</B>, <B>cerrar sesión</B> y esta guía.
+          </p>
+          <p>
+            Y las <B>notificaciones</B>: actívalas una vez en cada móvil y te avisará cuando tu pareja te escriba, te
+            mande cariño, añada un plan, una nota o un recuerdo, responda la pregunta del día o visite El Trono. En el
+            iPhone solo funcionan con la app instalada en la pantalla de inicio.
           </p>
         </Section>
 

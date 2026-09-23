@@ -80,14 +80,16 @@ junto con `npm run lint`, `npx tsc --noEmit` y `npm run build`.
 ## Variables de entorno
 
 Copia `.env.example` como `.env.local` y rellena los valores según las
-instrucciones de la Fase 3. **Nunca subas `.env.local` a Git** (ya está
+instrucciones de la Fase 3. Para las notificaciones, en Vercel hace falta
+además `VAPID_PRIVATE_KEY` (secreta; la pública está en
+`src/lib/push/config.ts`). **Nunca subas `.env.local` a Git** (ya está
 excluido en `.gitignore`).
 
 ## Estructura del proyecto
 
 ```
 ratta-app/
-├── public/              # iconos, manifest.json, logo
+├── public/              # iconos, manifest.json, logo, sw.js (notificaciones)
 ├── scripts/
 │   └── backup.sh        # copia de seguridad de los datos (Fase 15)
 ├── supabase/
@@ -97,7 +99,7 @@ ratta-app/
 ├── src/
 │   ├── app/
 │   │   ├── (app)/       # páginas protegidas: inicio, calendario, notas,
-│   │   │                #   juegos (El Trono), perfil, recuerdos
+│   │   │                #   juegos (El Trono), perfil, recuerdos, chat
 │   │   └── login/       # página de acceso
 │   ├── components/
 │   │   ├── features/    # componentes compartidos entre Inicio y sus páginas
@@ -232,6 +234,12 @@ puntuales según se van usando:
   **Recuerdos** con fotos privadas (bucket privado + enlaces firmados).
   Las fotos se reducen en el móvil antes de subirlas, lo que además
   quita la ubicación GPS que llevan dentro.
+- **Chat y notificaciones**: chat privado en tiempo real (Supabase
+  Realtime) y notificaciones push (Web Push + service worker) cuando tu
+  pareja te escribe, te manda cariño, añade un plan, nota o recuerdo,
+  responde la pregunta del día (sin revelar la respuesta) o visita El
+  Trono. Requiere la variable `VAPID_PRIVATE_KEY` en Vercel; en iPhone,
+  la app instalada en la pantalla de inicio (iOS 16.4+).
 
 ## Notas de seguridad
 
