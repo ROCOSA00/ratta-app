@@ -88,12 +88,26 @@ export async function QuestionOfTheDay() {
   return (
     <div
       className="mx-5 rounded-2xl border p-5"
-      style={{ background: "var(--color-surface)", borderColor: "var(--color-line)" }}
+      style={{
+        background: "color-mix(in srgb, var(--color-accent) 7%, var(--color-surface))",
+        borderColor: "color-mix(in srgb, var(--color-accent) 20%, var(--color-line))",
+      }}
     >
-      <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "var(--color-accent)" }}>
-        Pregunta del día
-      </p>
-      <p className="mt-1.5 text-base font-semibold" style={{ color: "var(--color-ink)" }}>
+      <div className="flex items-center gap-2">
+        <span
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+          style={{
+            background: "color-mix(in srgb, var(--color-accent) 18%, var(--color-surface))",
+            color: "var(--color-accent)",
+          }}
+        >
+          <HelpCircle size={15} strokeWidth={2.3} />
+        </span>
+        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--color-accent)" }}>
+          Pregunta del día
+        </p>
+      </div>
+      <p className="mt-2 text-base font-semibold" style={{ color: "var(--color-ink)" }}>
         {round.question.text}
       </p>
 

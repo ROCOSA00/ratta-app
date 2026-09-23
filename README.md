@@ -101,6 +101,9 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
     "Más", solo puedes escribir en tu propia carpeta (probado con un
     stub local de `storage.objects`); pendiente de aplicar la
     migración
+  - [x] Pulido visual: tarjetas con icono y tinte de color por
+    sección (paleta existente, sin colores nuevos) en Inicio,
+    Calendario, Notas y El Trono, en vez del blanco plano de antes
   - [ ] Minijuego (tipo Brick Breaker) con puntuaciones — fase propia
   - [ ] Tests automatizados (Vitest/Playwright)
 - [ ] **Fase 12** — GitHub + Vercel

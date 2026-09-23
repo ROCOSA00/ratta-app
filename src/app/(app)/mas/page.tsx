@@ -30,7 +30,10 @@ export default async function MasPage() {
 
       <div
         className="mx-5 mt-5 flex flex-col gap-4 rounded-2xl border p-4"
-        style={{ background: "var(--color-surface)", borderColor: "var(--color-line)" }}
+        style={{
+          background: "color-mix(in srgb, var(--color-accent-2) 6%, var(--color-surface))",
+          borderColor: "color-mix(in srgb, var(--color-accent-2) 18%, var(--color-line))",
+        }}
       >
         <div className="flex items-center justify-between gap-3">
           <p className="truncate text-sm" style={{ color: "var(--color-ink)" }}>

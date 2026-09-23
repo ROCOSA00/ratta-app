@@ -27,37 +27,51 @@ export function NoteList({ notes }: { notes: NoteRow[] }) {
 
   return (
     <ul className="mx-5 flex flex-col gap-2">
-      {notes.map((note) => (
-        <li
-          key={note.id}
-          className="rounded-2xl border p-4"
-          style={{ background: "var(--color-surface)", borderColor: "var(--color-line)" }}
-        >
-          <div className="flex items-start justify-between gap-2">
-            <p className="text-sm font-medium" style={{ color: "var(--color-ink)" }}>
-              {note.title}
+      {notes.map((note) => {
+        const tint = note.is_pinned ? "var(--color-gold)" : "var(--color-accent)";
+        return (
+          <li
+            key={note.id}
+            className="rounded-2xl border p-4"
+            style={{
+              background: `color-mix(in srgb, ${tint} 6%, var(--color-surface))`,
+              borderColor: `color-mix(in srgb, ${tint} 18%, var(--color-line))`,
+            }}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                  style={{ background: `color-mix(in srgb, ${tint} 18%, var(--color-surface))`, color: tint }}
+                >
+                  <NotebookPen size={14} strokeWidth={2.3} />
+                </span>
+                <p className="text-sm font-medium" style={{ color: "var(--color-ink)" }}>
+                  {note.title}
+                </p>
+              </div>
+              <form action={togglePin}>
+                <input type="hidden" name="noteId" value={note.id} />
+                <input type="hidden" name="nextPinned" value={(!note.is_pinned).toString()} />
+                <button
+                  type="submit"
+                  aria-label={note.is_pinned ? "Desfijar nota" : "Fijar nota"}
+                  className="shrink-0 rounded-full p-1"
+                  style={{ color: note.is_pinned ? "var(--color-gold)" : "var(--color-muted)" }}
+                >
+                  <Pin size={16} fill={note.is_pinned ? "currentColor" : "none"} />
+                </button>
+              </form>
+            </div>
+            <p className="mt-1.5 line-clamp-3 text-sm" style={{ color: "var(--color-muted)" }}>
+              {note.content}
             </p>
-            <form action={togglePin}>
-              <input type="hidden" name="noteId" value={note.id} />
-              <input type="hidden" name="nextPinned" value={(!note.is_pinned).toString()} />
-              <button
-                type="submit"
-                aria-label={note.is_pinned ? "Desfijar nota" : "Fijar nota"}
-                className="shrink-0 rounded-full p-1"
-                style={{ color: note.is_pinned ? "var(--color-accent)" : "var(--color-muted)" }}
-              >
-                <Pin size={16} fill={note.is_pinned ? "currentColor" : "none"} />
-              </button>
-            </form>
-          </div>
-          <p className="mt-1 line-clamp-3 text-sm" style={{ color: "var(--color-muted)" }}>
-            {note.content}
-          </p>
-          <p className="mt-2 text-xs" style={{ color: "var(--color-muted)" }}>
-            {formatDate(note.created_at)}
-          </p>
-        </li>
-      ))}
+            <p className="mt-2 text-xs" style={{ color: "var(--color-muted)" }}>
+              {formatDate(note.created_at)}
+            </p>
+          </li>
+        );
+      })}
     </ul>
   );
 }
