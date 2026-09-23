@@ -1,21 +1,14 @@
-import { redirect } from "next/navigation";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { createClient } from "@/lib/supabase/server";
 
-export default async function AppLayout({
+// La comprobación de sesión ya la hace middleware.ts en cada petición
+// (incluida esta), así que repetirla aquí solo añadía una segunda
+// llamada de red a Supabase Auth en cada navegación, sin ganar nada:
+// este layout no usaba el usuario para nada más que ese chequeo.
+export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col">
       <div className="flex-1 pb-24">{children}</div>
