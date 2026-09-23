@@ -1,11 +1,14 @@
-import { NotebookPen, Pin } from "lucide-react";
+import Link from "next/link";
+import { ListChecks, NotebookPen, Pin } from "lucide-react";
 import { formatDate } from "@/lib/format-date";
-import { togglePin } from "./actions";
+import { ConfirmDeleteButton } from "@/components/shared/ConfirmDeleteButton";
+import { togglePin, deleteNote } from "./actions";
 
 export type NoteRow = {
   id: string;
   title: string;
   content: string;
+  note_type: "text" | "checklist";
   created_at: string;
   is_pinned: boolean;
 };
@@ -29,6 +32,7 @@ export function NoteList({ notes }: { notes: NoteRow[] }) {
     <ul className="mx-5 flex flex-col gap-2">
       {notes.map((note) => {
         const tint = note.is_pinned ? "var(--color-gold)" : "var(--color-accent)";
+        const Icon = note.note_type === "checklist" ? ListChecks : NotebookPen;
         return (
           <li
             key={note.id}
@@ -39,36 +43,47 @@ export function NoteList({ notes }: { notes: NoteRow[] }) {
             }}
           >
             <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-2">
+              <Link href={`/notas/${note.id}`} className="flex min-w-0 flex-1 items-center gap-2">
                 <span
                   className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
                   style={{ background: `color-mix(in srgb, ${tint} 18%, var(--color-surface))`, color: tint }}
                 >
-                  <NotebookPen size={14} strokeWidth={2.3} />
+                  <Icon size={14} strokeWidth={2.3} />
                 </span>
-                <p className="text-sm font-medium" style={{ color: "var(--color-ink)" }}>
+                <p className="truncate text-sm font-medium" style={{ color: "var(--color-ink)" }}>
                   {note.title}
                 </p>
+              </Link>
+              <div className="flex shrink-0 items-center">
+                <form action={togglePin}>
+                  <input type="hidden" name="noteId" value={note.id} />
+                  <input type="hidden" name="nextPinned" value={(!note.is_pinned).toString()} />
+                  <button
+                    type="submit"
+                    aria-label={note.is_pinned ? "Desfijar nota" : "Fijar nota"}
+                    className="rounded-full p-1.5"
+                    style={{ color: note.is_pinned ? "var(--color-gold)" : "var(--color-muted)" }}
+                  >
+                    <Pin size={16} fill={note.is_pinned ? "currentColor" : "none"} />
+                  </button>
+                </form>
+                <form action={deleteNote}>
+                  <input type="hidden" name="noteId" value={note.id} />
+                  <ConfirmDeleteButton
+                    label="Borrar nota"
+                    confirmMessage={`¿Borrar la nota "${note.title}"? No se puede deshacer.`}
+                  />
+                </form>
               </div>
-              <form action={togglePin}>
-                <input type="hidden" name="noteId" value={note.id} />
-                <input type="hidden" name="nextPinned" value={(!note.is_pinned).toString()} />
-                <button
-                  type="submit"
-                  aria-label={note.is_pinned ? "Desfijar nota" : "Fijar nota"}
-                  className="shrink-0 rounded-full p-1"
-                  style={{ color: note.is_pinned ? "var(--color-gold)" : "var(--color-muted)" }}
-                >
-                  <Pin size={16} fill={note.is_pinned ? "currentColor" : "none"} />
-                </button>
-              </form>
             </div>
-            <p className="mt-1.5 line-clamp-3 text-sm" style={{ color: "var(--color-muted)" }}>
-              {note.content}
-            </p>
-            <p className="mt-2 text-xs" style={{ color: "var(--color-muted)" }}>
-              {formatDate(note.created_at)}
-            </p>
+            <Link href={`/notas/${note.id}`} className="block">
+              <p className="mt-1.5 line-clamp-3 text-sm" style={{ color: "var(--color-muted)" }}>
+                {note.note_type === "checklist" ? "Lista de tareas · toca para ver" : note.content}
+              </p>
+              <p className="mt-2 text-xs" style={{ color: "var(--color-muted)" }}>
+                {formatDate(note.created_at)}
+              </p>
+            </Link>
           </li>
         );
       })}

@@ -4,11 +4,24 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
+import { zonedInputToUTC } from "@/lib/format-date";
 
-const newEventSchema = z.object({
-  title: z.string().trim().min(1, "Ponle un título al evento."),
-  date: z.string().min(1, "Elige una fecha."),
-  time: z.string().min(1, "Elige una hora."),
+const newEventSchema = z
+  .object({
+    title: z.string().trim().min(1, "Ponle un título al evento."),
+    date: z.string().min(1, "Elige una fecha."),
+    time: z.string().optional(),
+    allDay: z.enum(["true", "false"]).default("false"),
+    location: z.string().trim().max(200, "Máximo 200 caracteres.").optional(),
+    description: z.string().trim().max(1000, "Máximo 1000 caracteres.").optional(),
+  })
+  .refine((data) => data.allDay === "true" || !!data.time, {
+    message: "Elige una hora.",
+    path: ["time"],
+  });
+
+const deleteEventSchema = z.object({
+  eventId: z.string().uuid(),
 });
 
 export type NewEventState = { error: string | null };
@@ -21,17 +34,30 @@ export async function createEvent(
     title: formData.get("title"),
     date: formData.get("date"),
     time: formData.get("time"),
+    allDay: formData.get("allDay") === "on" ? "true" : "false",
+    location: formData.get("location"),
+    description: formData.get("description"),
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   }
 
-  const startAt = new Date(`${parsed.data.date}T${parsed.data.time}`);
+  const isAllDay = parsed.data.allDay === "true";
+  let startAt: Date;
+  let endAt: Date;
+
+  if (isAllDay) {
+    startAt = zonedInputToUTC(`${parsed.data.date}T00:00`);
+    endAt = zonedInputToUTC(`${parsed.data.date}T23:59`);
+  } else {
+    startAt = zonedInputToUTC(`${parsed.data.date}T${parsed.data.time}`);
+    endAt = new Date(startAt.getTime() + 60 * 60 * 1000);
+  }
+
   if (Number.isNaN(startAt.getTime())) {
     return { error: "Fecha u hora no válidas." };
   }
-  const endAt = new Date(startAt.getTime() + 60 * 60 * 1000);
 
   const supabase = await createClient();
   const {
@@ -56,6 +82,9 @@ export async function createEvent(
     title: parsed.data.title,
     start_at: startAt.toISOString(),
     end_at: endAt.toISOString(),
+    all_day: isAllDay,
+    location: parsed.data.location || null,
+    description: parsed.data.description || null,
   });
 
   if (error) {
@@ -63,5 +92,19 @@ export async function createEvent(
   }
 
   revalidatePath("/calendario");
+  revalidatePath("/inicio");
   return { error: null };
+}
+
+export async function deleteEvent(formData: FormData): Promise<void> {
+  const parsed = deleteEventSchema.safeParse({ eventId: formData.get("eventId") });
+  if (!parsed.success) return;
+
+  const supabase = await createClient();
+  // La RLS de events ya exige que el evento pertenezca a un espacio del
+  // que el usuario es miembro, igual que en el resto de acciones por id.
+  await supabase.from("events").delete().eq("id", parsed.data.eventId);
+
+  revalidatePath("/calendario");
+  revalidatePath("/inicio");
 }

@@ -1,9 +1,14 @@
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
+
 export function PageHeader({
   title,
   subtitle,
+  backHref,
 }: {
   title: string;
   subtitle?: string;
+  backHref?: string;
 }) {
   return (
     <header
@@ -15,6 +20,16 @@ export function PageHeader({
         paddingTop: "calc(env(safe-area-inset-top, 0px) + 1.25rem)",
       }}
     >
+      {backHref ? (
+        <Link
+          href={backHref}
+          className="mb-1 flex items-center gap-0.5 text-sm font-medium"
+          style={{ color: "var(--color-muted)" }}
+        >
+          <ChevronLeft size={16} />
+          Volver
+        </Link>
+      ) : null}
       <h1 className="text-2xl font-semibold" style={{ color: "var(--color-ink)" }}>
         {title}
       </h1>

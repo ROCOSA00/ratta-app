@@ -32,16 +32,19 @@ export function BottomNav() {
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
-      <ul className="mx-auto flex max-w-md items-stretch justify-between px-2">
+      <ul className="mx-auto flex max-w-md items-stretch justify-between px-2 py-1.5">
         {TABS.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href || pathname.startsWith(href + "/");
           return (
             <li key={href} className="flex-1">
               <Link
                 href={href}
-                className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl py-1.5 text-[11px] font-medium transition-colors"
+                className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl py-1.5 text-[11px] font-medium transition-all duration-150"
                 style={{
                   color: isActive ? "var(--color-accent)" : "var(--color-muted)",
+                  background: isActive
+                    ? "color-mix(in srgb, var(--color-accent) 10%, transparent)"
+                    : "transparent",
                 }}
                 aria-current={isActive ? "page" : undefined}
               >
