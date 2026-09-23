@@ -28,7 +28,9 @@ function sameSecret(given: string, expected: string): boolean {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  const secret = process.env.MOMENT_CRON_SECRET;
+  // trim(): al pegar la clave en Vercel es fácil que se cuele un espacio o
+  // un salto de línea al principio o al final.
+  const secret = process.env.MOMENT_CRON_SECRET?.trim();
   if (!secret) return Response.json({ error: "not configured" }, { status: 503 });
 
   const header = request.headers.get("authorization") ?? "";
