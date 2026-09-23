@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
 import { QuestionOfTheDay } from "@/components/features/QuestionOfTheDay";
 import { RenameForm } from "./RenameForm";
+import { AvatarUpload } from "./AvatarUpload";
 
 export default async function MasPage() {
   const supabase = await createClient();
@@ -12,13 +13,15 @@ export default async function MasPage() {
   } = await supabase.auth.getUser();
 
   let displayName = "";
+  let avatarUrl: string | null = null;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("display_name")
+      .select("display_name, avatar_url")
       .eq("id", user.id)
       .maybeSingle();
     displayName = (profile?.display_name as string | undefined) ?? "";
+    avatarUrl = (profile?.avatar_url as string | null | undefined) ?? null;
   }
 
   return (
@@ -47,6 +50,8 @@ export default async function MasPage() {
             </button>
           </form>
         </div>
+
+        {user ? <AvatarUpload userId={user.id} currentAvatarUrl={avatarUrl} /> : null}
 
         <RenameForm currentName={displayName} />
       </div>

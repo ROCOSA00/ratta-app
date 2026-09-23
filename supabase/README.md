@@ -20,6 +20,28 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Migración pendiente de aplicar: almacenamiento de avatares
+
+`20260923140000_avatar_storage.sql` (Fase 11) crea el bucket
+`avatars` de Supabase Storage (público para lectura, solo fotos de
+perfil, no datos sensibles) y las políticas RLS de `storage.objects`:
+cada persona solo puede subir/reemplazar/borrar dentro de su propia
+carpeta (`avatars/<su-uuid>/...`), nunca en la de su pareja. También
+limita el tamaño (3 MB) y el tipo de archivo (solo imágenes) a nivel
+de Supabase, no solo en el navegador.
+
+`storage.objects` no la creamos nosotros (es infraestructura propia
+de Supabase), así que para validarla se montó un *stub* local de esa
+tabla + la función `storage.foldername()` que usa Supabase de verdad,
+y se comprobó con datos reales: subir a tu propia carpeta funciona,
+subir a la ajena falla, reemplazar tu propia foto funciona, borrar la
+de tu pareja no afecta ninguna fila. El primer intento tenía un fallo
+(faltaba la política de `SELECT`, y sin ella ni siquiera veías tu
+propia foto) — se detectó y corrigió antes de dar la migración por
+buena, no después.
+
+Pégala en el SQL Editor como las anteriores.
+
 ## Dar de alta el Ratta Space (una sola vez) — ✅ ya hecho
 
 `spaces` y `space_members` no tienen políticas de `INSERT` para la app:

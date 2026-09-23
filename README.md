@@ -97,7 +97,10 @@ A medida que avancen las fases se añadirán las carpetas `features/`,
   - [x] Pulido divertido (paquete 1): confeti de emojis al registrar
     en El Trono, mensajitos de cariño entre los dos (reutiliza
     `activity_log`, sin migración nueva), cambiar tu nombre desde "Más"
-  - [ ] Foto de perfil (avatar) — necesita activar Supabase Storage
+  - [~] Foto de perfil (avatar): bucket de Storage + subida desde
+    "Más", solo puedes escribir en tu propia carpeta (probado con un
+    stub local de `storage.objects`); pendiente de aplicar la
+    migración
   - [ ] Minijuego (tipo Brick Breaker) con puntuaciones — fase propia
   - [ ] Tests automatizados (Vitest/Playwright)
 - [ ] **Fase 12** — GitHub + Vercel
