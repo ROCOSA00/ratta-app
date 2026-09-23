@@ -97,7 +97,7 @@ ratta-app/
 ├── src/
 │   ├── app/
 │   │   ├── (app)/       # páginas protegidas: inicio, calendario, notas,
-│   │   │                #   juegos (El Trono), mas
+│   │   │                #   juegos (El Trono), perfil, recuerdos
 │   │   └── login/       # página de acceso
 │   ├── components/
 │   │   ├── features/    # componentes compartidos entre Inicio y sus páginas
@@ -226,6 +226,12 @@ puntuales según se van usando:
   fallan sin el arreglo. También: la Pregunta del día cambiaba a la
   01:00-02:00 (UTC) en vez de a medianoche en Madrid, y una lista fijada
   salía vacía en Inicio.
+- **Perfil, música y recuerdos**: "Más" pasa a ser **Perfil**, con foto de
+  portada y un diseño nuevo (`/mas` redirige a `/perfil`). Inicio muestra
+  vuestra playlist de Spotify y un **recuerdo del día**. Nueva galería
+  **Recuerdos** con fotos privadas (bucket privado + enlaces firmados).
+  Las fotos se reducen en el móvil antes de subirlas, lo que además
+  quita la ubicación GPS que llevan dentro.
 
 ## Notas de seguridad
 
