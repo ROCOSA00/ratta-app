@@ -20,11 +20,14 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Momento Ratta — ⏳ pendiente de aplicar
+## Momento Ratta — ✅ ya aplicada y en marcha
 
 `20260927100000_momento_ratta.sql` + la puesta en marcha de
 `setup/momento_despertador.sql` (que **no** es una migración: crea una
 clave propia de esta instalación y programa el despertador).
+Aplicada en producción: extensiones activadas, clave creada en Vault y
+copiada a `MOMENT_CRON_SECRET` en Vercel, y despertador programado
+(`cron.schedule('momento-ratta', ...)`).
 
 **Cómo funciona.** `moment_tick()` se ejecuta cada minuto con `pg_cron`.
 La primera vez de cada día elige para cada espacio una hora al azar entre
