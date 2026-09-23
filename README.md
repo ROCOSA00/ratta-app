@@ -169,6 +169,27 @@ ratta-app/
   este README explicando cómo encajan GitHub, Vercel y Supabase —
   ver el detalle completo en `supabase/README.md`
 
+## Mejoras posteriores a la Fase 15
+
+Con las 15 fases completas, la app sigue evolucionando con mejoras
+puntuales según se van usando:
+
+- **Rendimiento**: la navegación entre pestañas comprobaba la sesión
+  dos veces por click (middleware + layout duplicado); se eliminó la
+  comprobación repetida y se añadió una pantalla de carga instantánea
+  ([PR #10](https://github.com/ROCOSA00/ratta-app/pull/10)).
+- **Borrar**: notas y eventos del calendario ahora se pueden borrar
+  (con confirmación), usando las políticas RLS de `DELETE` que ya
+  existían desde la Fase 4.
+- **Calendario**: vista de mes (rejilla) y semana, además de la lista
+  original; ubicación y descripción en los eventos; corregido un bug
+  real de zona horaria (el servidor corre en UTC, no en hora de
+  Madrid — las horas podían mostrarse o guardarse desplazadas 1-2h).
+- **Notas**: página de detalle para ver/editar una nota completa (antes
+  solo se veían 3 líneas sin poder editar), y un nuevo tipo "lista"
+  con casillas, usando la tabla `note_items` que existía desde la
+  Fase 4 sin usarse.
+
 ## Notas de seguridad
 
 - Todas las tablas de Supabase usan **RLS** (Row Level Security): un
