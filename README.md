@@ -240,6 +240,11 @@ puntuales según se van usando:
   responde la pregunta del día (sin revelar la respuesta) o visita El
   Trono. Requiere la variable `VAPID_PRIVATE_KEY` en Vercel; en iPhone,
   la app instalada en la pantalla de inicio (iOS 16.4+).
+- **Más mensajitos**: 22 mensajitos en tres grupos (Cariño, Planes,
+  Tonterías) dentro de un selector plegable, para no llenar Inicio de
+  botones. La lista vive en `src/lib/nudges/options.ts`; el móvil solo
+  envía la clave y el servidor pone el emoji y el texto, así nadie puede
+  colar un mensaje inventado en la notificación.
 
 ## Notas de seguridad
 
