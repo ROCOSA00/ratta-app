@@ -36,7 +36,7 @@ import {
   updateNote,
   updateNoteTitle,
 } from "@/app/(app)/notas/actions";
-import { createEvent, deleteEvent } from "@/app/(app)/calendario/actions";
+import { addEventPhoto, createEvent, deleteEvent, deleteEventPhoto } from "@/app/(app)/calendario/actions";
 import { logEntry, undoEntry } from "@/lib/poop/actions";
 import { submitAnswer } from "@/lib/questions/actions";
 import { sendNudge } from "@/lib/nudges/actions";
@@ -51,6 +51,7 @@ const NOTE_ID = "11111111-1111-4111-8111-111111111111";
 const ITEM_ID = "22222222-2222-4222-8222-222222222222";
 const EVENT_ID = "33333333-3333-4333-8333-333333333333";
 const ROUND_ID = "44444444-4444-4444-8444-444444444444";
+const PHOTO_ID = "55555555-5555-4555-8555-555555555555";
 
 beforeEach(() => {
   state.fake = createFakeSupabase();
@@ -213,6 +214,88 @@ describe("Calendario", () => {
   it("borra un plan", async () => {
     await deleteEvent(form({ eventId: EVENT_ID }));
     expect(opsOf("events", "delete")[0]?.filters).toEqual([["id", EVENT_ID]]);
+  });
+
+  it("al borrar un plan también quita sus fotos del almacén, y desde el detalle vuelve al calendario", async () => {
+    state.fake = createFakeSupabase({
+      results: { "event_photos:select": { data: [{ storage_path: "s/a.jpg" }, { storage_path: "s/b.jpg" }], error: null } },
+    });
+    await expect(deleteEvent(form({ eventId: EVENT_ID, redirect: "1" }))).rejects.toThrow("NEXT_REDIRECT:/calendario");
+    expect(opsOf("events", "delete")).toHaveLength(1);
+    expect(state.fake.storage.removed).toEqual([{ bucket: "event-photos", paths: ["s/a.jpg", "s/b.jpg"] }]);
+  });
+});
+
+// ------------------------------------------------------- Fotos de planes
+
+describe("Fotos de planes", () => {
+  const SPACE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const PATH = `${SPACE}/dddddddd-dddd-4ddd-8ddd-dddddddddddd.jpg`;
+  const withEvent = (startAt: string) =>
+    createFakeSupabase({
+      results: { "events:select": { data: { id: EVENT_ID, title: "Cena", start_at: startAt }, error: null } },
+    });
+
+  beforeEach(() => {
+    state.spaceId = SPACE;
+  });
+
+  it("añade una foto a un plan de hoy o pasado y avisa a tu pareja", async () => {
+    state.fake = withEvent("2020-05-01T18:00:00Z");
+    expect(await addEventPhoto({ eventId: EVENT_ID, path: PATH })).toEqual({ error: null });
+    expect(opsOf("event_photos", "insert")[0]?.payload).toEqual({
+      space_id: SPACE,
+      event_id: EVENT_ID,
+      uploaded_by: "user-me",
+      storage_path: PATH,
+    });
+    expect(state.notified[0]).toMatchObject({
+      title: "📸 Fotos del plan",
+      body: "Rokito ha añadido una foto a «Cena»",
+      url: `/calendario/${EVENT_ID}`,
+    });
+  });
+
+  it("no deja añadir fotos antes del día del plan", async () => {
+    state.fake = withEvent("2999-01-01T18:00:00Z");
+    expect((await addEventPhoto({ eventId: EVENT_ID, path: PATH })).error).toBe(
+      "Podréis añadir fotos a partir del día del plan.",
+    );
+    expect(opsOf("event_photos", "insert")).toHaveLength(0);
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("si el plan no existe (o no es vuestro), no guarda nada", async () => {
+    state.fake = createFakeSupabase({ results: { "events:select": { data: null, error: null } } });
+    expect((await addEventPhoto({ eventId: EVENT_ID, path: PATH })).error).toBe("Ese plan ya no existe.");
+    expect(opsOf("event_photos", "insert")).toHaveLength(0);
+  });
+
+  it("rechaza rutas de otro espacio o manipuladas", async () => {
+    for (const path of [
+      "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/dddddddd-dddd-4ddd-8ddd-dddddddddddd.jpg",
+      `${SPACE}/../x.jpg`,
+      "https://evil.test/x.jpg",
+    ]) {
+      expect((await addEventPhoto({ eventId: EVENT_ID, path })).error).toBe("Ruta de foto no válida.");
+    }
+    expect((await addEventPhoto({ eventId: "no-es-uuid", path: PATH })).error).toBeTruthy();
+    expect(state.fake.ops).toHaveLength(0);
+  });
+
+  it("quitar una foto borra la fila y el fichero", async () => {
+    state.fake = createFakeSupabase({
+      results: { "event_photos:delete": { data: { storage_path: PATH, event_id: EVENT_ID }, error: null } },
+    });
+    expect(await deleteEventPhoto(PHOTO_ID)).toEqual({ error: null });
+    expect(opsOf("event_photos", "delete")[0]?.filters).toEqual([["id", PHOTO_ID]]);
+    expect(state.fake.storage.removed).toEqual([{ bucket: "event-photos", paths: [PATH] }]);
+  });
+
+  it("si no se pudo borrar la fila (no es vuestra), no toca el almacén", async () => {
+    state.fake = createFakeSupabase({ results: { "event_photos:delete": { data: null, error: null } } });
+    expect((await deleteEventPhoto(PHOTO_ID)).error).toBeTruthy();
+    expect(state.fake.storage.removed).toHaveLength(0);
   });
 });
 
