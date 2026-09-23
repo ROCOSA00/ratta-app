@@ -73,6 +73,23 @@ h4 {
   text-wrap: balance;
 }
 
+/* Respuesta táctil al pulsar, como en una app nativa. */
+button:not(:disabled),
+a {
+  transition: transform 120ms ease;
+}
+button:not(:disabled):active,
+a:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled):active,
+  a:active {
+    transform: none;
+  }
+}
+
 .font-mono-nums {
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   font-variant-numeric: tabular-nums;
