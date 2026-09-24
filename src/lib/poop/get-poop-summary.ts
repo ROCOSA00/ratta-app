@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
 import { computeStats, type PoopEntry, type UserStats } from "./stats";
+import { getAuthUser } from "@/lib/auth/get-user";
 
 export type PoopSummary = {
   currentUserId: string;
@@ -23,7 +24,7 @@ export async function getPoopSummary(): Promise<PoopSummary | null> {
     { data: members },
     { data: entries },
   ] = await Promise.all([
-    supabase.auth.getUser(),
+    getAuthUser(),
     supabase.from("space_members").select("user_id").eq("space_id", spaceId),
     supabase.from("poop_entries").select("user_id, logged_at").eq("space_id", spaceId),
   ]);

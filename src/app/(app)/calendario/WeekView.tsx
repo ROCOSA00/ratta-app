@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LinkPending } from "./LinkPending";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { addDays, dayLabel, todayKey, toDateKey, weekKeys } from "@/lib/calendar/date-utils";
 import { EventCard, type EventRow } from "./EventList";
@@ -26,11 +27,13 @@ export function WeekView({ refKey, events }: { refKey: string; events: EventRow[
       >
         <Link
           href={`/calendario?view=week&ref=${prevRef}`}
+          prefetch
           aria-label="Semana anterior"
-          className="rounded-full p-1.5"
+          className="relative rounded-full p-1.5"
           style={{ color: "var(--color-muted)" }}
         >
           <ChevronLeft size={18} />
+          <LinkPending />
         </Link>
         <p className="text-sm font-semibold capitalize" style={{ color: "var(--color-ink)" }}>
           {/* weekKeys() siempre devuelve exactamente 7 keys */}
@@ -38,11 +41,13 @@ export function WeekView({ refKey, events }: { refKey: string; events: EventRow[
         </p>
         <Link
           href={`/calendario?view=week&ref=${nextRef}`}
+          prefetch
           aria-label="Semana siguiente"
-          className="rounded-full p-1.5"
+          className="relative rounded-full p-1.5"
           style={{ color: "var(--color-muted)" }}
         >
           <ChevronRight size={18} />
+          <LinkPending />
         </Link>
       </div>
 

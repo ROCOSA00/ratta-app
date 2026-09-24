@@ -124,7 +124,8 @@ a:active {
   .nav-pop,
   .nav-badge,
   .page-in,
-  .splash-logo {
+  .splash-logo,
+  .member-float {
     animation: none;
   }
 }
@@ -266,6 +267,118 @@ a:active {
 
 .tour-card {
   animation: page-in 220ms ease-out;
+}
+
+/* Enlace tocado mientras llega la pantalla nueva (LinkPending). */
+.link-pending {
+  animation: link-pending 0.9s ease-in-out infinite;
+}
+
+@keyframes link-pending {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Carnet de Ratta (MemberCard): tarjeta 3D con brillo holográfico que se
+   mueve con el giro (--mx / --my). */
+.member-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow:
+    0 24px 60px -18px rgba(225, 34, 94, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.25) inset;
+}
+
+.member-front {
+  background:
+    radial-gradient(circle at 85% 15%, rgba(255, 145, 82, 0.55), transparent 45%),
+    linear-gradient(135deg, #3b1260 0%, #7c3aed 38%, #e1225e 72%, #ff7a45 100%);
+}
+
+.member-back {
+  background: linear-gradient(315deg, #3b1260 0%, #7c3aed 40%, #e1225e 78%, #ff7a45 100%);
+}
+
+.member-holo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.55), transparent 42%),
+    repeating-linear-gradient(
+      115deg,
+      rgba(255, 0, 132, 0.28) 0%,
+      rgba(255, 213, 0, 0.26) 7%,
+      rgba(0, 255, 170, 0.24) 14%,
+      rgba(0, 170, 255, 0.26) 21%,
+      rgba(170, 85, 255, 0.28) 28%,
+      rgba(255, 0, 132, 0.28) 35%
+    );
+  background-size:
+    100% 100%,
+    240% 240%;
+  background-position:
+    center,
+    var(--mx, 50%) var(--my, 50%);
+  mix-blend-mode: overlay;
+  opacity: 0.9;
+}
+
+.member-photo-holo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.35) 45%,
+    rgba(255, 0, 170, 0.2) 55%,
+    transparent 70%
+  );
+  background-size: 250% 250%;
+  background-position: var(--mx, 50%) var(--my, 50%);
+  mix-blend-mode: screen;
+}
+
+.member-badge {
+  color: #3b1260;
+  background: linear-gradient(90deg, #ffe29a, #ffffff, #ffc0e0, #ffe29a);
+  background-size: 250% 100%;
+  background-position: var(--mx, 50%) 50%;
+}
+
+.member-chip {
+  display: block;
+  width: 38px;
+  height: 28px;
+  border-radius: 6px;
+  background:
+    linear-gradient(90deg, transparent 45%, rgba(0, 0, 0, 0.25) 45%, rgba(0, 0, 0, 0.25) 55%, transparent 55%),
+    linear-gradient(0deg, transparent 45%, rgba(0, 0, 0, 0.25) 45%, rgba(0, 0, 0, 0.25) 55%, transparent 55%),
+    linear-gradient(135deg, #fff1b8, #e5b94e 55%, #b8862a);
+}
+
+.member-signature {
+  font-family: "Snell Roundhand", "Segoe Script", "Brush Script MT", cursive;
+}
+
+.member-float {
+  animation: member-float 4s ease-in-out infinite;
+}
+
+@keyframes member-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 /* Juego de los corazones: cada toque lanza un corazón que sube y se

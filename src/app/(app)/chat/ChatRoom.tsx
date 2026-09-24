@@ -8,6 +8,8 @@ import { markChatRead, sendMessage, sendPhotoMessage } from "@/lib/chat/actions"
 import { CHAT_BUCKET, SIGNED_URL_SECONDS, type ChatMessage } from "@/lib/chat/types";
 import { resizeImage } from "@/lib/images/resize";
 import { TIME_ZONE } from "@/lib/format-date";
+import { MemberCard, type MemberCardPerson } from "@/components/features/MemberCard";
+import { findStatus } from "@/lib/status/options";
 import { addDays, dayLabel, todayKey, toDateKey } from "@/lib/calendar/date-utils";
 
 const timeFormatter = new Intl.DateTimeFormat("es-ES", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit" });
@@ -48,13 +50,18 @@ export function ChatRoom({
   partnerName,
   partnerAvatar,
   initialMessages,
+  card,
 }: {
   spaceId: string;
   myId: string;
   partnerName: string;
   partnerAvatar: string | null;
   initialMessages: ChatMessage[];
+  /** Datos del carnet de tu pareja (se abre tocando su cara o su nombre). */
+  card: { person: MemberCardPerson; partnerName: string; sinceLabel: string; daysTogether: number } | null;
 }) {
+  const [showCard, setShowCard] = useState(false);
+  const partnerStatus = findStatus(card?.person.statusKey);
   const [messages, setMessages] = useState(initialMessages);
   const [text, setText] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
@@ -212,25 +219,45 @@ export function ChatRoom({
           paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)",
         }}
       >
-        <span
-          className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-lg"
-          style={{ backgroundImage: "var(--color-gradient)" }}
+        <button
+          type="button"
+          onClick={() => card && setShowCard(true)}
+          className="flex min-w-0 items-center gap-3 text-left"
+          aria-label={card ? `Ver el carnet de ${partnerName}` : undefined}
+          data-tour="chat-card"
         >
-          {partnerAvatar ? (
-            <Image src={partnerAvatar} alt="" fill sizes="40px" className="object-cover" />
-          ) : (
-            <span>💞</span>
-          )}
-        </span>
-        <div>
-          <h1 className="text-lg leading-tight" style={{ color: "var(--color-ink)" }}>
-            {partnerName}
-          </h1>
-          <p className="text-xs" style={{ color: "var(--color-muted)" }}>
-            Solo vosotros dos 🔒
-          </p>
-        </div>
+          <span
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-lg"
+            style={{ backgroundImage: "var(--color-gradient)" }}
+          >
+            {partnerAvatar ? (
+              <Image src={partnerAvatar} alt="" fill sizes="40px" className="object-cover" />
+            ) : (
+              <span>💞</span>
+            )}
+          </span>
+          <span className="min-w-0">
+            <span className="block text-lg font-bold leading-tight" style={{ color: "var(--color-ink)" }}>
+              {partnerName}
+            </span>
+            <span className="block truncate text-xs" style={{ color: "var(--color-muted)" }}>
+              {partnerStatus
+                ? `${partnerStatus.emoji} ${partnerStatus.label}${card?.person.statusNote ? ` · ${card.person.statusNote}` : ""}`
+                : "Toca para ver su carnet 🪪"}
+            </span>
+          </span>
+        </button>
       </header>
+
+      {showCard && card ? (
+        <MemberCard
+          person={card.person}
+          partnerName={card.partnerName}
+          sinceLabel={card.sinceLabel}
+          daysTogether={card.daysTogether}
+          onClose={() => setShowCard(false)}
+        />
+      ) : null}
 
       <div className={`flex flex-col gap-1 px-4 pt-3 ${photo ? "pb-56" : "pb-36"}`}>
         {messages.length === 0 ? (

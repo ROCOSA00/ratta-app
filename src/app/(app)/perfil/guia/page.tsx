@@ -5,6 +5,7 @@ import {
   Camera,
   Gamepad2,
   Settings,
+  Smile,
   Heart,
   HeartHandshake,
   MessageCircleHeart,
@@ -120,6 +121,10 @@ export default function GuiaPage() {
           <p>
             Con el botón 📷 puedes mandar <B>fotos</B> (con un texto si quieres). Toca una foto para verla en grande.
             Son privadas: solo las veis vosotros dos.
+          </p>
+          <p>
+            Toca la <B>cara o el nombre</B> de tu pareja, arriba, y se abre su <B>carnet de Ratta</B> 🪪 holográfico:
+            arrástralo para girarlo y tócalo para darle la vuelta. Debajo de su nombre ves su <B>estado</B> de ánimo.
           </p>
           <p>
             Si tu pareja te ha escrito y aún no lo has visto, el icono del Chat de la barra de abajo lleva un{" "}
@@ -247,6 +252,17 @@ export default function GuiaPage() {
           <p>
             Vuestra playlist de Spotify, en Inicio. Dale al play para escucharla ahí mismo, o a{" "}
             <B>Abrir en Spotify</B> para ir a la app.
+          </p>
+        </Section>
+
+        <Section icon={Smile} tint="var(--color-accent)" title="Tu estado y tu carnet">
+          <p>
+            En <B>Perfil → Tu estado</B> dices cómo estás: 😍 enamorado/a, 🥺 desatendido/a, 😠 enfadado/a, 💩
+            cagón/a… con una nota si quieres. A tu pareja le llega un aviso y lo ve en el chat y en tu carnet.
+          </p>
+          <p>
+            Y con <B>Ver mi carnet de Ratta</B> ves el tuyo: tu foto, tu portada por detrás, tu nº de socia/o y los
+            días que lleváis juntos.
           </p>
         </Section>
 

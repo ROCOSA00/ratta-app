@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
 import { todayKey } from "@/lib/calendar/date-utils";
 import { AnswerForm } from "./AnswerForm";
+import { getAuthUser } from "@/lib/auth/get-user";
 
 // El día de la pregunta es el de Madrid, no el del servidor (UTC): si no,
 // la pregunta nueva no llegaba hasta la 01:00-02:00 de la madrugada.
@@ -34,7 +35,7 @@ export async function QuestionOfTheDay() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return null;
 
   const today = todayDateString();

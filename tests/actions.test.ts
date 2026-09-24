@@ -40,7 +40,7 @@ import { addEventPhoto, createEvent, deleteEvent, deleteEventPhoto } from "@/app
 import { logEntry, undoEntry } from "@/lib/poop/actions";
 import { submitAnswer } from "@/lib/questions/actions";
 import { sendNudge } from "@/lib/nudges/actions";
-import { updateDisplayName } from "@/lib/profile/actions";
+import { updateDisplayName, updateStatus } from "@/lib/profile/actions";
 import { changePassword, signIn } from "@/lib/auth/actions";
 import { addMemory, deleteMemory } from "@/lib/memories/actions";
 import { markChatRead, sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
@@ -749,6 +749,36 @@ describe("Flappy Rata", () => {
       expect((await submitFlappyScore(bad)).error).toBe("Puntuación no válida.");
     }
     expect(state.fake.rpcCalls).toHaveLength(0);
+  });
+});
+
+// ------------------------------------------------------------ Tu estado
+
+describe("Estado de ánimo", () => {
+  it("guarda tu estado en TU perfil (emoji y texto los pone el servidor) y avisa", async () => {
+    expect(await updateStatus({ key: "enamorado", note: " pensando en ti " })).toEqual({ error: null });
+    const op = opsOf("profiles", "update")[0];
+    expect(op?.payload).toMatchObject({ status_key: "enamorado", status_note: "pensando en ti" });
+    expect(op?.filters).toEqual([["id", "user-me"]]);
+    expect(state.notified).toEqual([
+      { title: "😍 Rokito", body: "Está enamorado/a: pensando en ti", url: "/chat", tag: "status" },
+    ]);
+  });
+
+  it("quitar el estado lo deja vacío y no avisa", async () => {
+    expect(await updateStatus({ key: null, note: "algo" })).toEqual({ error: null });
+    expect(opsOf("profiles", "update")[0]?.payload).toEqual({
+      status_key: null,
+      status_note: null,
+      status_updated_at: null,
+    });
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("rechaza estados inventados y notas largas", async () => {
+    expect((await updateStatus({ key: "hackeo", note: "" })).error).toBe("Estado no válido.");
+    expect((await updateStatus({ key: "feliz", note: "x".repeat(61) })).error).toBe("Máximo 60 caracteres.");
+    expect(state.fake.ops).toHaveLength(0);
   });
 });
 

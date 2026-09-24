@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
 import { todayKey } from "@/lib/calendar/date-utils";
+import { getAuthUser } from "@/lib/auth/get-user";
 
 export type FlappyPlayer = { name: string; best: number; todayBest: number; plays: number };
 
@@ -31,7 +32,7 @@ export async function getFlappySummary(): Promise<FlappySummary | null> {
     { data: members },
     { data: rows },
   ] = await Promise.all([
-    supabase.auth.getUser(),
+    getAuthUser(),
     supabase.from("space_members").select("user_id").eq("space_id", spaceId),
     supabase.from("game_days").select("user_id, day, best, plays").eq("space_id", spaceId).eq("game", "flappy"),
   ]);

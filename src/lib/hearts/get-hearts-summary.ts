@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
 import { todayKey } from "@/lib/calendar/date-utils";
 import { computeHeartStats, EMPTY_TOTALS, type HeartRow, type HeartTotals } from "./stats";
+import { getAuthUser } from "@/lib/auth/get-user";
 
 export type HeartsSummary = {
   me: { name: string; totals: HeartTotals };
@@ -21,7 +22,7 @@ export async function getHeartsSummary(): Promise<HeartsSummary | null> {
     { data: members },
     { data: rows },
   ] = await Promise.all([
-    supabase.auth.getUser(),
+    getAuthUser(),
     supabase.from("space_members").select("user_id").eq("space_id", spaceId),
     supabase.from("heart_taps").select("user_id, day, count").eq("space_id", spaceId),
   ]);

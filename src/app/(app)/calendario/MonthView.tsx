@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LinkPending } from "./LinkPending";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   addMonths,
@@ -36,22 +37,26 @@ export function MonthView({
       <div className="flex items-center justify-between">
         <Link
           href={`/calendario?view=month&ref=${prevRef}`}
+          prefetch
           aria-label="Mes anterior"
-          className="rounded-full p-1.5"
+          className="relative rounded-full p-1.5"
           style={{ color: "var(--color-muted)" }}
         >
           <ChevronLeft size={18} />
+          <LinkPending />
         </Link>
         <p className="text-sm font-semibold capitalize" style={{ color: "var(--color-ink)" }}>
           {monthLabel(refKey)}
         </p>
         <Link
           href={`/calendario?view=month&ref=${nextRef}`}
+          prefetch
           aria-label="Mes siguiente"
-          className="rounded-full p-1.5"
+          className="relative rounded-full p-1.5"
           style={{ color: "var(--color-muted)" }}
         >
           <ChevronRight size={18} />
+          <LinkPending />
         </Link>
       </div>
 
@@ -76,7 +81,7 @@ export function MonthView({
             <Link
               key={key}
               href={`/calendario?view=month&ref=${key}`}
-              className="flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg text-xs"
+              className="relative flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg text-xs"
               style={{
                 opacity: inMonth ? 1 : 0.35,
                 background: isSelected
@@ -102,6 +107,7 @@ export function MonthView({
                   </span>
                 ) : null}
               </span>
+              <LinkPending />
             </Link>
           );
         })}

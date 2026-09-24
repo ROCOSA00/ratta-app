@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
+import { getAuthUser } from "@/lib/auth/get-user";
 
 export type LatestNudge = {
   emoji: string;
@@ -17,7 +18,7 @@ export async function getLatestNudge(): Promise<LatestNudge | null> {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return null;
 
   const since = new Date(Date.now() - NUDGE_WINDOW_MS).toISOString();

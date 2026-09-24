@@ -56,21 +56,24 @@ export default async function CalendarioPage({
       // monthGridKeys()/weekKeys() siempre devuelven arrays no vacíos (42 y 7 keys).
       const rangeStart = addDays(keys[0]!, -1);
       const rangeEnd = addDays(keys[keys.length - 1]!, 2);
-      const { data } = await supabase
-        .from("events")
-        .select(EVENT_COLUMNS)
-        .eq("space_id", spaceId)
-        .gte("end_at", `${rangeStart}T00:00:00.000Z`)
-        .lt("start_at", `${rangeEnd}T00:00:00.000Z`)
-        .order("start_at", { ascending: true });
+      // Los planes y los Momentos del mes se piden a la vez, no uno tras otro.
+      const [{ data }, moments] = await Promise.all([
+        supabase
+          .from("events")
+          .select(EVENT_COLUMNS)
+          .eq("space_id", spaceId)
+          .gte("end_at", `${rangeStart}T00:00:00.000Z`)
+          .lt("start_at", `${rangeEnd}T00:00:00.000Z`)
+          .order("start_at", { ascending: true }),
+        view === "month"
+          ? Promise.all([
+              getMomentDaysInRange(spaceId, keys[0]!, keys[keys.length - 1]!),
+              getMomentForDay(spaceId, refKey),
+            ])
+          : null,
+      ]);
       events = toEventRows(data);
-
-      if (view === "month") {
-        [momentDays, dayMoment] = await Promise.all([
-          getMomentDaysInRange(spaceId, keys[0]!, keys[keys.length - 1]!),
-          getMomentForDay(spaceId, refKey),
-        ]);
-      }
+      if (moments) [momentDays, dayMoment] = moments;
     }
   }
 
