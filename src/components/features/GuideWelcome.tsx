@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Sparkles, X } from "lucide-react";
+import { Play, Sparkles, X } from "lucide-react";
+import { hasSeenTour, markTourSeen, useTour } from "@/components/tour/Tour";
 
 // Solo una comodidad de este dispositivo (recordar que ya viste la guía):
 // si el almacenamiento no está disponible, el aviso simplemente vuelve a salir.
@@ -26,9 +27,10 @@ function hasSeen(): boolean {
 
 export function GuideWelcome({ name }: { name?: string }) {
   const [visible, setVisible] = useState(false);
+  const { start } = useTour();
 
   useEffect(() => {
-    setVisible(!hasSeen());
+    setVisible(!hasSeen() && !hasSeenTour());
   }, []);
 
   if (!visible) return null;
@@ -42,6 +44,7 @@ export function GuideWelcome({ name }: { name?: string }) {
         type="button"
         onClick={() => {
           markSeen();
+          markTourSeen();
           setVisible(false);
         }}
         aria-label="Cerrar"
@@ -55,13 +58,23 @@ export function GuideWelcome({ name }: { name?: string }) {
       <p className="mt-1 pr-6 text-sm text-white/90">
         Vuestro rincón para dos. ¿Te enseño en un minuto qué es cada cosa?
       </p>
-      <Link
-        href="/perfil/guia"
-        className="mt-3 inline-block rounded-full bg-white px-4 py-1.5 text-sm font-semibold"
-        style={{ color: "var(--color-accent)" }}
-      >
-        Ver cómo funciona
-      </Link>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            markSeen();
+            setVisible(false);
+            start();
+          }}
+          className="flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-sm font-semibold"
+          style={{ color: "var(--color-accent)" }}
+        >
+          <Play size={14} /> Hacer el tutorial
+        </button>
+        <Link href="/perfil/guia" className="rounded-full px-3 py-1.5 text-sm font-semibold text-white/90 underline">
+          Leer la guía
+        </Link>
+      </div>
     </div>
   );
 }

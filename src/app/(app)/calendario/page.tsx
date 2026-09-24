@@ -80,7 +80,9 @@ export default async function CalendarioPage({
     <>
       <PageHeader title="Calendario" subtitle="Vuestros planes, en un solo sitio" />
       <div className="mt-4 flex flex-col gap-4">
-        <ViewToggle view={view} refKey={refKey} />
+        <div data-tour="cal-views">
+          <ViewToggle view={view} refKey={refKey} />
+        </div>
 
         {view === "month" ? (
           <>
@@ -111,7 +113,9 @@ export default async function CalendarioPage({
         {view === "list" ? <EventList events={events} /> : null}
 
         <div className="px-5">
-          <NewEventForm />
+          <div data-tour="cal-new">
+            <NewEventForm />
+          </div>
         </div>
       </div>
     </>

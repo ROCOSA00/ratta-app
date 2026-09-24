@@ -114,6 +114,7 @@ export function BottomNav({ spaceId, initialUnread }: { spaceId: string | null; 
             <li key={href} className="relative flex-1">
               <Link
                 href={href}
+                data-tour={`nav-${href.slice(1)}`}
                 className="flex h-[52px] flex-col items-center justify-center gap-0.5 text-[10.5px] transition-colors duration-200"
                 style={{
                   color: isActive ? "var(--color-accent)" : "var(--color-muted)",

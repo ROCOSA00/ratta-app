@@ -14,6 +14,7 @@ import {
   type GameState,
 } from "@/lib/flappy/engine";
 import { submitFlappyScore } from "@/lib/games/actions";
+import { vibrate } from "@/lib/prefs-client";
 import type { FlappyPlayer, FlappySummary } from "@/lib/games/get-flappy-summary";
 
 // Tras chocar, un momento sin aceptar toques: si no, el toque con el que
@@ -103,7 +104,7 @@ export function FlappyGame({ summary }: { summary: FlappySummary }) {
       overAt.current = Date.now();
       setStatus("over");
       setResult({ score, message: null });
-      navigator.vibrate?.(60);
+      vibrate(60);
       setMe((m) => ({
         ...m,
         best: Math.max(m.best, score),

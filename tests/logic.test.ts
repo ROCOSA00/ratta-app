@@ -8,6 +8,8 @@ import { computeHeartStats } from "@/lib/hearts/stats";
 import { lateLabel } from "@/lib/moments/config";
 import { collides, flap, gapFor, newGame, RAT_X, speedFor, step, STEP, WORLD_H, type GameState } from "@/lib/flappy/engine";
 import { summarizePlayer } from "@/lib/games/get-flappy-summary";
+import { DEFAULT_PREFS, htmlAttributes, parsePrefs, serializePrefs } from "@/lib/prefs";
+import { TOUR_STEPS } from "@/components/tour/steps";
 
 describe("Hora de Madrid", () => {
   it("convierte la hora escrita en el formulario al instante UTC correcto (verano, invierno, medianoche)", () => {
@@ -260,5 +262,65 @@ describe("Flappy Rata: ranking", () => {
       plays: 2,
     });
     expect(summarizePlayer([], "yo", "2026-09-24", "Tú")).toEqual({ name: "Tú", best: 0, todayBest: 0, plays: 0 });
+  });
+});
+
+// --------------------------------------------------------------- Ajustes
+
+describe("Ajustes (cookie de preferencias)", () => {
+  it("sin cookie, todo por defecto", () => {
+    expect(parsePrefs(undefined)).toEqual(DEFAULT_PREFS);
+    expect(parsePrefs("")).toEqual(DEFAULT_PREFS);
+  });
+
+  it("guarda y vuelve a leer exactamente lo mismo", () => {
+    const prefs = {
+      theme: "dark" as const,
+      textSize: "large" as const,
+      reduceMotion: true,
+      splash: false,
+      haptics: false,
+      hiddenHome: ["music" as const, "trono" as const],
+    };
+    expect(parsePrefs(serializePrefs(prefs))).toEqual(prefs);
+  });
+
+  it("una cookie rota o manipulada no rompe nada: vuelve a lo de por defecto", () => {
+    for (const bad of ["%%%", "no-es-json", encodeURIComponent("null"), encodeURIComponent("[1,2]")]) {
+      expect(parsePrefs(bad)).toEqual(DEFAULT_PREFS);
+    }
+    const weird = encodeURIComponent(
+      JSON.stringify({ theme: "rosa", textSize: 99, reduceMotion: "sí", hiddenHome: ["music", "hackeo", "music", 3] }),
+    );
+    expect(parsePrefs(weird)).toEqual({ ...DEFAULT_PREFS, hiddenHome: ["music"] });
+  });
+
+  it("atributos de <html>: nada en automático; data-theme solo si eliges claro u oscuro", () => {
+    expect(htmlAttributes(DEFAULT_PREFS)).toEqual({});
+    expect(htmlAttributes({ ...DEFAULT_PREFS, theme: "light" })).toEqual({ "data-theme": "light" });
+    expect(htmlAttributes({ ...DEFAULT_PREFS, theme: "dark", textSize: "large", reduceMotion: true })).toEqual({
+      "data-theme": "dark",
+      "data-text": "large",
+      "data-motion": "reduced",
+    });
+  });
+});
+
+describe("Tutorial interactivo", () => {
+  it("cada paso tiene id único, título y texto; los de tocar tienen algo que tocar", () => {
+    expect(new Set(TOUR_STEPS.map((s) => s.id)).size).toBe(TOUR_STEPS.length);
+    for (const step of TOUR_STEPS) {
+      expect(step.title.length).toBeGreaterThan(0);
+      expect(step.body.length).toBeGreaterThan(0);
+      if (step.action === "tap") expect(step.target).toMatch(/^nav-/);
+    }
+  });
+
+  it("cada «toca» lleva a la pantalla del paso siguiente", () => {
+    TOUR_STEPS.forEach((step, i) => {
+      if (step.action !== "tap") return;
+      const next = TOUR_STEPS[i + 1];
+      expect(next?.path).toBe(`/${step.target!.slice("nav-".length)}`);
+    });
   });
 });

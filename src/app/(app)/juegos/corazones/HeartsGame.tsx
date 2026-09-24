@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Heart } from "lucide-react";
 import { sendHearts } from "@/lib/hearts/actions";
+import { vibrate } from "@/lib/prefs-client";
 import type { HeartsSummary } from "@/lib/hearts/get-hearts-summary";
 import type { HeartPeriod } from "@/lib/hearts/stats";
 import { dayLabel, todayKey } from "@/lib/calendar/date-utils";
@@ -84,7 +85,7 @@ export function HeartsGame({ summary }: { summary: HeartsSummary }) {
     // Como mucho unos cuantos a la vez, para que vaya fluido aunque pulses muy rápido.
     setFloats((current) => [...current.slice(-14), float]);
     window.setTimeout(() => setFloats((current) => current.filter((f) => f.id !== id)), 950);
-    navigator.vibrate?.(8);
+    vibrate(8);
 
     if (pending.current >= FLUSH_AT) {
       flush();

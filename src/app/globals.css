@@ -9,6 +9,10 @@
    --------------------------------------------------------------- */
 
 :root {
+  /* color-scheme: que el navegador pinte sus propios controles (selector
+     de fecha y hora, casillas, barras de desplazamiento) a juego con el
+     tema. Sin esto, en oscuro salían en claro. */
+  color-scheme: light;
   --color-bg: #fffbfc;
   --color-surface: #ffffff;
   --color-ink: #1b1216;
@@ -24,6 +28,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --color-bg: #140b10;
     --color-surface: #1f1319;
     --color-ink: #f5e9ee;
@@ -39,6 +44,7 @@
 }
 
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --color-bg: #140b10;
   --color-surface: #1f1319;
   --color-ink: #f5e9ee;
@@ -90,6 +96,21 @@ a {
 button:not(:disabled):active,
 a:active {
   transform: scale(0.97);
+}
+
+/* Ajustes → Letra grande: todo lo que va en rem (casi todo) crece un 12,5 %. */
+:root[data-text="large"] {
+  font-size: 112.5%;
+}
+
+/* Ajustes → Reducir animaciones: se quitan (casi) todas, estén donde estén. */
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -210,6 +231,41 @@ a:active {
     visibility: hidden;
     pointer-events: none;
   }
+}
+
+/* Tutorial interactivo: el hueco que resalta (con una sombra enorme que
+   oscurece el resto), un latido cuando hay que tocarlo, y la tarjeta. */
+.tour-hole {
+  box-shadow:
+    0 0 0 3px var(--color-accent),
+    0 0 0 9999px rgba(10, 4, 8, 0.62);
+  transition:
+    top 250ms ease,
+    left 250ms ease,
+    width 250ms ease,
+    height 250ms ease;
+}
+
+.tour-hole-tap {
+  animation: tour-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes tour-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 3px var(--color-accent),
+      0 0 0 9999px rgba(10, 4, 8, 0.62);
+  }
+  50% {
+    box-shadow:
+      0 0 0 8px color-mix(in srgb, var(--color-accent) 55%, transparent),
+      0 0 0 9999px rgba(10, 4, 8, 0.62);
+  }
+}
+
+.tour-card {
+  animation: page-in 220ms ease-out;
 }
 
 /* Juego de los corazones: cada toque lanza un corazón que sube y se

@@ -3,6 +3,8 @@ import { AutoRefresh } from "@/components/shared/AutoRefresh";
 import { SplashScreen } from "@/components/shared/SplashScreen";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
 import { getUnreadChatCount } from "@/lib/chat/unread";
+import { getPrefs } from "@/lib/prefs-server";
+import { TourProvider } from "@/components/tour/Tour";
 
 // La comprobación de sesión ya la hace middleware.ts en cada petición
 // (incluida esta). Aquí solo hace falta el espacio, para el globo de
@@ -12,17 +14,19 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const spaceId = await getCurrentSpaceId();
+  const [spaceId, prefs] = await Promise.all([getCurrentSpaceId(), getPrefs()]);
   const unread = spaceId ? await getUnreadChatCount(spaceId) : 0;
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col">
-      <div className="flex-1" style={{ paddingBottom: "calc(var(--nav-gap) + var(--nav-height) + 20px)" }}>
-        {children}
+    <TourProvider>
+      <div className="mx-auto flex min-h-dvh max-w-md flex-col">
+        <div className="flex-1" style={{ paddingBottom: "calc(var(--nav-gap) + var(--nav-height) + 20px)" }}>
+          {children}
+        </div>
+        <BottomNav spaceId={spaceId} initialUnread={unread} />
+        <AutoRefresh />
+        {prefs.splash ? <SplashScreen /> : null}
       </div>
-      <BottomNav spaceId={spaceId} initialUnread={unread} />
-      <AutoRefresh />
-      <SplashScreen />
-    </div>
+    </TourProvider>
   );
 }

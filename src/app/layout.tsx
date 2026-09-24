@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { getPrefs } from "@/lib/prefs-server";
+import { htmlAttributes } from "@/lib/prefs";
 
 export const metadata: Metadata = {
   title: "Ratta App",
@@ -33,13 +35,17 @@ export const viewport: Viewport = {
   themeColor: "#e1225e",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Tema, tamaño de letra y animaciones elegidos en Ajustes (cookie de este
+  // dispositivo): van ya en el HTML, así no hay parpadeo al abrir la app.
+  const prefs = await getPrefs();
+
   return (
-    <html lang="es">
+    <html lang="es" {...htmlAttributes(prefs)}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link

@@ -76,7 +76,7 @@ export default async function JuegosPage() {
   return (
     <>
       <PageHeader title="Juegos" subtitle="Piques sanos entre vosotros dos" />
-      <div className="mt-5 flex flex-col gap-3">
+      <div className="mt-5 flex flex-col gap-3" data-tour="games">
         <GameCard
           href="/juegos/trono"
           emoji="👑"

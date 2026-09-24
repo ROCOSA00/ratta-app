@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ComponentType, ReactNode } from "react";
-import { Bell, BookHeart, ChevronRight, Images, KeyRound, LogOut, UserPen } from "lucide-react";
+import { Bell, BookHeart, ChevronRight, Images, KeyRound, LogOut, Settings, UserPen } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
 import { getTogetherInfo } from "@/lib/couple";
@@ -33,8 +33,9 @@ function Card({ icon: Icon, tint, title, children }: {
   );
 }
 
-function LinkRow({ href, icon: Icon, tint, title, subtitle }: {
+function LinkRow({ href, icon: Icon, tint, title, subtitle, tour }: {
   href: string;
+  tour?: string;
   icon: ComponentType<{ size?: number; strokeWidth?: number }>;
   tint: string;
   title: string;
@@ -43,6 +44,7 @@ function LinkRow({ href, icon: Icon, tint, title, subtitle }: {
   return (
     <Link
       href={href}
+      data-tour={tour}
       className="mx-5 flex items-center gap-3 rounded-2xl border p-4"
       style={{
         background: `color-mix(in srgb, ${tint} 7%, var(--color-surface))`,
@@ -128,6 +130,14 @@ export default async function PerfilPage() {
           tint="var(--color-accent-2)"
           title="Recuerdos"
           subtitle="Vuestras fotos juntos"
+        />
+        <LinkRow
+          href="/perfil/ajustes"
+          icon={Settings}
+          tint="var(--color-accent)"
+          title="Ajustes"
+          subtitle="Tema claro u oscuro, letra, Inicio y tutorial"
+          tour="settings"
         />
         <LinkRow
           href="/perfil/guia"

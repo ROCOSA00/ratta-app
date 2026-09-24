@@ -358,6 +358,7 @@ export function ChatRoom({
             onClick={() => fileRef.current?.click()}
             disabled={isSending}
             aria-label="Adjuntar foto"
+            data-tour="chat-photo"
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border disabled:opacity-50"
             style={{ background: "var(--color-surface)", borderColor: "var(--color-line)", color: "var(--color-accent)" }}
           >
