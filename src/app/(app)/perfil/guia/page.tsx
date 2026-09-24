@@ -276,7 +276,8 @@ export default function GuiaPage() {
 
         <Section icon={UserRound} tint="var(--color-accent-2)" title="Perfil">
           <p>
-            Tu <B>foto de perfil</B> y tu <B>foto de portada</B> (toca cualquiera de las dos para cambiarla), tu{" "}
+            Tu <B>foto de perfil</B> y tu <B>foto de portada</B> (toca cualquiera de las dos para cambiarla: antes de
+            subirla puedes <B>moverla y ampliarla</B> con los dedos para encuadrarla a tu gusto), tu{" "}
             <B>nombre</B> (el que ve tu pareja), <B>cambiar la contraseña</B>, <B>cerrar sesión</B> y esta guía.
           </p>
           <p>

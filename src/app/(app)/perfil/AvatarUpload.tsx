@@ -4,21 +4,30 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Camera } from "lucide-react";
-import { uploadProfileImage } from "@/lib/profile/upload-image";
+import { PROFILE_IMAGE, uploadProfileImage } from "@/lib/profile/upload-image";
+import { ImageCropper } from "@/components/shared/ImageCropper";
 
 export function AvatarUpload({ userId, currentAvatarUrl }: { userId: string; currentAvatarUrl: string | null }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [picked, setPicked] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  // Al elegir una foto no se sube aún: primero se abre el editor para encuadrarla.
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file) return;
+    if (file) {
+      setError(null);
+      setPicked(file);
+    }
+  }
+
+  async function upload(blob: Blob) {
+    setPicked(null);
     setUploading(true);
-    setError(null);
-    const message = await uploadProfileImage("avatar", userId, file);
+    const message = await uploadProfileImage("avatar", userId, blob);
     setUploading(false);
     if (message) setError(message);
     else router.refresh();
@@ -51,6 +60,16 @@ export function AvatarUpload({ userId, currentAvatarUrl }: { userId: string; cur
         </span>
       </button>
       <input ref={inputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+      {picked ? (
+        <ImageCropper
+          file={picked}
+          shape="circle"
+          title="Encuadra tu foto de perfil"
+          {...PROFILE_IMAGE.avatar}
+          onCancel={() => setPicked(null)}
+          onConfirm={upload}
+        />
+      ) : null}
       {uploading ? (
         <p className="text-xs" style={{ color: "var(--color-muted)" }}>
           Subiendo…

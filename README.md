@@ -314,6 +314,11 @@ puntuales según se van usando:
   las funciones de Vercel en Dublín (`dub1`), al lado de Supabase (EU
   West). Por defecto Vercel las ejecuta en Washington (`iad1`) y cada
   consulta cruzaba el Atlántico.
+- **Encuadrar la foto de perfil y la portada** (`ImageCropper`): antes de
+  subirla se abre un editor para moverla (un dedo) y ampliarla (pellizco
+  o barra); se guarda justo lo que se ve en el marco (perfil 512×512,
+  portada 1600×800, 2:1 como se muestra en Perfil). Cuentas en
+  `src/lib/images/crop.ts`, con tests.
 
 ## Notas de seguridad
 

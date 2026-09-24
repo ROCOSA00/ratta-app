@@ -97,7 +97,8 @@ export default async function PerfilPage() {
 
   return (
     <>
-      <div className="relative h-52 w-full overflow-hidden">
+      {/* Misma forma que el recorte de la portada (2:1): se ve justo lo que encuadraste. */}
+      <div className="relative aspect-[2/1] w-full overflow-hidden">
         {me?.cover_url ? (
           <Image src={me.cover_url} alt="Tu foto de portada" fill priority sizes="448px" className="object-cover" />
         ) : (
