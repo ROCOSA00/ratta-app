@@ -20,10 +20,10 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Estado de ánimo en el perfil — ⏳ pendiente de aplicar
+## Estado de ánimo en el perfil — ✅ ya aplicada
 
-`20260930100000_profile_status.sql`. Hay que aplicarla en producción
-**antes** de publicar el código que la usa.
+`20260930100000_profile_status.sql`. Aplicada en producción antes de
+publicar el código que la usa.
 
 - Tres columnas nuevas en `profiles`: `status_key`, `status_note` (≤ 60
   caracteres) y `status_updated_at`. La lista de estados válidos la
