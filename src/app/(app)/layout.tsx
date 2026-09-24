@@ -1,4 +1,5 @@
 import { BottomNav } from "@/components/navigation/BottomNav";
+import { AutoRefresh } from "@/components/shared/AutoRefresh";
 
 // La comprobación de sesión ya la hace middleware.ts en cada petición
 // (incluida esta), así que repetirla aquí solo añadía una segunda
@@ -15,6 +16,7 @@ export default function AppLayout({
         {children}
       </div>
       <BottomNav />
+      <AutoRefresh />
     </div>
   );
 }

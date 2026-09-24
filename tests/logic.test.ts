@@ -6,6 +6,8 @@ import { monthGridKeys, toDateKey, weekKeys } from "@/lib/calendar/date-utils";
 import { NUDGE_GROUPS, findNudge } from "@/lib/nudges/options";
 import { computeHeartStats } from "@/lib/hearts/stats";
 import { lateLabel } from "@/lib/moments/config";
+import { collides, flap, gapFor, newGame, RAT_X, speedFor, step, STEP, WORLD_H, type GameState } from "@/lib/flappy/engine";
+import { summarizePlayer } from "@/lib/games/get-flappy-summary";
 
 describe("Hora de Madrid", () => {
   it("convierte la hora escrita en el formulario al instante UTC correcto (verano, invierno, medianoche)", () => {
@@ -166,5 +168,97 @@ describe("Etiqueta de retraso del Momento", () => {
     expect(lateLabel(754)).toBe("⏰ 13 min tarde");
     expect(lateLabel(3600)).toBe("⏰ 1 h tarde");
     expect(lateLabel(5400)).toBe("⏰ 1 h 30 min tarde");
+  });
+});
+
+// ------------------------------------------------------------ Flappy Rata
+
+describe("Flappy Rata: motor del juego", () => {
+  const run = (s: GameState, seconds: number, random = () => 0.5) => {
+    let state = s;
+    for (let i = 0; i < Math.round(seconds / STEP); i++) state = step(state, random);
+    return state;
+  };
+
+  it("empieza esperando y no cae hasta el primer toque", () => {
+    const s = run(newGame(), 2);
+    expect(s.status).toBe("ready");
+    expect(s.ratY).toBe(newGame().ratY);
+  });
+
+  it("al tocar sube, y luego la gravedad la hace caer", () => {
+    const s0 = flap(newGame());
+    expect(s0.status).toBe("playing");
+    const up = run(s0, 0.1);
+    expect(up.ratY).toBeLessThan(s0.ratY);
+    const down = run(up, 0.6);
+    expect(down.ratY).toBeGreaterThan(up.ratY);
+  });
+
+  it("si no tocas, se estrella contra el suelo", () => {
+    const s = run(flap(newGame()), 5);
+    expect(s.status).toBe("over");
+    expect(s.score).toBe(0);
+  });
+
+  it("tocar sin parar no te mata contra el techo: te quedas pegada a él", () => {
+    let s = flap(newGame());
+    for (let i = 0; i < 120; i++) {
+      s = step(flap(s));
+    }
+    expect(s.status).toBe("playing");
+    expect(s.ratY).toBeGreaterThan(0);
+  });
+
+  it("chocar con una tubería termina la partida", () => {
+    const s: GameState = {
+      ...flap(newGame()),
+      ratY: 100,
+      pipes: [{ x: RAT_X - 10, gapY: 400, gap: 150, scored: false }],
+    };
+    expect(collides(s)).toBe(true);
+    expect(collides({ ...s, ratY: 400 })).toBe(false);
+  });
+
+  it("se va poniendo más difícil, con límites", () => {
+    expect(speedFor(0)).toBeLessThan(speedFor(10));
+    expect(speedFor(1000)).toBe(230);
+    expect(gapFor(0)).toBeGreaterThan(gapFor(10));
+    expect(gapFor(1000)).toBe(128);
+  });
+
+  it("se puede ganar: un jugador automático sencillo pasa 25 tuberías sumando puntos", () => {
+    let seed = 42;
+    const random = () => {
+      seed = (seed * 16807) % 2147483647;
+      return seed / 2147483647;
+    };
+    let s = flap(newGame());
+    for (let i = 0; i < 120 * 90 && s.status === "playing" && s.score < 25; i++) {
+      const next = s.pipes.find((p) => p.x + 64 > RAT_X - 15);
+      const target = next ? next.gapY + next.gap / 4 : WORLD_H / 2;
+      if (s.ratY > target && s.vy > 0) s = flap(s);
+      s = step(s, random);
+    }
+    expect(s.score).toBeGreaterThanOrEqual(25);
+  });
+});
+
+describe("Flappy Rata: ranking", () => {
+  const rows = [
+    { user_id: "yo", day: "2026-09-24", best: 7, plays: 3 },
+    { user_id: "yo", day: "2026-09-20", best: 15, plays: 10 },
+    { user_id: "ella", day: "2026-09-23", best: 9, plays: 2 },
+  ];
+
+  it("récord de siempre, mejor de hoy y partidas totales", () => {
+    expect(summarizePlayer(rows, "yo", "2026-09-24", "Tú")).toEqual({ name: "Tú", best: 15, todayBest: 7, plays: 13 });
+    expect(summarizePlayer(rows, "ella", "2026-09-24", "Giselz")).toEqual({
+      name: "Giselz",
+      best: 9,
+      todayBest: 0,
+      plays: 2,
+    });
+    expect(summarizePlayer([], "yo", "2026-09-24", "Tú")).toEqual({ name: "Tú", best: 0, todayBest: 0, plays: 0 });
   });
 });

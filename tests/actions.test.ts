@@ -46,6 +46,7 @@ import { addMemory, deleteMemory } from "@/lib/memories/actions";
 import { sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
 import { sendHearts } from "@/lib/hearts/actions";
 import { postMoment } from "@/lib/moments/actions";
+import { submitFlappyScore } from "@/lib/games/actions";
 import { todayKey } from "@/lib/calendar/date-utils";
 
 const ok = { error: null };
@@ -691,6 +692,52 @@ describe("Momento Ratta", () => {
     }
     expect((await postMoment({ path: PATH, caption: "x".repeat(141) })).error).toBe("Máximo 140 caracteres.");
     expect(state.fake.ops).toHaveLength(0);
+  });
+});
+
+// ------------------------------------------------------------ Flappy Rata
+
+describe("Flappy Rata", () => {
+  const withBests = (myPrev: number, partnerBest: number) =>
+    createFakeSupabase({
+      results: { "rpc:record_game_score": { data: { my_prev_best: myPrev, partner_best: partnerBest }, error: null } },
+    });
+
+  it("guarda la partida en tu espacio", async () => {
+    state.fake = withBests(3, 10);
+    expect(await submitFlappyScore(5)).toEqual({ error: null, personalBest: true, stoleRecord: false });
+    expect(state.fake.rpcCalls).toEqual([
+      { fn: "record_game_score", args: { p_space_id: "space-1", p_game: "flappy", p_score: 5 } },
+    ]);
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("si le quitas el récord a tu pareja, le llega un aviso", async () => {
+    state.fake = withBests(8, 12);
+    expect(await submitFlappyScore(13)).toEqual({ error: null, personalBest: true, stoleRecord: true });
+    expect(state.notified).toEqual([
+      { title: "🐀 Flappy Rata", body: "Rokito te ha quitado el récord con 13 puntos 😈", url: "/juegos/flappy", tag: "flappy" },
+    ]);
+  });
+
+  it("si ya tenías tú el récord, no vuelve a avisar en cada partida", async () => {
+    state.fake = withBests(20, 12);
+    expect(await submitFlappyScore(25)).toEqual({ error: null, personalBest: true, stoleRecord: false });
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("empatar o quedarse por debajo no es quitar el récord", async () => {
+    state.fake = withBests(5, 12);
+    expect((await submitFlappyScore(12)).stoleRecord).toBe(false);
+    expect((await submitFlappyScore(4)).personalBest).toBe(false);
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("rechaza puntuaciones imposibles", async () => {
+    for (const bad of [-1, 2.5, 10001, Number.NaN]) {
+      expect((await submitFlappyScore(bad)).error).toBe("Puntuación no válida.");
+    }
+    expect(state.fake.rpcCalls).toHaveLength(0);
   });
 });
 

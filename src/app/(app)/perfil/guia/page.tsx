@@ -3,6 +3,7 @@ import {
   CalendarDays,
   Crown,
   Camera,
+  Gamepad2,
   Heart,
   HeartHandshake,
   MessageCircleHeart,
@@ -188,6 +189,17 @@ export default function GuiaPage() {
           </ul>
         </Section>
 
+        <Section icon={Gamepad2} tint="var(--color-accent-2)" title="Flappy Rata">
+          <p>
+            El tercer juego de <B>Juegos</B> 🐀 Toca la pantalla para que la rata vuele y esquiva las tuberías: cada
+            una que pasas es un punto, y cada vez va más rápido.
+          </p>
+          <p>
+            Abajo tenéis los <B>récords</B> de los dos (con el mejor de hoy y cuántas partidas lleváis). Si le quitas
+            el récord a tu pareja, le llega un aviso para picarla. 😈
+          </p>
+        </Section>
+
         <Section icon={Camera} tint="var(--color-accent)" title="Momento Ratta">
           <p>
             Vuestro BeReal 📸 Una vez al día, a una hora al azar entre las 10:00 y las 22:00, os llega un aviso a los
@@ -237,7 +249,7 @@ export default function GuiaPage() {
           </p>
           <p>
             Y las <B>notificaciones</B>: actívalas una vez en cada móvil y te avisará cuando tu pareja te escriba, te
-            mande cariño, añada un plan, fotos a un plan, una nota o un recuerdo, responda la pregunta del día, visite El Trono o te mande corazones, y cuando suene el Momento Ratta. En el
+            mande cariño, añada un plan, fotos a un plan, una nota o un recuerdo, responda la pregunta del día, visite El Trono, te mande corazones o te quite el récord de Flappy Rata, y cuando suene el Momento Ratta. En el
             iPhone solo funcionan con la app instalada en la pantalla de inicio.
           </p>
         </Section>

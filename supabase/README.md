@@ -20,6 +20,35 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Flappy Rata (puntuaciones de juegos) — ⏳ pendiente de aplicar
+
+`20260928100000_game_scores.sql`. Hay que aplicarla en producción
+**antes** de publicar el código que la usa.
+
+- Tabla `game_days`: una fila por persona, juego y **día** (Madrid) con
+  la mejor puntuación y el número de partidas. Los dos ven las de ambos.
+- Nadie escribe directamente: solo `record_game_score()` (`SECURITY
+  DEFINER`, revocada para `anon`), que guarda a nombre de quien tiene la
+  sesión, en su espacio, para un juego conocido y con una puntuación
+  entre 0 y 10000. Devuelve los récords anteriores (el tuyo y el de tu
+  pareja) para que la app sepa si le has quitado el récord.
+- Las puntuaciones las calcula el propio móvil (es un juego): alguien con
+  conocimientos podría mandar una inventada, pero solo a su nombre y
+  dentro de esos límites. Para un juego entre vosotros dos, suficiente.
+
+Validada en Postgres 16 local, con todas las migraciones anteriores:
+
+| Caso | Resultado |
+|---|---|
+| Primera partida | devuelve tu récord previo (0) y el de tu pareja |
+| 3 partidas el mismo día (8, 20, 5) | mejor 20, 3 partidas |
+| Récord de la pareja | no cuenta el de alguien de otro espacio |
+| Tu pareja ve el ranking | las filas de los dos |
+| Puntuación negativa o > 10000 / juego desconocido | rechazado por la función |
+| Persona de fuera: jugar en vuestro espacio / ver el ranking | rechazado / 0 filas |
+| Escribir, cambiar o borrar récords a mano | rechazado por RLS / 0 filas |
+| Sin sesión (`anon`) | permiso denegado |
+
 ## Momento Ratta — ✅ ya aplicada y en marcha
 
 `20260927100000_momento_ratta.sql` + la puesta en marcha de

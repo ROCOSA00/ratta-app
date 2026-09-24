@@ -269,6 +269,15 @@ puntuales según se van usando:
   con 📸 en el calendario. El despertador es `pg_cron` en Supabase, que
   llama a `/api/momento` con una clave compartida (`MOMENT_CRON_SECRET`).
   Migración `20260927100000_momento_ratta.sql` + `setup/momento_despertador.sql`.
+- **Flappy Rata** (`/juegos/flappy`): tercer juego, un Flappy Bird con la
+  rata en un `<canvas>`, con física a paso fijo (`src/lib/flappy/engine.ts`,
+  igual en pantallas de 60 y 120 Hz) y récords de los dos; si le quitas el
+  récord a tu pareja, le llega un aviso. Migración
+  `20260928100000_game_scores.sql`.
+- **Inicio siempre al día**: al volver a la app (instalada, en segundo
+  plano) cada pantalla recarga sus datos (`AutoRefresh` en el layout), e
+  Inicio además cada minuto mientras lo miras. Antes, El Trono en Inicio
+  se quedaba con los datos de cuando lo abriste.
 
 ## Notas de seguridad
 
