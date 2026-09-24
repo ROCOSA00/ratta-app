@@ -1,5 +1,6 @@
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { AutoRefresh } from "@/components/shared/AutoRefresh";
+import { SplashScreen } from "@/components/shared/SplashScreen";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
 import { getUnreadChatCount } from "@/lib/chat/unread";
 
@@ -21,6 +22,7 @@ export default async function AppLayout({
       </div>
       <BottomNav spaceId={spaceId} initialUnread={unread} />
       <AutoRefresh />
+      <SplashScreen />
     </div>
   );
 }
