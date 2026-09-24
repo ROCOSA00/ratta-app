@@ -20,10 +20,10 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Mensajes sin leer del chat — ⏳ pendiente de aplicar
+## Mensajes sin leer del chat — ✅ ya aplicada
 
-`20260929100000_chat_reads.sql`. Hay que aplicarla en producción
-**antes** de publicar el código que la usa.
+`20260929100000_chat_reads.sql`. Aplicada en producción antes de
+publicar el código que la usa.
 
 - Tabla `chat_reads`: hasta cuándo ha leído cada persona el chat de su
   espacio. Cada uno solo ve y toca la suya.
