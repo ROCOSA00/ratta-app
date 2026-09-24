@@ -288,6 +288,17 @@ puntuales según se van usando:
   progreso (`SplashScreen`, menos de 1,5 s). Solo al abrir la app, no al
   cambiar de pestaña; si el JavaScript no llegara a quitarla, el CSS la
   oculta solo a los 3 s.
+- **Ajustes** (`/perfil/ajustes`): tema Auto/Claro/Oscuro, letra grande,
+  reducir animaciones, pantalla de carga, vibración y qué tarjetas ver en
+  Inicio. Se guardan por dispositivo en una cookie (`src/lib/prefs.ts`),
+  así el servidor pinta ya el `<html>` con el tema elegido (sin parpadeo).
+  `color-scheme` va con el tema para que los controles nativos (fecha,
+  hora, casillas) también cambien. Comprobado píxel a píxel: el tema
+  elegido a mano se ve igual que el del sistema.
+- **Tutorial interactivo** (`src/components/tour/`): resalta cada cosa y
+  te hace tocar las pestañas para ir de pantalla en pantalla (16 pasos).
+  Se ofrece al entrar por primera vez y se puede repetir desde Ajustes o
+  desde «Cómo funciona Ratta».
 
 ## Notas de seguridad
 

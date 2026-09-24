@@ -10,6 +10,8 @@ import { SpotifyCard } from "@/components/features/SpotifyCard";
 import { MemoryOfTheDayCard } from "@/components/features/MemoryOfTheDayCard";
 import { MomentBanner } from "@/components/features/MomentBanner";
 import { AutoRefresh } from "@/components/shared/AutoRefresh";
+import { getPrefs } from "@/lib/prefs-server";
+import type { HomeCardId } from "@/lib/prefs";
 import { getTodayMoment } from "@/lib/moments/get-moments";
 import { getNextEvent } from "@/lib/events/get-next-event";
 import { getPinnedNote } from "@/lib/notes/get-pinned-note";
@@ -32,9 +34,10 @@ function countdownLabel(startAt: string): string {
   return `En ${days} días`;
 }
 
-function SectionCard({ tint, children }: { tint: string; children: React.ReactNode }) {
+function SectionCard({ tint, tour, children }: { tint: string; tour?: string; children: React.ReactNode }) {
   return (
     <div
+      data-tour={tour}
       className="mx-5 rounded-2xl border p-4"
       style={{
         background: `color-mix(in srgb, ${tint} 7%, var(--color-surface))`,
@@ -76,13 +79,16 @@ function SectionHeader({
 }
 
 export default async function InicioPage() {
-  const [nextEvent, pinnedNote, poopSummary, latestNudge, todayMoment] = await Promise.all([
+  const [nextEvent, pinnedNote, poopSummary, latestNudge, todayMoment, prefs] = await Promise.all([
     getNextEvent(),
     getPinnedNote(),
     getPoopSummary(),
     getLatestNudge(),
     getTodayMoment(),
+    getPrefs(),
   ]);
+  // Tarjetas que has ocultado en Ajustes (en este dispositivo).
+  const show = (id: HomeCardId) => !prefs.hiddenHome.includes(id);
 
   const myName = poopSummary ? poopSummary.displayNameById.get(poopSummary.currentUserId) : undefined;
   const greeting = greetingFor(madridHour(new Date()));
@@ -115,6 +121,7 @@ export default async function InicioPage() {
           </div>
 
           <div
+            data-tour="together"
             className="mt-1 w-full max-w-xs rounded-2xl border px-4 py-3"
             style={{
               background: "color-mix(in srgb, var(--color-accent) 7%, var(--color-surface))",
@@ -156,7 +163,7 @@ export default async function InicioPage() {
         <MomentBanner moment={todayMoment} />
         <GuideWelcome name={myName} />
 
-        <Link href={nextEvent ? `/calendario/${nextEvent.id}` : "/calendario"}>
+        <Link href={nextEvent ? `/calendario/${nextEvent.id}` : "/calendario"} data-tour="next-event" className="block">
           <SectionCard tint="var(--color-accent-2)">
             <SectionHeader
               icon={CalendarDays}
@@ -189,123 +196,133 @@ export default async function InicioPage() {
           </SectionCard>
         </Link>
 
-        <MemoryOfTheDayCard />
+        {show("memory") ? <MemoryOfTheDayCard /> : null}
 
-        <QuestionOfTheDay />
-
-        <SectionCard tint="var(--color-accent)">
-          <SectionHeader icon={Heart} tint="var(--color-accent)" label="Cariño" />
-          {latestNudge ? (
-            <p className="mt-2 text-sm" style={{ color: "var(--color-ink)" }}>
-              {latestNudge.emoji} <b>{latestNudge.senderName}</b>: {latestNudge.label}
-              {" · "}
-              <span style={{ color: "var(--color-muted)" }}>{formatRelative(latestNudge.createdAt)}</span>
-            </p>
-          ) : (
-            <p className="mt-2 text-sm" style={{ color: "var(--color-muted)" }}>
-              Mándale un mensajito a tu pareja.
-            </p>
-          )}
-          <div className="mt-3">
-            <NudgeButtons />
+        {show("question") ? (
+          <div data-tour="question">
+            <QuestionOfTheDay />
           </div>
-        </SectionCard>
+        ) : null}
 
-        <SpotifyCard />
+        {show("nudge") ? (
+          <SectionCard tint="var(--color-accent)" tour="nudge">
+            <SectionHeader icon={Heart} tint="var(--color-accent)" label="Cariño" />
+            {latestNudge ? (
+              <p className="mt-2 text-sm" style={{ color: "var(--color-ink)" }}>
+                {latestNudge.emoji} <b>{latestNudge.senderName}</b>: {latestNudge.label}
+                {" · "}
+                <span style={{ color: "var(--color-muted)" }}>{formatRelative(latestNudge.createdAt)}</span>
+              </p>
+            ) : (
+              <p className="mt-2 text-sm" style={{ color: "var(--color-muted)" }}>
+                Mándale un mensajito a tu pareja.
+              </p>
+            )}
+            <div className="mt-3">
+              <NudgeButtons />
+            </div>
+          </SectionCard>
+        ) : null}
 
-        <SectionCard tint="var(--color-gold)">
-          <SectionHeader
-            icon={Crown}
-            tint="var(--color-gold)"
-            label="El Trono"
-            right={
-              <Link
-                href="/juegos/trono"
-                className="flex items-center gap-0.5 text-xs"
-                style={{ color: "var(--color-muted)" }}
-              >
-                Ver más <ChevronRight size={14} />
-              </Link>
-            }
-          />
+        {show("music") ? <SpotifyCard /> : null}
 
-          {poopSummary ? (
-            <>
-              <div className="mt-3 flex items-center justify-center">
-                <LogButton />
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                {poopSummary.orderedIds.map((id) => {
-                  const s = poopSummary.stats[id];
-                  const name =
-                    id === poopSummary.currentUserId
-                      ? "Tú"
-                      : (poopSummary.displayNameById.get(id) ?? "Compañero/a");
-                  return (
-                    <div
-                      key={id}
-                      className="rounded-xl p-2.5 text-center"
-                      style={{ background: "color-mix(in srgb, var(--color-gold) 10%, var(--color-surface))" }}
-                    >
-                      <p className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
-                        {name}
-                      </p>
-                      <p className="font-mono-nums text-xl font-bold" style={{ color: "var(--color-accent)" }}>
-                        {s?.today ?? 0}
-                      </p>
-                      <p className="text-[11px]" style={{ color: "var(--color-muted)" }}>
-                        hoy
-                      </p>
-                      {s && s.streak > 0 ? (
-                        <p
-                          className="mt-0.5 flex items-center justify-center gap-0.5 text-[11px] font-semibold"
-                          style={{ color: "var(--color-gold)" }}
-                        >
-                          <Flame size={11} /> {s.streak}
-                        </p>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-              {poopSummary.comparison ? (
-                <p className="mt-2 text-center text-xs" style={{ color: "var(--color-muted)" }}>
-                  {poopSummary.comparison}
-                </p>
-              ) : null}
-            </>
-          ) : (
-            <p className="mt-2 text-sm" style={{ color: "var(--color-muted)" }}>
-              No perteneces a ningún espacio todavía.
-            </p>
-          )}
-        </SectionCard>
-
-        <Link href={pinnedNote ? `/notas/${pinnedNote.id}` : "/notas"}>
-          <SectionCard tint="var(--color-accent-2)">
+        {show("trono") ? (
+          <SectionCard tint="var(--color-gold)" tour="trono">
             <SectionHeader
-              icon={Pin}
-              tint="var(--color-accent-2)"
-              label="Tu nota fijada"
-              right={<ChevronRight size={16} style={{ color: "var(--color-muted)" }} />}
+              icon={Crown}
+              tint="var(--color-gold)"
+              label="El Trono"
+              right={
+                <Link
+                  href="/juegos/trono"
+                  className="flex items-center gap-0.5 text-xs"
+                  style={{ color: "var(--color-muted)" }}
+                >
+                  Ver más <ChevronRight size={14} />
+                </Link>
+              }
             />
-            {pinnedNote ? (
+  
+            {poopSummary ? (
               <>
-                <p className="mt-2 text-base font-semibold" style={{ color: "var(--color-ink)" }}>
-                  {pinnedNote.title}
-                </p>
-                <p className="mt-0.5 line-clamp-2 text-sm" style={{ color: "var(--color-muted)" }}>
-                  {pinnedNote.note_type === "checklist" ? "Lista de tareas · toca para abrirla" : pinnedNote.content}
-                </p>
+                <div className="mt-3 flex items-center justify-center">
+                  <LogButton />
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {poopSummary.orderedIds.map((id) => {
+                    const s = poopSummary.stats[id];
+                    const name =
+                      id === poopSummary.currentUserId
+                        ? "Tú"
+                        : (poopSummary.displayNameById.get(id) ?? "Compañero/a");
+                    return (
+                      <div
+                        key={id}
+                        className="rounded-xl p-2.5 text-center"
+                        style={{ background: "color-mix(in srgb, var(--color-gold) 10%, var(--color-surface))" }}
+                      >
+                        <p className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
+                          {name}
+                        </p>
+                        <p className="font-mono-nums text-xl font-bold" style={{ color: "var(--color-accent)" }}>
+                          {s?.today ?? 0}
+                        </p>
+                        <p className="text-[11px]" style={{ color: "var(--color-muted)" }}>
+                          hoy
+                        </p>
+                        {s && s.streak > 0 ? (
+                          <p
+                            className="mt-0.5 flex items-center justify-center gap-0.5 text-[11px] font-semibold"
+                            style={{ color: "var(--color-gold)" }}
+                          >
+                            <Flame size={11} /> {s.streak}
+                          </p>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+                {poopSummary.comparison ? (
+                  <p className="mt-2 text-center text-xs" style={{ color: "var(--color-muted)" }}>
+                    {poopSummary.comparison}
+                  </p>
+                ) : null}
               </>
             ) : (
               <p className="mt-2 text-sm" style={{ color: "var(--color-muted)" }}>
-                No tienes ninguna nota fijada. Ve a Notas y fija una con el
-                icono de chincheta.
+                No perteneces a ningún espacio todavía.
               </p>
             )}
           </SectionCard>
-        </Link>
+        ) : null}
+
+        {show("pinned") ? (
+          <Link href={pinnedNote ? `/notas/${pinnedNote.id}` : "/notas"}>
+            <SectionCard tint="var(--color-accent-2)">
+              <SectionHeader
+                icon={Pin}
+                tint="var(--color-accent-2)"
+                label="Tu nota fijada"
+                right={<ChevronRight size={16} style={{ color: "var(--color-muted)" }} />}
+              />
+              {pinnedNote ? (
+                <>
+                  <p className="mt-2 text-base font-semibold" style={{ color: "var(--color-ink)" }}>
+                    {pinnedNote.title}
+                  </p>
+                  <p className="mt-0.5 line-clamp-2 text-sm" style={{ color: "var(--color-muted)" }}>
+                    {pinnedNote.note_type === "checklist" ? "Lista de tareas · toca para abrirla" : pinnedNote.content}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-2 text-sm" style={{ color: "var(--color-muted)" }}>
+                  No tienes ninguna nota fijada. Ve a Notas y fija una con el
+                  icono de chincheta.
+                </p>
+              )}
+            </SectionCard>
+          </Link>
+        ) : null}
       </div>
     </>
   );

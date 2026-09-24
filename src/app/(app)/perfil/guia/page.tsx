@@ -4,6 +4,7 @@ import {
   Crown,
   Camera,
   Gamepad2,
+  Settings,
   Heart,
   HeartHandshake,
   MessageCircleHeart,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { MarkGuideSeen } from "@/components/features/GuideWelcome";
+import { StartTourButton } from "@/components/tour/StartTourButton";
 
 function Section({
   icon: Icon,
@@ -77,6 +79,8 @@ export default function GuiaPage() {
       <PageHeader title="Cómo funciona Ratta" subtitle="Una vuelta rápida por todo" backHref="/perfil" />
 
       <div className="mt-5 flex flex-col gap-4 pb-4">
+        <StartTourButton />
+
         <p className="mx-5 text-sm leading-relaxed" style={{ color: "var(--color-muted)" }}>
           Ratta es vuestro rincón privado: solo existen dos cuentas, la tuya y la de tu pareja, y nadie
           más puede ver nada de lo que hay dentro. 💞
@@ -243,6 +247,14 @@ export default function GuiaPage() {
           <p>
             Vuestra playlist de Spotify, en Inicio. Dale al play para escucharla ahí mismo, o a{" "}
             <B>Abrir en Spotify</B> para ir a la app.
+          </p>
+        </Section>
+
+        <Section icon={Settings} tint="var(--color-accent)" title="Ajustes">
+          <p>
+            En <B>Perfil → Ajustes</B> eliges el <B>tema</B> (claro, oscuro o automático, según tu móvil), la{" "}
+            <B>letra grande</B>, si quieres menos <B>animaciones</B> o la pantalla de carga, y qué{" "}
+            <B>tarjetas</B> ver en Inicio. Se guardan en cada móvil. Desde ahí también puedes repetir el tutorial.
           </p>
         </Section>
 
