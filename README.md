@@ -310,6 +310,10 @@ puntuales según se van usando:
   espacio). El calendario pide planes y Momentos a la vez, cambia de
   vista al instante y precarga las otras vistas y el mes anterior y
   siguiente.
+- **Servidor junto a la base de datos**: `vercel.json` fija la región de
+  las funciones de Vercel en Dublín (`dub1`), al lado de Supabase (EU
+  West). Por defecto Vercel las ejecuta en Washington (`iad1`) y cada
+  consulta cruzaba el Atlántico.
 
 ## Notas de seguridad
 
