@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getMemory } from "@/lib/memories/get-memories";
 import { deleteMemory } from "@/lib/memories/actions";
 import { formatDate } from "@/lib/format-date";
+import { getAuthUser } from "@/lib/auth/get-user";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -34,7 +35,7 @@ export default async function RecuerdoPage({ params }: { params: Promise<{ id: s
     },
     { data: uploader },
   ] = await Promise.all([
-    supabase.auth.getUser(),
+    getAuthUser(),
     supabase.from("profiles").select("display_name").eq("id", memory.uploaded_by).maybeSingle(),
   ]);
   const isMine = user?.id === memory.uploaded_by;

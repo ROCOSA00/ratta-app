@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
 import { todayKey } from "@/lib/calendar/date-utils";
 import { MOMENT_BUCKET, MOMENT_URL_SECONDS } from "./config";
+import { getAuthUser } from "@/lib/auth/get-user";
 
 export type MomentPhoto = {
   id: string;
@@ -61,7 +62,7 @@ export async function getTodayMoment(): Promise<TodayMoment | null> {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return null;
 
   const day = todayKey();
@@ -110,7 +111,7 @@ export async function getMomentForDay(
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return null;
   const [{ data: rows }, people] = await Promise.all([
     supabase.from("moment_photos").select(COLUMNS).eq("space_id", spaceId).eq("day", day),

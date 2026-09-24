@@ -20,6 +20,27 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Estado de ánimo en el perfil — ⏳ pendiente de aplicar
+
+`20260930100000_profile_status.sql`. Hay que aplicarla en producción
+**antes** de publicar el código que la usa.
+
+- Tres columnas nuevas en `profiles`: `status_key`, `status_note` (≤ 60
+  caracteres) y `status_updated_at`. La lista de estados válidos la
+  comprueba el servidor (`src/lib/status/options.ts`); la base de datos
+  limita además el formato de la key.
+- Las políticas de `profiles` no cambian: solo editas tu fila y solo ves
+  la tuya y la de tu pareja.
+
+Validada en Postgres 16 local, con todas las migraciones anteriores:
+
+| Caso | Resultado |
+|---|---|
+| Poner tu estado / tu pareja lo ve | permitido / lo ve |
+| Cambiar el estado de tu pareja | 0 filas |
+| Key con formato raro / nota de 61 caracteres | rechazado por el `CHECK` |
+| Persona de fuera ve tu estado | 0 filas |
+
 ## Mensajes sin leer del chat — ✅ ya aplicada
 
 `20260929100000_chat_reads.sql`. Aplicada en producción antes de

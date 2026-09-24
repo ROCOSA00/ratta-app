@@ -1,17 +1,27 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ComponentType, ReactNode } from "react";
-import { Bell, BookHeart, ChevronRight, Images, KeyRound, LogOut, Settings, UserPen } from "lucide-react";
+import { Bell, BookHeart, ChevronRight, Images, KeyRound, LogOut, Settings, Smile, UserPen } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
-import { getTogetherInfo } from "@/lib/couple";
+import { getTogetherInfo, TOGETHER_SINCE } from "@/lib/couple";
+import { MyCardButton } from "@/components/features/MyCardButton";
+import { StatusPicker } from "./StatusPicker";
 import { RenameForm } from "./RenameForm";
 import { AvatarUpload } from "./AvatarUpload";
 import { CoverUpload } from "./CoverUpload";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 import { NotificationSettings } from "./NotificationSettings";
+import { getAuthUser } from "@/lib/auth/get-user";
 
-type ProfileRow = { id: string; display_name: string | null; avatar_url: string | null; cover_url: string | null };
+type ProfileRow = {
+  id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  cover_url: string | null;
+  status_key: string | null;
+  status_note: string | null;
+};
 
 function Card({ icon: Icon, tint, title, children }: {
   icon: ComponentType<{ size?: number; strokeWidth?: number }>;
@@ -74,10 +84,12 @@ export default async function PerfilPage() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   // La RLS de profiles devuelve tu perfil y el de tu pareja, nada más.
-  const { data } = await supabase.from("profiles").select("id, display_name, avatar_url, cover_url");
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, display_name, avatar_url, cover_url, status_key, status_note");
   const profiles = (data ?? []) as ProfileRow[];
   const me = profiles.find((p) => p.id === user?.id);
   const partner = profiles.find((p) => p.id !== user?.id);
@@ -121,6 +133,21 @@ export default async function PerfilPage() {
             💞 {together.days} días con {partner.display_name}
           </p>
         ) : null}
+        {user && me ? (
+          <MyCardButton
+            person={{
+              id: me.id,
+              name: me.display_name ?? "Tú",
+              avatarUrl: me.avatar_url,
+              coverUrl: me.cover_url,
+              statusKey: me.status_key,
+              statusNote: me.status_note,
+            }}
+            partnerName={partner?.display_name ?? "tu pareja"}
+            sinceLabel={TOGETHER_SINCE.split("-").reverse().join("·")}
+            daysTogether={together.days}
+          />
+        ) : null}
       </div>
 
       <div className="mt-6 flex flex-col gap-4 pb-4">
@@ -146,6 +173,10 @@ export default async function PerfilPage() {
           title="Cómo funciona Ratta"
           subtitle="Una vuelta rápida por todo"
         />
+
+        <Card icon={Smile} tint="var(--color-accent)" title="Tu estado">
+          <StatusPicker currentKey={me?.status_key ?? null} currentNote={me?.status_note ?? null} />
+        </Card>
 
         <Card icon={Bell} tint="var(--color-accent)" title="Notificaciones">
           <NotificationSettings />

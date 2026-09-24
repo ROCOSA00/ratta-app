@@ -9,6 +9,7 @@ import { formatDate, formatDateTime } from "@/lib/format-date";
 import { todayKey, toDateKey } from "@/lib/calendar/date-utils";
 import { deleteEvent } from "../actions";
 import { EventPhotos } from "./EventPhotos";
+import { getAuthUser } from "@/lib/auth/get-user";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -36,7 +37,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
       data: { user },
     },
     { data: profiles },
-  ] = await Promise.all([supabase.auth.getUser(), supabase.from("profiles").select("id, display_name")]);
+  ] = await Promise.all([getAuthUser(), supabase.from("profiles").select("id, display_name")]);
   const names: Record<string, string> = {};
   for (const p of (profiles ?? []) as { id: string; display_name: string | null }[]) {
     names[p.id] = p.id === user?.id ? "Tú" : (p.display_name ?? "Tu pareja");

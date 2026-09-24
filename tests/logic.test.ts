@@ -10,6 +10,7 @@ import { collides, flap, gapFor, newGame, RAT_X, speedFor, step, STEP, WORLD_H, 
 import { summarizePlayer } from "@/lib/games/get-flappy-summary";
 import { DEFAULT_PREFS, htmlAttributes, parsePrefs, serializePrefs } from "@/lib/prefs";
 import { TOUR_STEPS } from "@/components/tour/steps";
+import { STATUS_OPTIONS, findStatus } from "@/lib/status/options";
 
 describe("Hora de Madrid", () => {
   it("convierte la hora escrita en el formulario al instante UTC correcto (verano, invierno, medianoche)", () => {
@@ -322,5 +323,15 @@ describe("Tutorial interactivo", () => {
       const next = TOUR_STEPS[i + 1];
       expect(next?.path).toBe(`/${step.target!.slice("nav-".length)}`);
     });
+  });
+});
+
+describe("Estados de ánimo", () => {
+  it("keys únicas y válidas para la base de datos (a-z y _)", () => {
+    expect(new Set(STATUS_OPTIONS.map((o) => o.key)).size).toBe(STATUS_OPTIONS.length);
+    for (const o of STATUS_OPTIONS) expect(o.key).toMatch(/^[a-z_]{1,30}$/);
+    expect(findStatus("cagon")?.emoji).toBe("💩");
+    expect(findStatus("hackeo")).toBeNull();
+    expect(findStatus(null)).toBeNull();
   });
 });

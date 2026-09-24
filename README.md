@@ -299,6 +299,21 @@ puntuales según se van usando:
   te hace tocar las pestañas para ir de pantalla en pantalla (16 pasos).
   Se ofrece al entrar por primera vez y se puede repetir desde Ajustes o
   desde «Cómo funciona Ratta».
+- **Carnet de Ratta y estado de ánimo**: tocando la cara o el nombre de
+  tu pareja en el chat se abre su carnet holográfico en 3D
+  (`MemberCard`: se gira arrastrando, se da la vuelta tocándolo). En
+  Perfil eliges tu estado («Enamorado/a», «Cagón/a»…, con nota) y ves tu
+  propio carnet. Migración `20260930100000_profile_status.sql`.
+- **Más rápida**: `getCurrentSpaceId()` y el usuario de la sesión
+  (`getAuthUser()`) se piden una sola vez por carga de página (`cache()`
+  de React; antes Inicio preguntaba ~6 veces quién eras y ~8 en qué
+  espacio). El calendario pide planes y Momentos a la vez, cambia de
+  vista al instante y precarga las otras vistas y el mes anterior y
+  siguiente.
+- **Servidor junto a la base de datos**: `vercel.json` fija la región de
+  las funciones de Vercel en Dublín (`dub1`), al lado de Supabase (EU
+  West). Por defecto Vercel las ejecuta en Washington (`iad1`) y cada
+  consulta cruzaba el Atlántico.
 
 ## Notas de seguridad
 

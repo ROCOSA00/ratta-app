@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
 import { CHAT_BUCKET, CHAT_COLUMNS, SIGNED_URL_SECONDS, type ChatMessage } from "@/lib/chat/types";
 import { ChatRoom } from "./ChatRoom";
+import { getAuthUser } from "@/lib/auth/get-user";
+import { getTogetherInfo, TOGETHER_SINCE } from "@/lib/couple";
 
 const PAGE_SIZE = 150;
 
@@ -23,14 +25,14 @@ export default async function ChatPage() {
     { data: messages },
     { data: profiles },
   ] = await Promise.all([
-    supabase.auth.getUser(),
+    getAuthUser(),
     supabase
       .from("messages")
       .select(CHAT_COLUMNS)
       .eq("space_id", spaceId)
       .order("created_at", { ascending: false })
       .limit(PAGE_SIZE),
-    supabase.from("profiles").select("id, display_name, avatar_url"),
+    supabase.from("profiles").select("id, display_name, avatar_url, cover_url, status_key, status_note"),
   ]);
 
   // Enlaces temporales para las fotos, todos de una vez (el almacén es privado).
@@ -47,9 +49,19 @@ export default async function ChatPage() {
   }));
 
   const me = user?.id ?? "";
-  const partner = (profiles ?? []).find((p) => p.id !== me) as
-    | { id: string; display_name: string | null; avatar_url: string | null }
-    | undefined;
+  type ProfileRow = {
+    id: string;
+    display_name: string | null;
+    avatar_url: string | null;
+    cover_url: string | null;
+    status_key: string | null;
+    status_note: string | null;
+  };
+  const all = (profiles ?? []) as ProfileRow[];
+  const partner = all.find((p) => p.id !== me);
+  const mine = all.find((p) => p.id === me);
+  const together = getTogetherInfo();
+  const [y, m, d] = TOGETHER_SINCE.split("-");
 
   return (
     <ChatRoom
@@ -58,6 +70,23 @@ export default async function ChatPage() {
       partnerName={partner?.display_name ?? "Tu pareja"}
       partnerAvatar={partner?.avatar_url ?? null}
       initialMessages={initialMessages}
+      card={
+        partner
+          ? {
+              person: {
+                id: partner.id,
+                name: partner.display_name ?? "Tu pareja",
+                avatarUrl: partner.avatar_url,
+                coverUrl: partner.cover_url,
+                statusKey: partner.status_key,
+                statusNote: partner.status_note,
+              },
+              partnerName: mine?.display_name ?? "Tú",
+              sinceLabel: `${d}·${m}·${y}`,
+              daysTogether: together.days,
+            }
+          : null
+      }
     />
   );
 }

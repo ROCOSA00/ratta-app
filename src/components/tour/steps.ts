@@ -80,6 +80,14 @@ export const TOUR_STEPS: readonly TourStep[] = [
     body: "Escribe abajo y los mensajes llegan al instante. Con este botón mandas fotos; tocándolas se ven en grande.",
   },
   {
+    id: "chat-card",
+    path: "/chat",
+    target: "chat-card",
+    action: "next",
+    title: "Su carnet de Ratta 🪪",
+    body: "Toca su cara o su nombre y verás su carnet holográfico: gíralo con el dedo. Debajo del nombre sale su estado de ánimo.",
+  },
+  {
     id: "go-calendar",
     path: "/chat",
     target: "nav-calendario",
@@ -133,7 +141,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     target: "settings",
     action: "next",
     title: "Ajustes ⚙️",
-    body: "Tema claro u oscuro, letra más grande, qué tarjetas ver en Inicio… y desde aquí puedes repetir este tutorial.",
+    body: "Tema claro u oscuro, letra más grande, qué tarjetas ver en Inicio… y desde aquí puedes repetir este tutorial. En Perfil también eliges tu estado de ánimo.",
   },
   {
     id: "done",
