@@ -43,7 +43,7 @@ import { sendNudge } from "@/lib/nudges/actions";
 import { updateDisplayName } from "@/lib/profile/actions";
 import { changePassword, signIn } from "@/lib/auth/actions";
 import { addMemory, deleteMemory } from "@/lib/memories/actions";
-import { sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
+import { markChatRead, sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
 import { sendHearts } from "@/lib/hearts/actions";
 import { postMoment } from "@/lib/moments/actions";
 import { submitFlappyScore } from "@/lib/games/actions";
@@ -547,6 +547,17 @@ describe("Chat", () => {
     state.fake = createFakeSupabase({ results: { "messages:insert": { data: null, error: { message: "x" } } } });
     expect((await sendMessage("hola")).error).toMatch(/No se pudo enviar/);
     expect(state.notified).toHaveLength(0);
+  });
+
+  it("abrir el chat lo marca como leído en tu espacio (quita el globo rojo)", async () => {
+    await markChatRead();
+    expect(state.fake.rpcCalls).toEqual([{ fn: "mark_chat_read", args: { p_space_id: "space-1" } }]);
+  });
+
+  it("sin espacio no marca nada", async () => {
+    state.spaceId = null;
+    await markChatRead();
+    expect(state.fake.rpcCalls).toHaveLength(0);
   });
 
   const CHAT_SPACE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";

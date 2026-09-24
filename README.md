@@ -278,6 +278,16 @@ puntuales según se van usando:
   plano) cada pantalla recarga sus datos (`AutoRefresh` en el layout), e
   Inicio además cada minuto mientras lo miras. Antes, El Trono en Inicio
   se quedaba con los datos de cuando lo abriste.
+- **Barra con movimiento y mensajes pendientes**: la pastilla de la
+  pestaña activa se desliza con un pequeño rebote, el icono da un saltito
+  y cada pantalla entra con un fundido (`template.tsx`; solo opacidad, para
+  no descolocar lo que va fijo). El Chat muestra un globo rojo con los
+  mensajes sin leer, al instante con Supabase Realtime. Migración
+  `20260929100000_chat_reads.sql`.
+- **Pantalla de carga al abrir la app**: logo en el centro y una barra de
+  progreso (`SplashScreen`, menos de 1,5 s). Solo al abrir la app, no al
+  cambiar de pestaña; si el JavaScript no llegara a quitarla, el CSS la
+  oculta solo a los 3 s.
 
 ## Notas de seguridad
 

@@ -97,11 +97,119 @@ a:active {
   a:active {
     transform: none;
   }
+  .nav-pill {
+    transition: none;
+  }
+  .nav-pop,
+  .nav-badge,
+  .page-in,
+  .splash-logo {
+    animation: none;
+  }
 }
 
 .font-mono-nums {
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   font-variant-numeric: tabular-nums;
+}
+
+/* Barra de abajo: la pastilla activa se desliza con un pequeño rebote, el
+   icono activo da un saltito y el globo de mensajes aparece con un "pop". */
+.nav-pill {
+  transition:
+    transform 380ms cubic-bezier(0.34, 1.45, 0.64, 1),
+    opacity 200ms ease;
+}
+
+.nav-pop {
+  animation: nav-pop 420ms cubic-bezier(0.34, 1.6, 0.64, 1);
+}
+
+@keyframes nav-pop {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(-5px) scale(1.18);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.nav-badge {
+  animation: badge-in 320ms cubic-bezier(0.34, 1.6, 0.64, 1);
+}
+
+@keyframes badge-in {
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Al cambiar de pantalla, la nueva aparece con un fundido suave. Solo
+   opacidad a propósito: un "transform" aquí descolocaría durante la
+   animación lo que va fijo en pantalla (la barra de escribir del chat). */
+.page-in {
+  animation: page-in 220ms ease-out;
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Pantalla de carga al abrir la app (SplashScreen). La barra se llena en
+   0,9 s; el logo "respira"; y si el JavaScript no llegara a quitarla, se
+   oculta sola a los 3 s. */
+.splash {
+  animation: splash-failsafe 300ms ease 3s forwards;
+}
+
+.splash-bar {
+  width: 0;
+  animation: splash-fill 900ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.splash-logo {
+  animation: splash-breathe 1.2s ease-in-out infinite;
+}
+
+@keyframes splash-fill {
+  0% {
+    width: 0;
+  }
+  60% {
+    width: 70%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes splash-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes splash-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 /* Juego de los corazones: cada toque lanza un corazón que sube y se

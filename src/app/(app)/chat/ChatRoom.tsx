@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { ImagePlus, SendHorizontal, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
+import { markChatRead, sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
 import { CHAT_BUCKET, SIGNED_URL_SECONDS, type ChatMessage } from "@/lib/chat/types";
 import { resizeImage } from "@/lib/images/resize";
 import { TIME_ZONE } from "@/lib/format-date";
@@ -101,6 +101,8 @@ export function ChatRoom({
               }
               const incoming: ChatMessage = { ...row, image_path: imagePath, image_url: imageUrl };
               setMessages((current) => mergeMessages(current, [incoming]));
+              // Lo estás viendo: ya está leído (que no salga el globo rojo luego).
+              if (incoming.sender_id !== myId && !document.hidden) void markChatRead();
             })();
           },
         )
@@ -111,7 +113,17 @@ export function ChatRoom({
       cancelled = true;
       if (channel) void supabase.removeChannel(channel);
     };
-  }, [spaceId]);
+  }, [spaceId, myId]);
+
+  // Abrir el chat (o volver a la app con el chat abierto) = leído hasta ahora.
+  useEffect(() => {
+    void markChatRead();
+    const onVisible = () => {
+      if (!document.hidden) void markChatRead();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
 
   // Al volver a la app, <AutoRefresh /> (en el layout) recarga los mensajes
   // por si se perdió alguno y renueva los enlaces temporales de las fotos.

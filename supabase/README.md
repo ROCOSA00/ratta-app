@@ -20,6 +20,32 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Mensajes sin leer del chat — ⏳ pendiente de aplicar
+
+`20260929100000_chat_reads.sql`. Hay que aplicarla en producción
+**antes** de publicar el código que la usa.
+
+- Tabla `chat_reads`: hasta cuándo ha leído cada persona el chat de su
+  espacio. Cada uno solo ve y toca la suya.
+- `mark_chat_read()` la pone a "ahora" (reloj de la base de datos) y
+  `unread_chat_count()` cuenta los mensajes de tu pareja posteriores.
+  Las dos son `SECURITY INVOKER`: se aplica la RLS de quien llama, así
+  que solo cuentan mensajes de tu espacio. Revocadas para `anon`.
+- Al aplicarla, los que ya estáis dentro empezáis con todo leído.
+
+Validada en Postgres 16 local, con todas las migraciones anteriores:
+
+| Caso | Resultado |
+|---|---|
+| Sin leer: 3 de tu pareja (no cuentan los tuyos ni los ya leídos) | 3 |
+| Tu pareja: 1 tuyo sin leer | 1 |
+| Abrir el chat / llega otro después | 0 / 1 |
+| Leer no cambia la marca de tu pareja | 0 cambiadas |
+| Sin marca todavía | 0 |
+| Ver marcas / cambiar o crear la de tu pareja | solo la tuya / 0 / rechazado |
+| Persona de fuera: contar vuestro chat / marcar leído en él | 0 / rechazado |
+| Sin sesión (`anon`) | permiso denegado |
+
 ## Flappy Rata (puntuaciones de juegos) — ✅ ya aplicada
 
 `20260928100000_game_scores.sql`. Aplicada en producción antes de

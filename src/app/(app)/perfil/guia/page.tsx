@@ -117,6 +117,10 @@ export default function GuiaPage() {
             Con el botón 📷 puedes mandar <B>fotos</B> (con un texto si quieres). Toca una foto para verla en grande.
             Son privadas: solo las veis vosotros dos.
           </p>
+          <p>
+            Si tu pareja te ha escrito y aún no lo has visto, el icono del Chat de la barra de abajo lleva un{" "}
+            <B>globo rojo</B> con cuántos mensajes tienes pendientes. Se quita al entrar al chat.
+          </p>
         </Section>
 
         <Section icon={MessageCircleQuestion} tint="var(--color-accent)" title="Pregunta del día">
