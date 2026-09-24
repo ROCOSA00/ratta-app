@@ -1,25 +1,21 @@
 import { createClient } from "@/lib/supabase/client";
-import { resizeImage } from "@/lib/images/resize";
-
 type Kind = "avatar" | "cover";
 
-const MAX_SIDE: Record<Kind, number> = { avatar: 512, cover: 1600 };
+/** Tamaño y forma de cada imagen (lo usa el editor de recorte). */
+export const PROFILE_IMAGE: Record<Kind, { aspect: number; outputWidth: number }> = {
+  avatar: { aspect: 1, outputWidth: 512 },
+  cover: { aspect: 2, outputWidth: 1600 },
+};
+
 const COLUMN: Record<Kind, "avatar_url" | "cover_url"> = { avatar: "avatar_url", cover: "cover_url" };
 
 /**
- * Sube tu foto de perfil o tu portada desde el navegador. Va al bucket
- * público "avatars", en tu propia carpeta (<tu-uuid>/avatar o /cover),
- * que es la única en la que la RLS te deja escribir.
- * Devuelve un mensaje de error para mostrar, o null si todo fue bien.
+ * Sube tu foto de perfil o tu portada, ya recortada en el editor
+ * (ImageCropper). Va al bucket público "avatars", en tu propia carpeta
+ * (<tu-uuid>/avatar o /cover), que es la única en la que la RLS te deja
+ * escribir. Devuelve un mensaje de error para mostrar, o null si todo fue bien.
  */
-export async function uploadProfileImage(kind: Kind, userId: string, file: File): Promise<string | null> {
-  let blob: Blob;
-  try {
-    blob = await resizeImage(file, MAX_SIDE[kind]);
-  } catch {
-    return "No se pudo leer esa imagen. Prueba con otra.";
-  }
-
+export async function uploadProfileImage(kind: Kind, userId: string, blob: Blob): Promise<string | null> {
   const supabase = createClient();
   const path = `${userId}/${kind}`;
 

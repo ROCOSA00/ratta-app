@@ -11,6 +11,7 @@ import { summarizePlayer } from "@/lib/games/get-flappy-summary";
 import { DEFAULT_PREFS, htmlAttributes, parsePrefs, serializePrefs } from "@/lib/prefs";
 import { TOUR_STEPS } from "@/components/tour/steps";
 import { STATUS_OPTIONS, findStatus } from "@/lib/status/options";
+import { clampView, cropRect, initialView, scaleFor, zoomAround } from "@/lib/images/crop";
 
 describe("Hora de Madrid", () => {
   it("convierte la hora escrita en el formulario al instante UTC correcto (verano, invierno, medianoche)", () => {
@@ -333,5 +334,49 @@ describe("Estados de ánimo", () => {
     expect(findStatus("cagon")?.emoji).toBe("💩");
     expect(findStatus("hackeo")).toBeNull();
     expect(findStatus(null)).toBeNull();
+  });
+});
+
+// ------------------------------------------------------ Editor de recorte
+
+describe("Editor de recorte de fotos", () => {
+  const photo = { w: 4000, h: 3000 }; // horizontal 4:3
+  const square = { w: 300, h: 300 }; // marco de la foto de perfil
+  const wide = { w: 340, h: 170 }; // marco de la portada (2:1)
+
+  it("sin zoom, la foto cubre el marco justo y queda centrada", () => {
+    const v = initialView(photo, square);
+    expect(scaleFor(photo, square, 1)).toBeCloseTo(0.1); // 3000 px de alto → 300
+    expect(v).toEqual({ zoom: 1, x: -50, y: 0 }); // sobran 100 px a lo ancho: 50 a cada lado
+    expect(cropRect(photo, square, v)).toEqual({ sx: 500, sy: 0, sw: 3000, sh: 3000 });
+  });
+
+  it("nunca deja huecos: no se puede mover más allá del borde", () => {
+    expect(clampView(photo, square, { zoom: 1, x: 80, y: 40 })).toEqual({ zoom: 1, x: 0, y: 0 });
+    expect(clampView(photo, square, { zoom: 1, x: -999, y: -999 })).toEqual({ zoom: 1, x: -100, y: 0 });
+  });
+
+  it("el zoom se queda entre 1 y 5", () => {
+    expect(clampView(photo, square, { zoom: 0.2, x: 0, y: 0 }).zoom).toBe(1);
+    expect(clampView(photo, square, { zoom: 99, x: 0, y: 0 }).zoom).toBe(5);
+  });
+
+  it("al ampliar, el punto bajo los dedos no se mueve", () => {
+    const v0 = initialView(photo, square);
+    const v1 = zoomAround(photo, square, v0, 2, 150, 150);
+    const s0 = scaleFor(photo, square, v0.zoom);
+    const s1 = scaleFor(photo, square, v1.zoom);
+    // El píxel de la foto que había en el centro del marco sigue en el centro.
+    expect((150 - v0.x) / s0).toBeCloseTo((150 - v1.x) / s1);
+    expect((150 - v0.y) / s0).toBeCloseTo((150 - v1.y) / s1);
+    // Con zoom 2 se guarda la mitad de ancho y de alto de antes.
+    expect(cropRect(photo, square, v1).sw).toBeCloseTo(1500);
+  });
+
+  it("portada alargada: el recorte tiene la misma forma que el marco (2:1)", () => {
+    const tall = { w: 3000, h: 4000 }; // foto vertical del móvil
+    const r = cropRect(tall, wide, initialView(tall, wide));
+    expect(r.sw / r.sh).toBeCloseTo(2);
+    expect(r.sw).toBeCloseTo(3000); // ocupa todo el ancho de la foto
   });
 });
