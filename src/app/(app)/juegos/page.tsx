@@ -3,6 +3,7 @@ import { ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
 import { getHeartsSummary } from "@/lib/hearts/get-hearts-summary";
+import { getFlappySummary } from "@/lib/games/get-flappy-summary";
 
 function GameCard({
   href,
@@ -53,7 +54,7 @@ function GameCard({
 }
 
 export default async function JuegosPage() {
-  const [poop, hearts] = await Promise.all([getPoopSummary(), getHeartsSummary()]);
+  const [poop, hearts, flappy] = await Promise.all([getPoopSummary(), getHeartsSummary(), getFlappySummary()]);
 
   let poopToday: string | null = null;
   if (poop) {
@@ -66,6 +67,10 @@ export default async function JuegosPage() {
 
   const heartsToday = hearts
     ? `Hoy: tú ${hearts.me.totals.today}${hearts.partner ? ` · ${hearts.partner.name} ${hearts.partner.totals.today}` : ""}`
+    : null;
+
+  const flappyRecords = flappy
+    ? `Récord: tú ${flappy.me.best}${flappy.partner ? ` · ${flappy.partner.name} ${flappy.partner.best}` : ""}`
     : null;
 
   return (
@@ -87,6 +92,14 @@ export default async function JuegosPage() {
           description="Pulsa sin parar y manda corazones"
           today={heartsToday}
           tint="var(--color-accent)"
+        />
+        <GameCard
+          href="/juegos/flappy"
+          emoji="🐀"
+          title="Flappy Rata"
+          description="Toca para volar y esquiva las tuberías"
+          today={flappyRecords}
+          tint="var(--color-accent-2)"
         />
       </div>
     </>

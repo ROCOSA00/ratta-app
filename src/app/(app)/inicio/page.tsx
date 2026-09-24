@@ -9,6 +9,7 @@ import { GuideWelcome } from "@/components/features/GuideWelcome";
 import { SpotifyCard } from "@/components/features/SpotifyCard";
 import { MemoryOfTheDayCard } from "@/components/features/MemoryOfTheDayCard";
 import { MomentBanner } from "@/components/features/MomentBanner";
+import { AutoRefresh } from "@/components/shared/AutoRefresh";
 import { getTodayMoment } from "@/lib/moments/get-moments";
 import { getNextEvent } from "@/lib/events/get-next-event";
 import { getPinnedNote } from "@/lib/notes/get-pinned-note";
@@ -149,11 +150,13 @@ export default async function InicioPage() {
         </div>
       </header>
 
+      {/* Inicio resume lo de los dos: se refresca solo cada minuto mientras lo miras. */}
+      <AutoRefresh everyMs={60_000} />
       <div className="flex flex-col gap-4 pb-2">
         <MomentBanner moment={todayMoment} />
         <GuideWelcome name={myName} />
 
-        <Link href="/calendario">
+        <Link href={nextEvent ? `/calendario/${nextEvent.id}` : "/calendario"}>
           <SectionCard tint="var(--color-accent-2)">
             <SectionHeader
               icon={CalendarDays}

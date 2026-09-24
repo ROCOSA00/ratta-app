@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { ImagePlus, SendHorizontal, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
@@ -64,7 +63,6 @@ export function ChatRoom({
   const [error, setError] = useState<string | null>(null);
   const [isSending, startSending] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
 
   // Si el servidor trae mensajes nuevos (al volver a la app), se mezclan.
   useEffect(() => {
@@ -115,15 +113,8 @@ export function ChatRoom({
     };
   }, [spaceId]);
 
-  // Al volver a la app tras un rato, se recarga por si se perdió algo
-  // (y así también se renuevan los enlaces temporales de las fotos).
-  useEffect(() => {
-    const onVisible = () => {
-      if (!document.hidden) router.refresh();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [router]);
+  // Al volver a la app, <AutoRefresh /> (en el layout) recarga los mensajes
+  // por si se perdió alguno y renueva los enlaces temporales de las fotos.
 
   // Al final de la página (no al último mensaje): el relleno inferior ya
   // deja el hueco de la barra de escribir y la barra flotante, que si no
