@@ -76,3 +76,11 @@ export async function sendPhotoMessage(input: { path: string; caption: string })
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Foto no válida." };
   return insertMessage({ body: parsed.data.caption, image_path: parsed.data.path });
 }
+
+/** Marca el chat como leído hasta ahora (quita el globo rojo del Chat). */
+export async function markChatRead(): Promise<void> {
+  const spaceId = await getCurrentSpaceId();
+  if (!spaceId) return;
+  const supabase = await createClient();
+  await supabase.rpc("mark_chat_read", { p_space_id: spaceId });
+}

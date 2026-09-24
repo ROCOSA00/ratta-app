@@ -278,6 +278,12 @@ puntuales según se van usando:
   plano) cada pantalla recarga sus datos (`AutoRefresh` en el layout), e
   Inicio además cada minuto mientras lo miras. Antes, El Trono en Inicio
   se quedaba con los datos de cuando lo abriste.
+- **Barra con movimiento y mensajes pendientes**: la pastilla de la
+  pestaña activa se desliza con un pequeño rebote, el icono da un saltito
+  y cada pantalla entra con un fundido (`template.tsx`; solo opacidad, para
+  no descolocar lo que va fijo). El Chat muestra un globo rojo con los
+  mensajes sin leer, al instante con Supabase Realtime. Migración
+  `20260929100000_chat_reads.sql`.
 
 ## Notas de seguridad
 
