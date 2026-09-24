@@ -20,10 +20,10 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Flappy Rata (puntuaciones de juegos) — ⏳ pendiente de aplicar
+## Flappy Rata (puntuaciones de juegos) — ✅ ya aplicada
 
-`20260928100000_game_scores.sql`. Hay que aplicarla en producción
-**antes** de publicar el código que la usa.
+`20260928100000_game_scores.sql`. Aplicada en producción antes de
+publicar el código que la usa.
 
 - Tabla `game_days`: una fila por persona, juego y **día** (Madrid) con
   la mejor puntuación y el número de partidas. Los dos ven las de ambos.
