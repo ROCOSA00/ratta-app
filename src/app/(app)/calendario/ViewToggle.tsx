@@ -5,16 +5,16 @@ import { useRouter } from "next/navigation";
 import { todayKey } from "@/lib/calendar/date-utils";
 
 const VIEWS = [
-  { key: "list", label: "Lista" },
   { key: "month", label: "Mes" },
   { key: "week", label: "Semana" },
+  { key: "list", label: "Lista" },
 ] as const;
 
 const hrefFor = (key: string, refKey: string) =>
   key === "list" ? "/calendario?view=list" : `/calendario?view=${key}&ref=${refKey || todayKey()}`;
 
 /**
- * Lista / Mes / Semana. La pestaña cambia al instante al tocarla (antes no
+ * Mes / Semana / Lista. La pestaña cambia al instante al tocarla (antes no
  * pasaba nada hasta que llegaba la página nueva) y las otras dos vistas se
  * precargan en segundo plano, así casi siempre el cambio es inmediato.
  */

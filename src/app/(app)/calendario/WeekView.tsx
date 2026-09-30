@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { LinkPending } from "./LinkPending";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { addDays, dayLabel, todayKey, toDateKey, weekKeys } from "@/lib/calendar/date-utils";
+import { addDays, dayLabel, todayKey, weekKeys } from "@/lib/calendar/date-utils";
 import { EventCard, type EventRow } from "./EventList";
 
 export function WeekView({ refKey, events }: { refKey: string; events: EventRow[] }) {
@@ -10,10 +10,9 @@ export function WeekView({ refKey, events }: { refKey: string; events: EventRow[
 
   const byDay = new Map<string, EventRow[]>();
   for (const event of events) {
-    const key = toDateKey(new Date(event.start_at));
-    const list = byDay.get(key) ?? [];
+    const list = byDay.get(event.day) ?? [];
     list.push(event);
-    byDay.set(key, list);
+    byDay.set(event.day, list);
   }
 
   const prevRef = addDays(refKey, -7);
@@ -74,7 +73,7 @@ export function WeekView({ refKey, events }: { refKey: string; events: EventRow[
             {dayEvents.length > 0 ? (
               <ul className="flex flex-col gap-2">
                 {dayEvents.map((event) => (
-                  <EventCard key={event.id} event={event} />
+                  <EventCard key={`${event.id}-${event.day}`} event={event} />
                 ))}
               </ul>
             ) : (

@@ -20,6 +20,49 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Planes que se repiten + aviso el día antes + vuestro día 6 — ⏳ pendiente
+
+`20261001100000_event_recurrence_reminders.sql` + la puesta en marcha de
+`setup/recordatorios_planes.sql` (que **no** es una migración: programa
+el aviso con `cron.schedule('recordatorios-planes', ...)`).
+
+- `events` gana `recurrence` (`none`, `weekly`, `biweekly`, `monthly`,
+  `yearly`), `recurrence_until` (último día, opcional) y
+  `remind_day_before`. Se guarda una sola fila por plan; la app calcula
+  las demás veces (`src/lib/events/recurrence.ts`) y la base de datos
+  tiene la misma regla en `event_occurs_on()`.
+- `event_photos` gana `occurrence` (de qué vez del plan es cada foto; las
+  que ya había toman el día de su plan). La política de insertar exige
+  ahora que ese día de verdad toque el plan.
+- `event_reminders_tick()` (pg_cron, cada hora): a partir de las 20:00 de
+  Madrid, una vez por noche y espacio (`event_reminder_runs`), manda a
+  `https://ratta-app.vercel.app/api/recordatorios` los planes de mañana
+  con el aviso activado. Misma clave de Vault que el Momento Ratta.
+- Crea el plan «DÍA CON EL AMOR DE MI VIDA»: todo el día, cada día 6
+  desde el 6 de marzo de 2026, con aviso, `color = 'love'`.
+
+Pasos:
+
+1. SQL Editor: ejecutar la migración.
+2. Publicar la app (merge) y esperar a que Vercel ponga **Ready**.
+3. SQL Editor: ejecutar `setup/recordatorios_planes.sql`.
+
+Validada en Postgres 16 local, con todas las migraciones anteriores y
+datos de antes (un plan con foto):
+
+| Caso | Resultado |
+|---|---|
+| Foto de antes | `occurrence` = día del plan en Madrid |
+| Día 6 de cada mes | creado una vez; toca el 6 oct 2026 y el 6 feb 2027, no el 7 |
+| `recurrence` inventada / fin antes del primer día | rechazado por el `CHECK` |
+| Aviso a las 19:59 | no hace nada |
+| Aviso a las 20:00, otra vez esa noche y a las 21:00 | una sola llamada, con los dos móviles |
+| Yoga cada sábado 10:00 hasta el 17 oct | avisa el 9 oct; el 23 oct ya no |
+| Día 6 + una cena ese día | una llamada con los dos, el de todo el día primero |
+| Foto en un sábado del yoga / en un domingo / tras el fin | permitido / RLS lo rechaza / RLS lo rechaza |
+| Quitar el aviso a un plan de tu espacio | permitido |
+| `event_reminders_tick()` llamada por un usuario | permiso denegado |
+
 ## Estado de ánimo en el perfil — ✅ ya aplicada
 
 `20260930100000_profile_status.sql`. Aplicada en producción antes de

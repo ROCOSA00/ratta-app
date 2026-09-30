@@ -36,7 +36,7 @@ import {
   updateNote,
   updateNoteTitle,
 } from "@/app/(app)/notas/actions";
-import { addEventPhoto, createEvent, deleteEvent, deleteEventPhoto } from "@/app/(app)/calendario/actions";
+import { addEventPhoto, createEvent, deleteEvent, deleteEventPhoto, setEventReminder } from "@/app/(app)/calendario/actions";
 import { logEntry, undoEntry } from "@/lib/poop/actions";
 import { submitAnswer } from "@/lib/questions/actions";
 import { sendNudge } from "@/lib/nudges/actions";
@@ -178,7 +178,48 @@ describe("Calendario", () => {
       all_day: false,
       location: null,
       description: null,
+      recurrence: "none",
+      recurrence_until: null,
+      remind_day_before: false,
     });
+  });
+
+  it("guarda un plan que se repite cada semana, hasta un día, y con aviso el día antes", async () => {
+    const res = await createEvent(
+      ok,
+      form({ title: "Yoga", date: "2026-10-03", time: "10:00", repeat: "weekly", until: "2026-12-19", remind: "on" }),
+    );
+    expect(res).toEqual({ error: null });
+    expect(opsOf("events", "insert")[0]?.payload).toMatchObject({
+      recurrence: "weekly",
+      recurrence_until: "2026-12-19",
+      remind_day_before: true,
+    });
+    expect(state.notified[0]?.body).toMatch(/· cada semana \(sábados\)$/);
+  });
+
+  it("si no se repite, ignora la fecha de fin", async () => {
+    await createEvent(ok, form({ title: "Cena", date: "2026-10-03", time: "21:00", repeat: "none", until: "2026-12-19" }));
+    expect(opsOf("events", "insert")[0]?.payload).toMatchObject({ recurrence: "none", recurrence_until: null });
+  });
+
+  it("rechaza repeticiones inventadas o un fin anterior al primer día", async () => {
+    expect((await createEvent(ok, form({ title: "X", date: "2026-10-03", time: "10:00", repeat: "daily" }))).error).toBe(
+      "Repetición no válida.",
+    );
+    expect(
+      (await createEvent(ok, form({ title: "X", date: "2026-10-03", time: "10:00", repeat: "weekly", until: "2026-10-01" })))
+        .error,
+    ).toBe("La fecha de fin no puede ser antes del primer día.");
+    expect(state.fake.ops).toHaveLength(0);
+  });
+
+  it("activa y quita el aviso del día antes de un plan", async () => {
+    expect(await setEventReminder(EVENT_ID, true)).toEqual({ error: null });
+    expect(opsOf("events", "update")[0]).toMatchObject({ payload: { remind_day_before: true }, filters: [["id", EVENT_ID]] });
+    state.fake = createFakeSupabase({ results: { "events:update": { data: null, error: null } } });
+    expect((await setEventReminder(EVENT_ID, false)).error).toBe("No se pudo cambiar el aviso.");
+    expect((await setEventReminder("no-es-uuid", true)).error).toBe("Plan no válido.");
   });
 
   it("en invierno la diferencia es de 1 hora (20:00 en enero = 19:00 UTC)", async () => {
@@ -234,9 +275,23 @@ describe("Calendario", () => {
 describe("Fotos de planes", () => {
   const SPACE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
   const PATH = `${SPACE}/dddddddd-dddd-4ddd-8ddd-dddddddddddd.jpg`;
-  const withEvent = (startAt: string) =>
+  const withEvent = (startAt: string, extra: Record<string, unknown> = {}) =>
     createFakeSupabase({
-      results: { "events:select": { data: { id: EVENT_ID, title: "Cena", start_at: startAt }, error: null } },
+      results: {
+        "events:select": {
+          data: {
+            id: EVENT_ID,
+            title: "Cena",
+            start_at: startAt,
+            end_at: startAt,
+            all_day: false,
+            recurrence: "none",
+            recurrence_until: null,
+            ...extra,
+          },
+          error: null,
+        },
+      },
     });
 
   beforeEach(() => {
@@ -251,12 +306,35 @@ describe("Fotos de planes", () => {
       event_id: EVENT_ID,
       uploaded_by: "user-me",
       storage_path: PATH,
+      occurrence: "2020-05-01",
     });
     expect(state.notified[0]).toMatchObject({
       title: "📸 Fotos del plan",
       body: "Rokito ha añadido una foto a «Cena»",
       url: `/calendario/${EVENT_ID}`,
     });
+  });
+
+  it("en un plan que se repite, la foto va a la vez de ese día (y solo si ese día toca)", async () => {
+    // Cada sábado desde el 2 de mayo de 2020, a las 20:00 de Madrid.
+    state.fake = withEvent("2020-05-02T18:00:00Z", { end_at: "2020-05-02T19:00:00Z", recurrence: "weekly" });
+    expect(await addEventPhoto({ eventId: EVENT_ID, path: PATH, day: "2020-05-16" })).toEqual({ error: null });
+    expect(opsOf("event_photos", "insert")[0]?.payload).toMatchObject({ occurrence: "2020-05-16" });
+    expect(state.notified[0]?.url).toBe(`/calendario/${EVENT_ID}?day=2020-05-16`);
+
+    state.fake = withEvent("2020-05-02T18:00:00Z", { recurrence: "weekly" });
+    expect((await addEventPhoto({ eventId: EVENT_ID, path: PATH, day: "2020-05-17" })).error).toBe(
+      "Ese día no toca este plan.",
+    );
+    expect((await addEventPhoto({ eventId: EVENT_ID, path: PATH })).error).toBe("Ese día no toca este plan.");
+    expect(opsOf("event_photos", "insert")).toHaveLength(0);
+  });
+
+  it("tampoco deja fotos en una vez futura de un plan que se repite", async () => {
+    state.fake = withEvent("2020-05-02T18:00:00Z", { recurrence: "weekly" });
+    expect((await addEventPhoto({ eventId: EVENT_ID, path: PATH, day: "2999-05-04" })).error).toBe(
+      "Podréis añadir fotos a partir del día del plan.",
+    );
   });
 
   it("no deja añadir fotos antes del día del plan", async () => {

@@ -416,3 +416,61 @@ a:active {
     opacity: 0;
   }
 }
+
+/* ---------- Día con el amor de mi vida (cada día 6) ---------- */
+.love-day {
+  box-shadow: 0 8px 24px -10px rgba(225, 34, 94, 0.55);
+}
+
+/* Corazones suaves de fondo que suben poco a poco, y un brillo que pasa. */
+.love-day-hearts {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.22) 50%, transparent 65%) no-repeat,
+    radial-gradient(circle, rgba(255, 255, 255, 0.16) 1.5px, transparent 2px);
+  background-size: 250% 100%, 18px 18px;
+  animation: love-shine 4.5s ease-in-out infinite;
+}
+
+.love-day-hearts::before,
+.love-day-hearts::after {
+  content: "♥";
+  position: absolute;
+  color: rgba(255, 255, 255, 0.28);
+  animation: love-float 5s ease-in-out infinite;
+}
+
+.love-day-hearts::before {
+  right: 14%;
+  bottom: 8%;
+  font-size: 28px;
+}
+
+.love-day-hearts::after {
+  right: 5%;
+  top: 6%;
+  font-size: 18px;
+  animation-delay: -2.5s;
+}
+
+@keyframes love-shine {
+  0% {
+    background-position: 130% 0, 0 0;
+  }
+  60%,
+  100% {
+    background-position: -30% 0, 0 0;
+  }
+}
+
+@keyframes love-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-8deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(8deg);
+  }
+}

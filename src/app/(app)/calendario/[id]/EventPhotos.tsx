@@ -13,12 +13,15 @@ import { formatDateTime } from "@/lib/format-date";
 
 export function EventPhotos({
   eventId,
+  day,
   spaceId,
   photos,
   names,
   canAdd,
 }: {
   eventId: string;
+  /** Qué vez del plan (solo si se repite). */
+  day?: string;
   spaceId: string;
   photos: EventPhoto[];
   names: Record<string, string>;
@@ -52,7 +55,7 @@ export function EventPhotos({
         failed += 1;
         continue;
       }
-      const result = await addEventPhoto({ eventId, path });
+      const result = await addEventPhoto({ eventId, path, day });
       if (result.error) {
         // Que no quede una foto huérfana en el almacén si no se pudo registrar.
         await supabase.storage.from(EVENT_PHOTOS_BUCKET).remove([path]);

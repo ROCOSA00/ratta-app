@@ -69,3 +69,14 @@ export function getTogetherInfo(today: string = todayKey(), since: string = TOGE
 
   return { days, breakdown: joinParts(parts), milestone, nextLabel };
 }
+
+/**
+ * Subtítulo del "Día con el amor de mi vida" (cada día 6): cuántos meses
+ * hacéis ese día. `since` es el día en que empezó todo.
+ */
+export function loveDayLabel(day: string, since: string = TOGETHER_SINCE): string {
+  const months = wholeMonthsBetween(since, day);
+  if (months <= 0) return "Donde empezó todo 💞";
+  if (months % 12 === 0) return `¡${plural(months / 12, "año", "años")} juntos! 🎉`;
+  return `${plural(months, "mes", "meses")} juntos`;
+}
