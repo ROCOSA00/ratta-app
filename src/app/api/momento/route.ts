@@ -1,6 +1,6 @@
-import { createHash, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { sendPush } from "@/lib/push/notify";
+import { checkCronSecret, pushTargetsSchema } from "@/lib/push/cron-auth";
 
 // La llama el "despertador" de Supabase (moment_tick, con pg_cron + pg_net)
 // cuando llega la hora del Momento Ratta de hoy. No hay sesión: se protege
@@ -8,35 +8,11 @@ import { sendPush } from "@/lib/push/notify";
 // en Vault en Supabase). Solo manda la notificación a los móviles que le
 // pasan; no lee ni escribe nada más.
 
-const bodySchema = z.object({
-  targets: z
-    .array(
-      z.object({
-        endpoint: z.string().url().startsWith("https://").max(1000),
-        p256dh: z.string().min(1).max(200),
-        auth: z.string().min(1).max(100),
-      }),
-    )
-    .max(20),
-});
-
-function sameSecret(given: string, expected: string): boolean {
-  // Comparar resúmenes de igual longitud, en tiempo constante.
-  const a = createHash("sha256").update(given).digest();
-  const b = createHash("sha256").update(expected).digest();
-  return timingSafeEqual(a, b);
-}
+const bodySchema = z.object({ targets: pushTargetsSchema });
 
 export async function POST(request: Request): Promise<Response> {
-  // trim(): al pegar la clave en Vercel es fácil que se cuele un espacio o
-  // un salto de línea al principio o al final.
-  const secret = process.env.MOMENT_CRON_SECRET?.trim();
-  if (!secret) return Response.json({ error: "not configured" }, { status: 503 });
-
-  const header = request.headers.get("authorization") ?? "";
-  if (!sameSecret(header, `Bearer ${secret}`)) {
-    return Response.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const denied = checkCronSecret(request);
+  if (denied) return denied;
 
   let json: unknown;
   try {

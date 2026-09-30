@@ -7,8 +7,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
 import { formatDate, formatDateTime, zonedInputToUTC } from "@/lib/format-date";
 import { notifyPartner } from "@/lib/push/notify";
-import { todayKey, toDateKey } from "@/lib/calendar/date-utils";
+import { todayKey } from "@/lib/calendar/date-utils";
 import { EVENT_PHOTOS_BUCKET } from "@/lib/events/photos-config";
+import { isRecurring, occursOn, RECURRENCES, recurrenceLabel, seriesStartDay, type Series } from "@/lib/events/recurrence";
+
+const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
 const newEventSchema = z
   .object({
@@ -18,10 +21,17 @@ const newEventSchema = z
     allDay: z.enum(["true", "false"]).default("false"),
     location: z.string().trim().max(200, "Máximo 200 caracteres.").optional(),
     description: z.string().trim().max(1000, "Máximo 1000 caracteres.").optional(),
+    repeat: z.enum(RECURRENCES, "Repetición no válida.").default("none"),
+    until: z.union([z.literal(""), z.string().regex(DATE_KEY, "Fecha de fin no válida.")]).optional(),
+    remind: z.boolean().default(false),
   })
   .refine((data) => data.allDay === "true" || !!data.time, {
     message: "Elige una hora.",
     path: ["time"],
+  })
+  .refine((data) => data.repeat === "none" || !data.until || data.until >= data.date, {
+    message: "La fecha de fin no puede ser antes del primer día.",
+    path: ["until"],
   });
 
 const deleteEventSchema = z.object({
@@ -43,6 +53,9 @@ export async function createEvent(
     allDay: formData.get("allDay") === "on" ? "true" : "false",
     location: formData.get("location") ?? undefined,
     description: formData.get("description") ?? undefined,
+    repeat: formData.get("repeat") ?? undefined,
+    until: formData.get("until") ?? undefined,
+    remind: formData.get("remind") === "on",
   });
 
   if (!parsed.success) {
@@ -82,6 +95,7 @@ export async function createEvent(
     return { error: "No perteneces a ningún espacio todavía." };
   }
 
+  const recurrence = parsed.data.repeat;
   const { error } = await supabase.from("events").insert({
     space_id: spaceId,
     created_by: user.id,
@@ -91,6 +105,9 @@ export async function createEvent(
     all_day: isAllDay,
     location: parsed.data.location || null,
     description: parsed.data.description || null,
+    recurrence,
+    recurrence_until: recurrence !== "none" && parsed.data.until ? parsed.data.until : null,
+    remind_day_before: parsed.data.remind,
   });
 
   if (error) {
@@ -99,9 +116,10 @@ export async function createEvent(
 
   const eventTitle = parsed.data.title;
   const when = isAllDay ? formatDate(startAt.toISOString()) : formatDateTime(startAt.toISOString());
+  const repeats = recurrenceLabel({ recurrence, start_at: startAt.toISOString(), recurrence_until: null });
   await notifyPartner((me) => ({
     title: "📅 Nuevo plan",
-    body: `${me} ha añadido: ${eventTitle} (${when})`,
+    body: `${me} ha añadido: ${eventTitle} (${when})${repeats ? ` · ${repeats.toLowerCase()}` : ""}`,
     url: "/calendario",
   }));
 
@@ -145,6 +163,8 @@ const PHOTO_PATH_RE = new RegExp(`^${UUID}/${UUID}\\.jpg$`);
 const addEventPhotoSchema = z.object({
   eventId: z.string().uuid(),
   path: z.string().regex(PHOTO_PATH_RE, "Ruta de foto no válida."),
+  /** Qué vez del plan (si se repite). */
+  day: z.string().regex(DATE_KEY).optional(),
 });
 
 export type AddEventPhotoResult = { error: string | null };
@@ -153,7 +173,11 @@ export type AddEventPhotoResult = { error: string | null };
  * Registra una foto de un plan que el navegador ya subió al almacén
  * privado "event-photos". Solo se puede a partir del día del plan.
  */
-export async function addEventPhoto(input: { eventId: string; path: string }): Promise<AddEventPhotoResult> {
+export async function addEventPhoto(input: {
+  eventId: string;
+  path: string;
+  day?: string;
+}): Promise<AddEventPhotoResult> {
   const parsed = addEventPhotoSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
 
@@ -171,13 +195,17 @@ export async function addEventPhoto(input: { eventId: string; path: string }): P
   // La RLS solo deja ver planes de tu espacio: si no aparece, no es vuestro.
   const { data: event } = await supabase
     .from("events")
-    .select("id, title, start_at")
+    .select("id, title, start_at, end_at, all_day, recurrence, recurrence_until")
     .eq("id", parsed.data.eventId)
     .maybeSingle();
   if (!event) return { error: "Ese plan ya no existe." };
 
-  const row = event as { id: string; title: string; start_at: string };
-  if (toDateKey(new Date(row.start_at)) > todayKey()) {
+  const row = event as Series & { id: string; title: string };
+  // Cada foto va a una vez concreta del plan (en uno que se repite, la del
+  // día que se esté mirando), y tiene que ser una vez que de verdad toca.
+  const occurrence = isRecurring(row) ? (parsed.data.day ?? "") : seriesStartDay(row);
+  if (!occursOn(row, occurrence)) return { error: "Ese día no toca este plan." };
+  if (occurrence > todayKey()) {
     return { error: "Podréis añadir fotos a partir del día del plan." };
   }
 
@@ -186,6 +214,7 @@ export async function addEventPhoto(input: { eventId: string; path: string }): P
     event_id: row.id,
     uploaded_by: user.id,
     storage_path: parsed.data.path,
+    occurrence,
   });
   if (error) return { error: "No se pudo guardar la foto. Inténtalo de nuevo." };
 
@@ -193,7 +222,7 @@ export async function addEventPhoto(input: { eventId: string; path: string }): P
   await notifyPartner((me) => ({
     title: "📸 Fotos del plan",
     body: `${me} ha añadido una foto a «${title}»`,
-    url: `/calendario/${row.id}`,
+    url: isRecurring(row) ? `/calendario/${row.id}?day=${occurrence}` : `/calendario/${row.id}`,
     tag: `event-photos-${row.id}`,
   }));
 
@@ -223,6 +252,30 @@ export async function deleteEventPhoto(photoId: string): Promise<{ error: string
 
   await supabase.storage.from(EVENT_PHOTOS_BUCKET).remove([deleted.storage_path]);
   revalidatePath(`/calendario/${deleted.event_id}`);
+  revalidatePath("/calendario");
+  return { error: null };
+}
+
+// ------------------------------------------------------------ Recordatorio
+
+const reminderSchema = z.object({ eventId: z.string().uuid(), on: z.boolean() });
+
+/** Activa o quita el aviso del día antes de un plan (de todas sus veces). */
+export async function setEventReminder(eventId: string, on: boolean): Promise<{ error: string | null }> {
+  const parsed = reminderSchema.safeParse({ eventId, on });
+  if (!parsed.success) return { error: "Plan no válido." };
+
+  const supabase = await createClient();
+  // La RLS de events solo deja cambiar planes de vuestro espacio.
+  const { data } = await supabase
+    .from("events")
+    .update({ remind_day_before: parsed.data.on })
+    .eq("id", parsed.data.eventId)
+    .select("id")
+    .maybeSingle();
+  if (!data) return { error: "No se pudo cambiar el aviso." };
+
+  revalidatePath(`/calendario/${parsed.data.eventId}`);
   revalidatePath("/calendario");
   return { error: null };
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeStats } from "@/lib/poop/stats";
-import { getTogetherInfo } from "@/lib/couple";
+import { getTogetherInfo, loveDayLabel } from "@/lib/couple";
 import { zonedInputToUTC, formatDateTime } from "@/lib/format-date";
 import { monthGridKeys, toDateKey, weekKeys } from "@/lib/calendar/date-utils";
 import { NUDGE_GROUPS, findNudge } from "@/lib/nudges/options";
@@ -12,6 +12,16 @@ import { DEFAULT_PREFS, htmlAttributes, parsePrefs, serializePrefs } from "@/lib
 import { TOUR_STEPS } from "@/components/tour/steps";
 import { STATUS_OPTIONS, findStatus } from "@/lib/status/options";
 import { clampView, cropRect, initialView, scaleFor, zoomAround } from "@/lib/images/crop";
+import {
+  nextOccurrence,
+  occurrenceDays,
+  occurrenceTimes,
+  occursOn,
+  recurrenceLabel,
+  type Recurrence,
+  type Series,
+} from "@/lib/events/recurrence";
+import { reminderMessage } from "@/lib/events/reminder-message";
 
 describe("Hora de Madrid", () => {
   it("convierte la hora escrita en el formulario al instante UTC correcto (verano, invierno, medianoche)", () => {
@@ -378,5 +388,136 @@ describe("Editor de recorte de fotos", () => {
     const r = cropRect(tall, wide, initialView(tall, wide));
     expect(r.sw / r.sh).toBeCloseTo(2);
     expect(r.sw).toBeCloseTo(3000); // ocupa todo el ancho de la foto
+  });
+});
+
+describe("Planes que se repiten", () => {
+  // Cada sábado a las 20:00 de Madrid desde el 3 oct 2026 (horario de verano: 18:00 UTC).
+  const series = (recurrence: Recurrence, extra: Partial<Series> = {}): Series => ({
+    start_at: "2026-10-03T18:00:00.000Z",
+    end_at: "2026-10-03T19:30:00.000Z",
+    all_day: false,
+    recurrence,
+    recurrence_until: null,
+    ...extra,
+  });
+  const love: Series = {
+    start_at: "2026-03-05T23:00:00.000Z",
+    end_at: "2026-03-06T22:59:00.000Z",
+    all_day: true,
+    recurrence: "monthly",
+    recurrence_until: null,
+  };
+
+  it("cada semana: los sábados del rango, y ninguno antes del primero", () => {
+    expect(occurrenceDays(series("weekly"), "2026-09-01", "2026-10-31")).toEqual([
+      "2026-10-03",
+      "2026-10-10",
+      "2026-10-17",
+      "2026-10-24",
+      "2026-10-31",
+    ]);
+    expect(occurrenceDays(series("biweekly"), "2026-10-05", "2026-11-10")).toEqual(["2026-10-17", "2026-10-31"]);
+  });
+
+  it("respeta el día de fin", () => {
+    expect(occurrenceDays(series("weekly", { recurrence_until: "2026-10-17" }), "2026-10-01", "2026-12-31")).toEqual([
+      "2026-10-03",
+      "2026-10-10",
+      "2026-10-17",
+    ]);
+    expect(occursOn(series("weekly", { recurrence_until: "2026-10-17" }), "2026-10-24")).toBe(false);
+  });
+
+  it("mantiene las 20:00 de Madrid al pasar al horario de invierno (y la duración)", () => {
+    expect(occurrenceTimes(series("weekly"), "2026-10-31")).toEqual({
+      start_at: "2026-10-31T19:00:00.000Z",
+      end_at: "2026-10-31T20:30:00.000Z",
+    });
+  });
+
+  it("cada mes el día 6, todo el día (vuestro día)", () => {
+    expect(occurrenceDays(love, "2026-09-28", "2026-11-08")).toEqual(["2026-10-06", "2026-11-06"]);
+    expect(occurrenceTimes(love, "2026-11-06")).toEqual({
+      start_at: "2026-11-05T23:00:00.000Z",
+      end_at: "2026-11-06T22:59:00.000Z",
+    });
+    expect(occursOn(love, "2027-02-06")).toBe(true);
+    expect(occursOn(love, "2027-02-07")).toBe(false);
+    expect(occursOn(love, "2026-02-06")).toBe(false);
+  });
+
+  it("un 'cada día 31' se salta los meses que no lo tienen; un 29 de febrero, los años no bisiestos", () => {
+    const d31 = series("monthly", { start_at: "2027-01-31T19:00:00.000Z", end_at: "2027-01-31T20:00:00.000Z" });
+    expect(occurrenceDays(d31, "2027-01-01", "2027-05-31")).toEqual(["2027-01-31", "2027-03-31", "2027-05-31"]);
+    const leap = series("yearly", { start_at: "2028-02-29T11:00:00.000Z", end_at: "2028-02-29T12:00:00.000Z" });
+    expect(occurrenceDays(leap, "2028-01-01", "2036-12-31")).toEqual(["2028-02-29", "2032-02-29", "2036-02-29"]);
+  });
+
+  it("un plan suelto solo toca su día", () => {
+    expect(occurrenceDays(series("none"), "2026-10-01", "2026-10-31")).toEqual(["2026-10-03"]);
+    expect(occurrenceDays(series("none"), "2026-10-04", "2026-10-31")).toEqual([]);
+  });
+
+  it("la próxima vez: la de hoy vale hasta que termina", () => {
+    const weekly = series("weekly");
+    expect(nextOccurrence(weekly, new Date("2026-10-10T17:00:00Z"))).toBe("2026-10-10");
+    expect(nextOccurrence(weekly, new Date("2026-10-10T20:00:00Z"))).toBe("2026-10-17");
+    expect(nextOccurrence(series("weekly", { recurrence_until: "2026-10-10" }), new Date("2026-10-11T08:00:00Z"))).toBe(
+      null,
+    );
+    expect(nextOccurrence(love, new Date("2026-10-07T10:00:00Z"))).toBe("2026-11-06");
+  });
+
+  it("describe la repetición", () => {
+    expect(recurrenceLabel(series("weekly"))).toBe("Cada semana (sábados)");
+    expect(recurrenceLabel(series("biweekly", { recurrence_until: "2026-12-19" }))).toBe(
+      "Cada 2 semanas (sábados) hasta el 19 dic 2026",
+    );
+    expect(recurrenceLabel(love)).toBe("Cada mes (día 6)");
+    expect(recurrenceLabel(series("yearly"))).toBe("Cada año (3 oct)");
+    expect(recurrenceLabel(series("none"))).toBeNull();
+  });
+
+  it("cuenta los meses del día con el amor de tu vida", () => {
+    expect(loveDayLabel("2026-03-06")).toBe("Donde empezó todo 💞");
+    expect(loveDayLabel("2026-04-06")).toBe("1 mes juntos");
+    expect(loveDayLabel("2026-10-06")).toBe("7 meses juntos");
+    expect(loveDayLabel("2027-03-06")).toBe("¡1 año juntos! 🎉");
+    expect(loveDayLabel("2028-03-06")).toBe("¡2 años juntos! 🎉");
+  });
+});
+
+describe("Aviso del día antes", () => {
+  it("un plan: con su hora, o de todo el día", () => {
+    expect(reminderMessage("2026-10-10", [{ title: "Yoga", time: "10:00", love: false, since: "2026-10-03" }])).toEqual({
+      title: "⏰ Mañana: Yoga",
+      body: "A las 10:00. ¡Que no se os olvide!",
+      url: "/calendario?view=month&ref=2026-10-10",
+      tag: "recordatorio-2026-10-10",
+    });
+    expect(reminderMessage("2026-10-10", [{ title: "Boda", time: null, love: false, since: "2026-10-10" }]).body).toBe(
+      "Todo el día. ¡Que no se os olvide!",
+    );
+  });
+
+  it("vuestro día 6 tiene su propio aviso", () => {
+    expect(
+      reminderMessage("2026-10-06", [
+        { title: "DÍA CON EL AMOR DE MI VIDA", time: null, love: true, since: "2026-03-06" },
+      ]),
+    ).toMatchObject({ title: "💞 Mañana es vuestro día", body: "DÍA CON EL AMOR DE MI VIDA · 7 meses juntos" });
+  });
+
+  it("varios planes: los junta en una sola notificación", () => {
+    expect(
+      reminderMessage("2026-11-06", [
+        { title: "DÍA CON EL AMOR DE MI VIDA", time: null, love: true, since: "2026-03-06" },
+        { title: "Cena", time: "21:00", love: false, since: "2026-11-06" },
+      ]),
+    ).toMatchObject({
+      title: "⏰ Mañana tenéis 2 planes",
+      body: "💞 DÍA CON EL AMOR DE MI VIDA · Cena (21:00)",
+    });
   });
 });

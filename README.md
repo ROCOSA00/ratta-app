@@ -319,6 +319,16 @@ puntuales según se van usando:
   o barra); se guarda justo lo que se ve en el marco (perfil 512×512,
   portada 1600×800, 2:1 como se muestra en Perfil). Cuentas en
   `src/lib/images/crop.ts`, con tests.
+- **Calendario: mes por defecto, planes que se repiten y aviso**: al
+  entrar se ve el mes. Un plan puede repetirse (cada semana, cada 2
+  semanas, cada mes o cada año, hasta un día o para siempre); en la base
+  de datos es una sola fila y las demás veces se calculan
+  (`src/lib/events/recurrence.ts`). Cada vez tiene sus propias fotos. Con
+  «Avisarnos el día antes», la noche antes (20:00) llega una notificación
+  (`event_reminders_tick()` en Supabase + `/api/recordatorios`). Y cada
+  día 6 está el plan «DÍA CON EL AMOR DE MI VIDA», de todo el día, con su
+  tarjeta especial y los meses que cumplís. Migración
+  `20261001100000_event_recurrence_reminders.sql`.
 
 ## Notas de seguridad
 

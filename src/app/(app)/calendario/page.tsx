@@ -1,8 +1,8 @@
 import { PageHeader } from "@/components/shared/PageHeader";
-import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
-import { addDays, dayLabel, monthGridKeys, todayKey, toDateKey, weekKeys } from "@/lib/calendar/date-utils";
-import { EventList, type EventRow } from "./EventList";
+import { dayLabel, monthGridKeys, todayKey, weekKeys } from "@/lib/calendar/date-utils";
+import { getEventsInRange, getUpcomingEvents, type EventRow } from "@/lib/events/load";
+import { EventList } from "./EventList";
 import { NewEventForm } from "./NewEventForm";
 import { ViewToggle } from "./ViewToggle";
 import { MonthView } from "./MonthView";
@@ -10,17 +10,6 @@ import { WeekView } from "./WeekView";
 import { MomentPhotos } from "@/components/features/MomentPhotos";
 import { getMomentDaysInRange, getMomentForDay, type MomentPhoto } from "@/lib/moments/get-moments";
 
-// event_photos(count): cuántas fotos tiene cada plan, en la misma consulta.
-const EVENT_COLUMNS = "id, title, start_at, end_at, all_day, location, description, event_photos(count)";
-
-type EventQueryRow = Omit<EventRow, "photo_count"> & { event_photos: { count: number }[] | null };
-
-function toEventRows(data: unknown): EventRow[] {
-  return ((data ?? []) as EventQueryRow[]).map(({ event_photos, ...rest }) => ({
-    ...rest,
-    photo_count: event_photos?.[0]?.count ?? 0,
-  }));
-}
 const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default async function CalendarioPage({
@@ -29,7 +18,8 @@ export default async function CalendarioPage({
   searchParams: Promise<{ view?: string; ref?: string }>;
 }) {
   const params = await searchParams;
-  const view = params.view === "month" || params.view === "week" ? params.view : "list";
+  // Por defecto, el mes.
+  const view = params.view === "list" || params.view === "week" ? params.view : "month";
   const refKey = params.ref && DATE_KEY_RE.test(params.ref) ? params.ref : todayKey();
 
   const spaceId = await getCurrentSpaceId();
@@ -38,46 +28,26 @@ export default async function CalendarioPage({
   let dayMoment: { photos: MomentPhoto[]; names: Record<string, string> } | null = null;
 
   if (spaceId) {
-    const supabase = await createClient();
-
     if (view === "list") {
-      const { data } = await supabase
-        .from("events")
-        .select(EVENT_COLUMNS)
-        .eq("space_id", spaceId)
-        .gte("end_at", new Date().toISOString())
-        .order("start_at", { ascending: true });
-      events = toEventRows(data);
+      events = await getUpcomingEvents(spaceId);
     } else {
-      // Mes/semana: traemos un rango con un día de margen a cada lado
-      // (por si el huso horario mueve un evento a la key vecina) y
-      // luego agrupamos con precisión por día ya en hora de Madrid.
       const keys = view === "month" ? monthGridKeys(refKey) : weekKeys(refKey);
       // monthGridKeys()/weekKeys() siempre devuelven arrays no vacíos (42 y 7 keys).
-      const rangeStart = addDays(keys[0]!, -1);
-      const rangeEnd = addDays(keys[keys.length - 1]!, 2);
+      const from = keys[0]!;
+      const to = keys[keys.length - 1]!;
       // Los planes y los Momentos del mes se piden a la vez, no uno tras otro.
-      const [{ data }, moments] = await Promise.all([
-        supabase
-          .from("events")
-          .select(EVENT_COLUMNS)
-          .eq("space_id", spaceId)
-          .gte("end_at", `${rangeStart}T00:00:00.000Z`)
-          .lt("start_at", `${rangeEnd}T00:00:00.000Z`)
-          .order("start_at", { ascending: true }),
+      const [inRange, moments] = await Promise.all([
+        getEventsInRange(spaceId, from, to),
         view === "month"
-          ? Promise.all([
-              getMomentDaysInRange(spaceId, keys[0]!, keys[keys.length - 1]!),
-              getMomentForDay(spaceId, refKey),
-            ])
+          ? Promise.all([getMomentDaysInRange(spaceId, from, to), getMomentForDay(spaceId, refKey)])
           : null,
       ]);
-      events = toEventRows(data);
+      events = inRange;
       if (moments) [momentDays, dayMoment] = moments;
     }
   }
 
-  const selectedDayEvents = events.filter((e) => toDateKey(new Date(e.start_at)) === refKey);
+  const selectedDayEvents = events.filter((e) => e.day === refKey);
 
   return (
     <>

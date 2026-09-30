@@ -14,6 +14,7 @@ import { getPrefs } from "@/lib/prefs-server";
 import type { HomeCardId } from "@/lib/prefs";
 import { getTodayMoment } from "@/lib/moments/get-moments";
 import { getNextEvent } from "@/lib/events/get-next-event";
+import { eventHref } from "@/lib/events/load";
 import { getPinnedNote } from "@/lib/notes/get-pinned-note";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
 import { getLatestNudge } from "@/lib/nudges/get-latest-nudge";
@@ -163,7 +164,7 @@ export default async function InicioPage() {
         <MomentBanner moment={todayMoment} />
         <GuideWelcome name={myName} />
 
-        <Link href={nextEvent ? `/calendario/${nextEvent.id}` : "/calendario"} data-tour="next-event" className="block">
+        <Link href={nextEvent ? eventHref(nextEvent) : "/calendario"} data-tour="next-event" className="block">
           <SectionCard tint="var(--color-accent-2)">
             <SectionHeader
               icon={CalendarDays}
