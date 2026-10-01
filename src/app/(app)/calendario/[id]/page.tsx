@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, MapPin, Repeat } from "lucide-react";
+import { CalendarDays, MapPin, Pencil, Repeat } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ConfirmDeleteBar } from "@/components/shared/ConfirmDeleteBar";
 import { createClient } from "@/lib/supabase/server";
@@ -11,6 +11,7 @@ import { LOVE_COLOR } from "@/lib/events/load";
 import { isRecurring, recurrenceLabel } from "@/lib/events/recurrence";
 import { loveDayLabel } from "@/lib/couple";
 import { ReminderToggle } from "./ReminderToggle";
+import { SkipOccurrenceButton, SkippedDays } from "./SkipButtons";
 import { deleteEvent } from "../actions";
 import { EventPhotos } from "./EventPhotos";
 import { getAuthUser } from "@/lib/auth/get-user";
@@ -116,7 +117,25 @@ export default async function EventoPage({
           </div>
         )}
 
+        {isLove ? null : (
+          <div className="mx-5 flex gap-2">
+            <Link
+              href={`/calendario/${event.id}/editar`}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-semibold"
+              style={{ borderColor: "var(--color-line)", color: "var(--color-ink)", background: "var(--color-surface)" }}
+            >
+              <Pencil size={15} />
+              Editar
+            </Link>
+            {repeats ? <SkipOccurrenceButton eventId={event.id} day={eventDay} title={event.title} /> : null}
+          </div>
+        )}
+
         <ReminderToggle eventId={event.id} on={event.remind_day_before} recurring={isRecurring(event)} />
+
+        {repeats ? (
+          <SkippedDays eventId={event.id} days={event.skipped_days.filter((d) => d >= todayKey())} />
+        ) : null}
 
         <EventPhotos
           key={eventDay}

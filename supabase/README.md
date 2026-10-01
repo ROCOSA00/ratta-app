@@ -20,7 +20,31 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Planes que se repiten + aviso el día antes + vuestro día 6 — ⏳ pendiente
+## Editar planes y saltar una vez — ⏳ pendiente
+
+`20261002100000_event_edit_skip.sql`. Aplicar en el SQL Editor antes de
+publicar el código que la usa.
+
+- `events.skipped_days`: los días sueltos en que un plan que se repite no
+  toca («Esta vez no»; máximo 500). El aviso del día antes
+  (`event_reminders_tick()`, misma función con una condición más) se los
+  salta.
+- `event_photos`: ahora se puede cambiar **solo** la columna `occurrence`
+  (permiso por columna) y solo a un día en que el plan toca. Sirve para
+  que, al cambiar de día un plan suelto, sus fotos se vayan con él.
+
+Validada en Postgres 16 local, encima de la anterior:
+
+| Caso | Resultado |
+|---|---|
+| Aviso la noche antes de un sábado saltado | no se manda |
+| Aviso la semana siguiente | se manda |
+| Más de 500 días saltados | rechazado por el `CHECK` |
+| Mover un plan suelto y luego su foto al nuevo día | permitido |
+| Poner la foto en un día que no toca | RLS lo rechaza |
+| Cambiar quién subió una foto | permiso denegado |
+
+## Planes que se repiten + aviso el día antes + vuestro día 6 — ✅ ya aplicada y en marcha
 
 `20261001100000_event_recurrence_reminders.sql` + la puesta en marcha de
 `setup/recordatorios_planes.sql` (que **no** es una migración: programa

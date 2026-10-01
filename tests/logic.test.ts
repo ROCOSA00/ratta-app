@@ -469,6 +469,13 @@ describe("Planes que se repiten", () => {
     expect(nextOccurrence(love, new Date("2026-10-07T10:00:00Z"))).toBe("2026-11-06");
   });
 
+  it("una vez saltada desaparece, sin tocar las demás", () => {
+    const skipped = series("weekly", { skipped_days: ["2026-10-10"] });
+    expect(occurrenceDays(skipped, "2026-10-01", "2026-10-17")).toEqual(["2026-10-03", "2026-10-17"]);
+    expect(occursOn(skipped, "2026-10-10")).toBe(false);
+    expect(nextOccurrence(skipped, new Date("2026-10-04T10:00:00Z"))).toBe("2026-10-17");
+  });
+
   it("describe la repetición", () => {
     expect(recurrenceLabel(series("weekly"))).toBe("Cada semana (sábados)");
     expect(recurrenceLabel(series("biweekly", { recurrence_until: "2026-12-19" }))).toBe(
