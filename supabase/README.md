@@ -20,6 +20,32 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Chat: responder y reacciones — ⏳ pendiente
+
+`20261004100000_chat_reactions_replies.sql`. Aplicar en el SQL Editor
+antes de publicar el código que la usa.
+
+- `messages.reply_to`: el mensaje al que se responde. La política de
+  insertar exige que sea de vuestro mismo espacio; si se borra el
+  original, la respuesta se queda sin cita (`on delete set null`).
+- `message_reactions`: una reacción por persona y mensaje, de una lista
+  fija de emojis. Quitarla es poner `emoji = null` (así en tiempo real
+  solo hay inserciones y cambios, que se filtran por espacio). Se cambia
+  con `react_to_message()` (permisos de quien llama). Añadida a
+  `supabase_realtime`.
+
+Validada en Postgres 16 local, encima de las anteriores:
+
+| Caso | Resultado |
+|---|---|
+| Responder a un mensaje de tu espacio / de otro espacio | permitido / RLS lo rechaza |
+| Reaccionar, cambiar y quitar la reacción | una sola fila, `emoji` null al quitarla |
+| Emoji fuera de la lista | rechazado por el `CHECK` |
+| Reaccionar a un mensaje de otro espacio | no se guarda nada |
+| Poner una reacción a nombre de tu pareja | RLS lo rechaza |
+| Persona de fuera ve reacciones | 0 filas |
+| Borrar el mensaje original | la respuesta pierde la cita; sus reacciones se borran |
+
 ## Cápsula del tiempo — ✅ ya aplicada
 
 `20261003100000_time_capsules.sql`. Aplicar en el SQL Editor antes de

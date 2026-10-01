@@ -14,7 +14,7 @@ import { getPrefs } from "@/lib/prefs-server";
 import type { HomeCardId } from "@/lib/prefs";
 import { getTodayMoment } from "@/lib/moments/get-moments";
 import { getNextEvent } from "@/lib/events/get-next-event";
-import { eventHref } from "@/lib/events/load";
+import { eventHref, LOVE_COLOR } from "@/lib/events/load";
 import { getCapsules } from "@/lib/capsules/get-capsules";
 import { CapsuleHomeCard } from "@/components/features/CapsuleHomeCard";
 import { getPinnedNote } from "@/lib/notes/get-pinned-note";
@@ -22,7 +22,7 @@ import { getPoopSummary } from "@/lib/poop/get-poop-summary";
 import { getLatestNudge } from "@/lib/nudges/get-latest-nudge";
 import { formatDate, formatDateTime, formatRelative } from "@/lib/format-date";
 import { daysBetween, madridHour, todayKey, toDateKey } from "@/lib/calendar/date-utils";
-import { getTogetherInfo } from "@/lib/couple";
+import { getTogetherInfo, loveDayLabel } from "@/lib/couple";
 
 function greetingFor(hour: number): string {
   if (hour >= 6 && hour < 13) return "Buenos días";
@@ -168,38 +168,61 @@ export default async function InicioPage() {
         <CapsuleHomeCard capsules={capsules} />
         <GuideWelcome name={myName} />
 
-        <Link href={nextEvent ? eventHref(nextEvent) : "/calendario"} data-tour="next-event" className="block">
-          <SectionCard tint="var(--color-accent-2)">
-            <SectionHeader
-              icon={CalendarDays}
-              tint="var(--color-accent-2)"
-              label="Próximo evento"
-              right={<ChevronRight size={16} style={{ color: "var(--color-muted)" }} />}
-            />
-            {nextEvent ? (
-              <>
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <p className="text-base font-semibold" style={{ color: "var(--color-ink)" }}>
-                    {nextEvent.title}
-                  </p>
-                  <span
-                    className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                    style={{ background: "var(--color-accent-2)", color: "#ffffff" }}
-                  >
-                    {countdownLabel(nextEvent.start_at)}
-                  </span>
-                </div>
-                <p className="mt-0.5 text-sm" style={{ color: "var(--color-muted)" }}>
-                  {nextEvent.all_day ? formatDate(nextEvent.start_at) : formatDateTime(nextEvent.start_at)}
-                </p>
-              </>
-            ) : (
-              <p className="mt-2 text-sm" style={{ color: "var(--color-muted)" }}>
-                No hay ningún evento próximo.
+        {nextEvent && nextEvent.color === LOVE_COLOR ? (
+          // El próximo es vuestro día 6: con su tarjeta especial.
+          <Link
+            href={eventHref(nextEvent)}
+            data-tour="next-event"
+            className="love-day relative mx-5 flex items-center gap-3 overflow-hidden rounded-2xl p-4 text-white"
+            style={{ backgroundImage: "var(--color-gradient)" }}
+          >
+            <span aria-hidden className="love-day-hearts" />
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/20 text-2xl">💞</span>
+            <div className="relative min-w-0 flex-1">
+              <p className="text-[11px] font-bold uppercase tracking-wide opacity-90">Próximo evento</p>
+              <p className="text-sm font-black tracking-wide">{nextEvent.title}</p>
+              <p className="mt-0.5 text-xs font-semibold opacity-95">
+                {formatDate(nextEvent.start_at)} · {loveDayLabel(nextEvent.day, nextEvent.first_day)}
               </p>
-            )}
-          </SectionCard>
-        </Link>
+            </div>
+            <span className="relative shrink-0 rounded-full bg-white/25 px-2 py-0.5 text-[11px] font-bold">
+              {countdownLabel(nextEvent.start_at)}
+            </span>
+          </Link>
+        ) : (
+          <Link href={nextEvent ? eventHref(nextEvent) : "/calendario"} data-tour="next-event" className="block">
+            <SectionCard tint="var(--color-accent-2)">
+              <SectionHeader
+                icon={CalendarDays}
+                tint="var(--color-accent-2)"
+                label="Próximo evento"
+                right={<ChevronRight size={16} style={{ color: "var(--color-muted)" }} />}
+              />
+              {nextEvent ? (
+                <>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <p className="text-base font-semibold" style={{ color: "var(--color-ink)" }}>
+                      {nextEvent.title}
+                    </p>
+                    <span
+                      className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                      style={{ background: "var(--color-accent-2)", color: "#ffffff" }}
+                    >
+                      {countdownLabel(nextEvent.start_at)}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-sm" style={{ color: "var(--color-muted)" }}>
+                    {nextEvent.all_day ? formatDate(nextEvent.start_at) : formatDateTime(nextEvent.start_at)}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-2 text-sm" style={{ color: "var(--color-muted)" }}>
+                  No hay ningún evento próximo.
+                </p>
+              )}
+            </SectionCard>
+          </Link>
+        )}
 
         {show("memory") ? <MemoryOfTheDayCard /> : null}
 
