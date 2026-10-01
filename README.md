@@ -358,6 +358,13 @@ puntuales según se van usando:
   datos (sin traer los mensajes). La semana de cada aniversario enseña el
   año que acaba de terminar y sale un aviso en Inicio; el resto del año,
   «vuestro año, hasta hoy». Lógica en `src/lib/wrapped/`, con tests.
+- **Novedades 🎁**: al entrar tras una actualización sale una vez el aviso
+  «¡Hay sorpresitas por aquí que no te puedes perder!» y, si quieres, un
+  tutorial interactivo solo con lo nuevo (`NEWS_STEPS` en
+  `src/components/tour/steps.ts`; al añadir cosas se cambia
+  `NEWS_VERSION` y el aviso vuelve a salir). Se repite desde Ajustes o
+  «Cómo funciona Ratta». Un test comprueba que todo lo que resalta el
+  tutorial existe de verdad en la app.
 - **El día 6 en Inicio**: si el próximo plan es vuestro día, «Próximo
   evento» sale con su tarjeta de corazones y los meses que cumplís.
 

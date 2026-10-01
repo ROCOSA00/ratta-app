@@ -385,7 +385,7 @@ export function ChatRoom({
           </p>
         ) : null}
 
-        {messages.map((m) => {
+        {messages.map((m, i) => {
           const mine = m.sender_id === myId;
           const day = toDateKey(new Date(m.created_at));
           const showDay = day !== lastDay;
@@ -406,6 +406,8 @@ export function ChatRoom({
               <div className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
                 <div
                   {...pressHandlers(m)}
+                  // El tutorial de novedades enseña a mantener pulsado el último.
+                  data-tour={i === messages.length - 1 ? "chat-message" : undefined}
                   className={`chat-bubble max-w-[78%] select-none rounded-2xl text-[15px] leading-snug transition-transform ${hasPhoto ? "p-1" : "px-3.5 py-2"} ${mine ? "rounded-br-md text-white" : "rounded-bl-md border"} ${flashId === m.id ? "chat-flash" : ""}`}
                   style={
                     mine

@@ -132,54 +132,57 @@ export function EventForm({ initial, prefillTitle }: { initial?: EventFormValues
         Todo el día
       </label>
 
-      <div className="flex flex-col gap-3">
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <label htmlFor="repeat" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
-            Se repite
-          </label>
-          <select
-            id="repeat"
-            name="repeat"
-            value={repeat}
-            onChange={(e) => setRepeat(e.target.value as Recurrence)}
-            className="w-full min-w-0 rounded-xl border px-3 py-2.5 text-sm outline-none"
-            style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
-          >
-            {repeatOptions(date).map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        {repeat === "none" ? null : (
+      {/* Repetición y aviso, juntos: el tutorial de novedades los resalta. */}
+      <div data-tour="cal-repeat" className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
           <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-            <label htmlFor="until" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
-              Hasta (opcional)
+            <label htmlFor="repeat" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
+              Se repite
             </label>
-            <input
-              id="until"
-              name="until"
-              type="date"
-              min={date || undefined}
-              defaultValue={initial?.until || undefined}
+            <select
+              id="repeat"
+              name="repeat"
+              value={repeat}
+              onChange={(e) => setRepeat(e.target.value as Recurrence)}
               className="w-full min-w-0 rounded-xl border px-3 py-2.5 text-sm outline-none"
               style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
-            />
+            >
+              {repeatOptions(date).map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
           </div>
-        )}
-      </div>
+          {repeat === "none" ? null : (
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <label htmlFor="until" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
+                Hasta (opcional)
+              </label>
+              <input
+                id="until"
+                name="until"
+                type="date"
+                min={date || undefined}
+                defaultValue={initial?.until || undefined}
+                className="w-full min-w-0 rounded-xl border px-3 py-2.5 text-sm outline-none"
+                style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
+              />
+            </div>
+          )}
+        </div>
 
-      <label className="flex items-center gap-2 text-sm" style={{ color: "var(--color-ink)" }}>
-        <input
-          type="checkbox"
-          name="remind"
-          defaultChecked={initial?.remind}
-          className="h-4 w-4 rounded"
-          style={{ accentColor: "var(--color-accent-2)" }}
-        />
-        🔔 Avisarnos el día antes
-      </label>
+        <label className="flex items-center gap-2 text-sm" style={{ color: "var(--color-ink)" }}>
+          <input
+            type="checkbox"
+            name="remind"
+            defaultChecked={initial?.remind}
+            className="h-4 w-4 rounded"
+            style={{ accentColor: "var(--color-accent-2)" }}
+          />
+          🔔 Avisarnos el día antes
+        </label>
+      </div>
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="location" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>

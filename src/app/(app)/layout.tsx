@@ -5,6 +5,7 @@ import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
 import { getUnreadChatCount } from "@/lib/chat/unread";
 import { getPrefs } from "@/lib/prefs-server";
 import { TourProvider } from "@/components/tour/Tour";
+import { WhatsNewPopup } from "@/components/tour/WhatsNewPopup";
 
 // La comprobación de sesión ya la hace middleware.ts en cada petición
 // (incluida esta). Aquí solo hace falta el espacio, para el globo de
@@ -25,6 +26,7 @@ export default async function AppLayout({
         </div>
         <BottomNav spaceId={spaceId} initialUnread={unread} />
         <AutoRefresh />
+        <WhatsNewPopup />
         {prefs.splash ? <SplashScreen /> : null}
       </div>
     </TourProvider>
