@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ComponentType, ReactNode } from "react";
-import { Bell, BookHeart, ChevronRight, Images, KeyRound, LogOut, Mail, Settings, Smile, UserPen } from "lucide-react";
+import { Bell, BookHeart, ChevronRight, Images, KeyRound, LogOut, Mail, Settings, Smile, Sparkles, UserPen } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
 import { getTogetherInfo, TOGETHER_SINCE } from "@/lib/couple";
@@ -165,6 +165,13 @@ export default async function PerfilPage() {
           tint="var(--color-accent)"
           title="Cápsulas del tiempo"
           subtitle="Cartas que se abren en el futuro 💌"
+        />
+        <LinkRow
+          href="/deseos"
+          icon={Sparkles}
+          tint="var(--color-accent-2)"
+          title="Lista de deseos"
+          subtitle="Sitios, planes, pelis… y tacharlos juntos ✨"
         />
         <LinkRow
           href="/perfil/ajustes"

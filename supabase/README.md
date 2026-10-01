@@ -20,6 +20,29 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Lista de deseos — ⏳ pendiente
+
+`20261005100000_wishes.sql`. Aplicar en el SQL Editor antes de publicar
+el código que la usa.
+
+- `wishes`: título, categoría (`lugar`, `plan`, `peli`, `comida`,
+  `otro`), nota opcional, y cuándo y quién lo tachó. Los dos ven, añaden,
+  tachan y borran los de su espacio. Solo se pueden cambiar título,
+  categoría, nota y el tachado (permiso por columna); tacharlo, solo a tu
+  nombre.
+
+Validada en Postgres 16 local:
+
+| Caso | Resultado |
+|---|---|
+| Añadir a tu nombre / a nombre de tu pareja / ya tachado | permitido / RLS lo rechaza / RLS lo rechaza |
+| Categoría inventada | rechazado por el `CHECK` |
+| Tacharlo tu pareja / a tu nombre siendo tu pareja | permitido / RLS lo rechaza |
+| Cambiar el autor | permiso denegado |
+| Fecha sin quién (o al revés) | rechazado por el `CHECK` |
+| Destachar | permitido |
+| Persona de fuera ve, cambia o borra | 0 filas |
+
 ## Chat: responder y reacciones — ✅ ya aplicada
 
 `20261004100000_chat_reactions_replies.sql`. Aplicar en el SQL Editor
