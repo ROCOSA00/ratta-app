@@ -15,7 +15,8 @@ const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 export default async function CalendarioPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; ref?: string }>;
+  /** titulo: para empezar un plan con ese título (desde la lista de deseos). */
+  searchParams: Promise<{ view?: string; ref?: string; titulo?: string }>;
 }) {
   const params = await searchParams;
   // Por defecto, el mes.
@@ -86,8 +87,8 @@ export default async function CalendarioPage({
         {view === "list" ? <EventList events={events} /> : null}
 
         <div className="px-5">
-          <div data-tour="cal-new">
-            <NewEventForm />
+          <div data-tour="cal-new" id="nuevo-plan" className="scroll-mt-24">
+            <NewEventForm prefillTitle={params.titulo?.slice(0, 200)} />
           </div>
         </div>
       </div>

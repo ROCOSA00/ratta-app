@@ -38,12 +38,12 @@ export type EventFormValues = {
   description: string;
 };
 
-export function NewEventForm() {
-  return <EventForm />;
+export function NewEventForm({ prefillTitle }: { prefillTitle?: string }) {
+  return <EventForm prefillTitle={prefillTitle} />;
 }
 
 /** Formulario de un plan: vacío para crear uno, o relleno para editarlo. */
-export function EventForm({ initial }: { initial?: EventFormValues }) {
+export function EventForm({ initial, prefillTitle }: { initial?: EventFormValues; prefillTitle?: string }) {
   const editing = !!initial;
   const [state, formAction, isPending] = useActionState(editing ? updateEvent : createEvent, initialState);
   const [allDay, setAllDay] = useState(initial?.allDay ?? false);
@@ -79,7 +79,7 @@ export function EventForm({ initial }: { initial?: EventFormValues }) {
           name="title"
           type="text"
           required
-          defaultValue={initial?.title}
+          defaultValue={initial?.title ?? prefillTitle}
           placeholder="Cena en casa"
           className="rounded-xl border px-3 py-2.5 text-sm outline-none"
           style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}

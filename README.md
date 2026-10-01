@@ -346,6 +346,10 @@ puntuales según se van usando:
   Las reacciones llegan al momento a tu pareja (y un aviso si es a un
   mensaje suyo); al responder, el original se cita encima y tocándolo se
   salta a él. Migración `20261004100000_chat_reactions_replies.sql`.
+- **Lista de deseos ✨** (`/deseos`, desde Perfil): sitios, planes, pelis
+  y series, comida… Se tachan al cumplirlos (con aviso a tu pareja), se
+  filtran por categoría y «Hacerlo plan» abre el calendario con el título
+  ya puesto. Migración `20261005100000_wishes.sql`.
 - **El día 6 en Inicio**: si el próximo plan es vuestro día, «Próximo
   evento» sale con su tarjeta de corazones y los meses que cumplís.
 

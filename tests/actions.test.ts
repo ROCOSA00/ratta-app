@@ -57,6 +57,7 @@ import { postMoment } from "@/lib/moments/actions";
 import { submitFlappyScore } from "@/lib/games/actions";
 import { addDays, addMonths, todayKey } from "@/lib/calendar/date-utils";
 import { createCapsule, deleteCapsule, markCapsuleOpened } from "@/lib/capsules/actions";
+import { addWish, deleteWish, toggleWish } from "@/lib/wishes/actions";
 
 const ok = { error: null };
 const NOTE_ID = "11111111-1111-4111-8111-111111111111";
@@ -276,6 +277,63 @@ describe("Calendario", () => {
     await expect(deleteEvent(form({ eventId: EVENT_ID, redirect: "1" }))).rejects.toThrow("NEXT_REDIRECT:/calendario");
     expect(opsOf("events", "delete")).toHaveLength(1);
     expect(state.fake.storage.removed).toEqual([{ bucket: "event-photos", paths: ["s/a.jpg", "s/b.jpg"] }]);
+  });
+});
+
+// ------------------------------------------------------ Lista de deseos
+
+describe("Lista de deseos", () => {
+  const WISH_ID = "88888888-8888-4888-8888-888888888888";
+  const fresh = { error: null, added: 0 };
+
+  it("añade un deseo a tu nombre y avisa a tu pareja", async () => {
+    const res = await addWish(fresh, form({ title: " Ir a Roma ", category: "lugar", note: "En primavera" }));
+    expect(res).toEqual({ error: null, added: 1 });
+    expect(opsOf("wishes", "insert")[0]?.payload).toEqual({
+      space_id: "space-1",
+      created_by: "user-me",
+      title: "Ir a Roma",
+      category: "lugar",
+      note: "En primavera",
+    });
+    expect(state.notified[0]).toMatchObject({ title: "✨ Nuevo deseo", body: "Rokito ha añadido: 🌍 Ir a Roma", url: "/deseos" });
+  });
+
+  it("sin categoría es «Otros»; sin título o con categoría inventada, no", async () => {
+    await addWish(fresh, form({ title: "Algo" }));
+    expect(opsOf("wishes", "insert")[0]?.payload).toMatchObject({ category: "otro", note: null });
+    state.fake = createFakeSupabase();
+    expect((await addWish(fresh, form({ title: "  " }))).error).toBe("Escribe tu deseo.");
+    expect((await addWish(fresh, form({ title: "X", category: "coche" }))).error).toBe("Categoría no válida.");
+    expect(state.fake.ops).toHaveLength(0);
+  });
+
+  it("tachar un deseo lo marca a tu nombre y lo celebra con tu pareja", async () => {
+    state.fake = createFakeSupabase({
+      results: { "wishes:update": { data: { title: "Ir a Roma", category: "lugar" }, error: null } },
+    });
+    expect(await toggleWish(WISH_ID, true)).toEqual({ error: null });
+    const op = opsOf("wishes", "update")[0];
+    expect(op?.filters).toEqual([["id", WISH_ID]]);
+    expect(op?.payload).toMatchObject({ done_by: "user-me" });
+    expect(state.notified[0]).toMatchObject({ title: "✅ ¡Deseo cumplido!", body: "Rokito ha tachado: 🌍 Ir a Roma 🎉" });
+  });
+
+  it("destacharlo no avisa; si no es vuestro, error", async () => {
+    state.fake = createFakeSupabase({
+      results: { "wishes:update": { data: { title: "Ir a Roma", category: "lugar" }, error: null } },
+    });
+    await toggleWish(WISH_ID, false);
+    expect(opsOf("wishes", "update")[0]?.payload).toEqual({ done_at: null, done_by: null });
+    expect(state.notified).toHaveLength(0);
+    state.fake = createFakeSupabase({ results: { "wishes:update": { data: null, error: null } } });
+    expect((await toggleWish(WISH_ID, true)).error).toBe("No se pudo cambiar.");
+    expect((await toggleWish("x", true)).error).toBe("Deseo no válido.");
+  });
+
+  it("borra un deseo", async () => {
+    await deleteWish(form({ wishId: WISH_ID }));
+    expect(opsOf("wishes", "delete")[0]?.filters).toEqual([["id", WISH_ID]]);
   });
 });
 
