@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ComponentType, ReactNode } from "react";
-import { Bell, BookHeart, ChevronRight, Images, KeyRound, LogOut, Mail, Settings, Smile, Sparkles, UserPen } from "lucide-react";
+import { Bell, BookHeart, ChevronRight, Gift, Images, KeyRound, LogOut, Mail, Settings, Smile, Sparkles, UserPen } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
 import { getTogetherInfo, TOGETHER_SINCE } from "@/lib/couple";
@@ -172,6 +172,13 @@ export default async function PerfilPage() {
           tint="var(--color-accent-2)"
           title="Lista de deseos"
           subtitle="Sitios, planes, pelis… y tacharlos juntos ✨"
+        />
+        <LinkRow
+          href="/wrapped"
+          icon={Gift}
+          tint="var(--color-accent)"
+          title="Ratta Wrapped"
+          subtitle="Vuestro año en resumen 🎁"
         />
         <LinkRow
           href="/perfil/ajustes"

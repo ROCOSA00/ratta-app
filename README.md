@@ -350,6 +350,14 @@ puntuales según se van usando:
   y series, comida… Se tachan al cumplirlos (con aviso a tu pareja), se
   filtran por categoría y «Hacerlo plan» abre el calendario con el título
   ya puesto. Migración `20261005100000_wishes.sql`.
+- **Ratta Wrapped 🎁** (`/wrapped`, desde Perfil): vuestro año de pareja
+  (de 6 de marzo a 6 de marzo) en pantallas tipo historias: días juntos,
+  mensajes y quién habla más, reacción favorita, Momentos y quién es más
+  puntual, planes y días 6, corazones, récord de Flappy, el Trono,
+  deseos, cartas y un recuerdo al azar. Todo se cuenta en la base de
+  datos (sin traer los mensajes). La semana de cada aniversario enseña el
+  año que acaba de terminar y sale un aviso en Inicio; el resto del año,
+  «vuestro año, hasta hoy». Lógica en `src/lib/wrapped/`, con tests.
 - **El día 6 en Inicio**: si el próximo plan es vuestro día, «Próximo
   evento» sale con su tarjeta de corazones y los meses que cumplís.
 
