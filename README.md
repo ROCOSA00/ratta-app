@@ -329,6 +329,11 @@ puntuales según se van usando:
   día 6 está el plan «DÍA CON EL AMOR DE MI VIDA», de todo el día, con su
   tarjeta especial y los meses que cumplís. Migración
   `20261001100000_event_recurrence_reminders.sql`.
+- **Editar planes y «Esta vez no»**: cada plan tiene «Editar» (cambia
+  todas sus veces; las fotos de un plan suelto se mueven con él, y en uno
+  que se repite no se deja un cambio que dejaría fotos sueltas) y, si se
+  repite, «Esta vez no» para quitar un solo día, que luego se puede
+  recuperar. Migración `20261002100000_event_edit_skip.sql`.
 
 ## Notas de seguridad
 

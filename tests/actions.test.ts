@@ -36,7 +36,15 @@ import {
   updateNote,
   updateNoteTitle,
 } from "@/app/(app)/notas/actions";
-import { addEventPhoto, createEvent, deleteEvent, deleteEventPhoto, setEventReminder } from "@/app/(app)/calendario/actions";
+import {
+  addEventPhoto,
+  createEvent,
+  deleteEvent,
+  deleteEventPhoto,
+  setEventReminder,
+  setOccurrenceSkipped,
+  updateEvent,
+} from "@/app/(app)/calendario/actions";
 import { logEntry, undoEntry } from "@/lib/poop/actions";
 import { submitAnswer } from "@/lib/questions/actions";
 import { sendNudge } from "@/lib/nudges/actions";
@@ -267,6 +275,103 @@ describe("Calendario", () => {
     await expect(deleteEvent(form({ eventId: EVENT_ID, redirect: "1" }))).rejects.toThrow("NEXT_REDIRECT:/calendario");
     expect(opsOf("events", "delete")).toHaveLength(1);
     expect(state.fake.storage.removed).toEqual([{ bucket: "event-photos", paths: ["s/a.jpg", "s/b.jpg"] }]);
+  });
+});
+
+// ------------------------------------------------- Editar y saltar planes
+
+describe("Editar planes y saltar una vez", () => {
+  // Yoga: cada sábado a las 10:00 desde el 3 oct 2026.
+  const yoga = {
+    id: EVENT_ID,
+    title: "Yoga",
+    start_at: "2026-10-03T08:00:00.000Z",
+    end_at: "2026-10-03T09:00:00.000Z",
+    all_day: false,
+    recurrence: "weekly",
+    recurrence_until: null,
+    color: null,
+    skipped_days: ["2026-10-24"],
+  };
+  const withStored = (event: Record<string, unknown> | null, photoDays: string[] = []) =>
+    createFakeSupabase({
+      results: {
+        "events:select": { data: event, error: null },
+        "event_photos:select": { data: photoDays.map((occurrence) => ({ occurrence })), error: null },
+      },
+    });
+  const editForm = (fields: Record<string, string>) =>
+    form({ eventId: EVENT_ID, title: "Cena", date: "2026-10-09", time: "21:00", ...fields });
+
+  it("edita un plan suelto, se lleva sus fotos al nuevo día, avisa y vuelve al plan", async () => {
+    state.fake = withStored({ ...yoga, title: "Cena", recurrence: "none", skipped_days: [] }, ["2026-10-03"]);
+    await expect(updateEvent(ok, editForm({ location: "Casa" }))).rejects.toThrow(`NEXT_REDIRECT:/calendario/${EVENT_ID}`);
+    expect(opsOf("events", "update")[0]).toMatchObject({
+      payload: {
+        title: "Cena",
+        start_at: "2026-10-09T19:00:00.000Z",
+        end_at: "2026-10-09T20:00:00.000Z",
+        location: "Casa",
+        recurrence: "none",
+      },
+      filters: [["id", EVENT_ID]],
+    });
+    expect(opsOf("event_photos", "update")[0]).toMatchObject({
+      payload: { occurrence: "2026-10-09" },
+      filters: [["event_id", EVENT_ID]],
+    });
+    expect(state.notified[0]).toMatchObject({ title: "✏️ Plan cambiado", url: `/calendario/${EVENT_ID}` });
+    expect(state.notified[0]?.body).toMatch(/^Rokito ha cambiado: Cena \(vie, 9 oct, 21:00\)$/);
+  });
+
+  it("no deja un cambio que dejaría fotos en días que ya no tocan", async () => {
+    state.fake = withStored(yoga, ["2026-10-10"]);
+    const res = await updateEvent(ok, editForm({ title: "Yoga", date: "2026-10-03", time: "10:00", repeat: "monthly" }));
+    expect(res.error).toMatch(/^Hay fotos del sáb, 10 oct que ya no encajarían/);
+    expect(opsOf("events", "update")).toHaveLength(0);
+  });
+
+  it("sí deja cambiar la hora o el título de uno que se repite (las fotos siguen encajando)", async () => {
+    state.fake = withStored(yoga, ["2026-10-10"]);
+    await expect(
+      updateEvent(ok, editForm({ title: "Yoga 🧘", date: "2026-10-03", time: "11:00", repeat: "weekly" })),
+    ).rejects.toThrow("NEXT_REDIRECT");
+    expect(opsOf("events", "update")[0]?.payload).toMatchObject({ title: "Yoga 🧘", recurrence: "weekly" });
+    expect(opsOf("event_photos", "update")).toHaveLength(0);
+  });
+
+  it("el día 6 no se edita, y un plan que no existe tampoco", async () => {
+    state.fake = withStored({ ...yoga, color: "love", recurrence: "monthly" });
+    expect((await updateEvent(ok, editForm({}))).error).toBe("Vuestro día 6 no se puede cambiar 💞");
+    state.fake = withStored(null);
+    expect((await updateEvent(ok, editForm({}))).error).toBe("Ese plan ya no existe.");
+    expect((await updateEvent(ok, editForm({ eventId: "no-es-uuid" }))).error).toBe("Plan no válido.");
+    expect(opsOf("events", "update")).toHaveLength(0);
+  });
+
+  it("salta un sábado del yoga (y avisa), y lo puede recuperar", async () => {
+    state.fake = withStored(yoga);
+    expect(await setOccurrenceSkipped(EVENT_ID, "2026-10-10", true)).toEqual({ error: null });
+    expect(opsOf("events", "update")[0]?.payload).toEqual({ skipped_days: ["2026-10-10", "2026-10-24"] });
+    expect(state.notified[0]).toMatchObject({ title: "🚫 Esta vez no" });
+    expect(state.notified[0]?.body).toMatch(/^Rokito: el sáb, 10 oct no hay «Yoga»$/);
+
+    state.fake = withStored(yoga);
+    state.notified = [];
+    expect(await setOccurrenceSkipped(EVENT_ID, "2026-10-24", false)).toEqual({ error: null });
+    expect(opsOf("events", "update")[0]?.payload).toEqual({ skipped_days: [] });
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("no salta días que no tocan, planes sueltos ni vuestro día 6", async () => {
+    state.fake = withStored(yoga);
+    expect((await setOccurrenceSkipped(EVENT_ID, "2026-10-11", true)).error).toBe("Ese día no toca este plan.");
+    state.fake = withStored({ ...yoga, recurrence: "none" });
+    expect((await setOccurrenceSkipped(EVENT_ID, "2026-10-03", true)).error).toBe("Este plan no se repite.");
+    state.fake = withStored({ ...yoga, color: "love", recurrence: "monthly" });
+    expect((await setOccurrenceSkipped(EVENT_ID, "2026-11-03", true)).error).toBe("Vuestro día 6 no se salta 💞");
+    expect((await setOccurrenceSkipped(EVENT_ID, "mañana", true)).error).toBe("Datos no válidos.");
+    expect(opsOf("events", "update")).toHaveLength(0);
   });
 });
 

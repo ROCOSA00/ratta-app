@@ -19,6 +19,8 @@ export type Series = {
   recurrence: Recurrence;
   /** Último día (incluido) en que se repite; null = para siempre. */
   recurrence_until: string | null;
+  /** Veces sueltas que se han saltado ("este sábado no"). */
+  skipped_days?: string[] | null;
 };
 
 /** Para no quedarse nunca en un bucle eterno por un dato raro. */
@@ -53,8 +55,16 @@ function nthByMonths(startDay: string, monthsPerStep: number, k: number): string
   return dayNumber(candidate) === dayNumber(startDay) ? candidate : null;
 }
 
+const isSkipped = (series: Series, day: string) => (series.skipped_days ?? []).includes(day);
+
 /** ¿Hay que hacer este plan el día `day`? */
 export function occursOn(series: Series, day: string): boolean {
+  if (isSkipped(series, day)) return false;
+  return followsRule(series, day);
+}
+
+/** ¿Encaja el día con la regla de repetición? (sin mirar las veces saltadas) */
+export function followsRule(series: Series, day: string): boolean {
   const start = seriesStartDay(series);
   if (day < start) return false;
   if (series.recurrence === "none") return day === start;
@@ -73,6 +83,10 @@ export function occursOn(series: Series, day: string): boolean {
 
 /** Todos los días (de `from` a `to`, ambos incluidos) en que toca el plan. */
 export function occurrenceDays(series: Series, from: string, to: string): string[] {
+  return ruleDays(series, from, to).filter((day) => !isSkipped(series, day));
+}
+
+function ruleDays(series: Series, from: string, to: string): string[] {
   const start = seriesStartDay(series);
   const last = series.recurrence !== "none" && series.recurrence_until && series.recurrence_until < to
     ? series.recurrence_until

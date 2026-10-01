@@ -9,7 +9,16 @@ import { formatDate, formatDateTime, zonedInputToUTC } from "@/lib/format-date";
 import { notifyPartner } from "@/lib/push/notify";
 import { todayKey } from "@/lib/calendar/date-utils";
 import { EVENT_PHOTOS_BUCKET } from "@/lib/events/photos-config";
-import { isRecurring, occursOn, RECURRENCES, recurrenceLabel, seriesStartDay, type Series } from "@/lib/events/recurrence";
+import {
+  followsRule,
+  isRecurring,
+  occursOn,
+  RECURRENCES,
+  recurrenceLabel,
+  seriesStartDay,
+  type Series,
+} from "@/lib/events/recurrence";
+import { LOVE_COLOR } from "@/lib/events/load";
 
 const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -40,10 +49,20 @@ const deleteEventSchema = z.object({
 
 export type NewEventState = { error: string | null };
 
-export async function createEvent(
-  _prevState: NewEventState,
-  formData: FormData,
-): Promise<NewEventState> {
+type EventFields = {
+  title: string;
+  start_at: string;
+  end_at: string;
+  all_day: boolean;
+  location: string | null;
+  description: string | null;
+  recurrence: (typeof RECURRENCES)[number];
+  recurrence_until: string | null;
+  remind_day_before: boolean;
+};
+
+/** Lee y valida el formulario de un plan (el mismo para crear y editar). */
+function parseEventForm(formData: FormData): { fields: EventFields } | { error: string } {
   const parsed = newEventSchema.safeParse({
     title: formData.get("title"),
     date: formData.get("date"),
@@ -78,6 +97,37 @@ export async function createEvent(
     return { error: "Fecha u hora no válidas." };
   }
 
+  const recurrence = parsed.data.repeat;
+  return {
+    fields: {
+      title: parsed.data.title,
+      start_at: startAt.toISOString(),
+      end_at: endAt.toISOString(),
+      all_day: isAllDay,
+      location: parsed.data.location || null,
+      description: parsed.data.description || null,
+      recurrence,
+      recurrence_until: recurrence !== "none" && parsed.data.until ? parsed.data.until : null,
+      remind_day_before: parsed.data.remind,
+    },
+  };
+}
+
+/** "vie, 25 sept, 20:00 · cada semana (viernes)" para las notificaciones. */
+function whenLabel(fields: EventFields): string {
+  const when = fields.all_day ? formatDate(fields.start_at) : formatDateTime(fields.start_at);
+  const repeats = recurrenceLabel({ ...fields, recurrence_until: null });
+  return repeats ? `(${when}) · ${repeats.toLowerCase()}` : `(${when})`;
+}
+
+export async function createEvent(
+  _prevState: NewEventState,
+  formData: FormData,
+): Promise<NewEventState> {
+  const form = parseEventForm(formData);
+  if ("error" in form) return { error: form.error };
+  const { fields } = form;
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -95,31 +145,19 @@ export async function createEvent(
     return { error: "No perteneces a ningún espacio todavía." };
   }
 
-  const recurrence = parsed.data.repeat;
   const { error } = await supabase.from("events").insert({
     space_id: spaceId,
     created_by: user.id,
-    title: parsed.data.title,
-    start_at: startAt.toISOString(),
-    end_at: endAt.toISOString(),
-    all_day: isAllDay,
-    location: parsed.data.location || null,
-    description: parsed.data.description || null,
-    recurrence,
-    recurrence_until: recurrence !== "none" && parsed.data.until ? parsed.data.until : null,
-    remind_day_before: parsed.data.remind,
+    ...fields,
   });
 
   if (error) {
     return { error: "No se pudo guardar el evento. Inténtalo de nuevo." };
   }
 
-  const eventTitle = parsed.data.title;
-  const when = isAllDay ? formatDate(startAt.toISOString()) : formatDateTime(startAt.toISOString());
-  const repeats = recurrenceLabel({ recurrence, start_at: startAt.toISOString(), recurrence_until: null });
   await notifyPartner((me) => ({
     title: "📅 Nuevo plan",
-    body: `${me} ha añadido: ${eventTitle} (${when})${repeats ? ` · ${repeats.toLowerCase()}` : ""}`,
+    body: `${me} ha añadido: ${fields.title} ${whenLabel(fields)}`,
     url: "/calendario",
   }));
 
@@ -195,7 +233,7 @@ export async function addEventPhoto(input: {
   // La RLS solo deja ver planes de tu espacio: si no aparece, no es vuestro.
   const { data: event } = await supabase
     .from("events")
-    .select("id, title, start_at, end_at, all_day, recurrence, recurrence_until")
+    .select("id, title, start_at, end_at, all_day, recurrence, recurrence_until, skipped_days")
     .eq("id", parsed.data.eventId)
     .maybeSingle();
   if (!event) return { error: "Ese plan ya no existe." };
@@ -277,5 +315,129 @@ export async function setEventReminder(eventId: string, on: boolean): Promise<{ 
 
   revalidatePath(`/calendario/${parsed.data.eventId}`);
   revalidatePath("/calendario");
+  return { error: null };
+}
+
+// ------------------------------------------------------------ Editar
+
+const eventIdSchema = z.string().uuid();
+
+type StoredEvent = Series & { id: string; title: string; color: string | null; skipped_days: string[] | null };
+
+/**
+ * Guarda los cambios de un plan (para todas sus veces). Las fotos no se
+ * pierden: en un plan suelto se mueven con él al nuevo día; en uno que se
+ * repite, si el cambio dejara fotos en días que ya no tocan, no se guarda.
+ */
+export async function updateEvent(_prevState: NewEventState, formData: FormData): Promise<NewEventState> {
+  const eventId = eventIdSchema.safeParse(formData.get("eventId"));
+  if (!eventId.success) return { error: "Plan no válido." };
+  const form = parseEventForm(formData);
+  if ("error" in form) return { error: form.error };
+  const { fields } = form;
+
+  const supabase = await createClient();
+  // La RLS solo deja ver y cambiar planes de vuestro espacio.
+  const [{ data: current }, { data: photos }] = await Promise.all([
+    supabase
+      .from("events")
+      .select("id, title, start_at, end_at, all_day, recurrence, recurrence_until, color, skipped_days")
+      .eq("id", eventId.data)
+      .maybeSingle(),
+    supabase.from("event_photos").select("occurrence").eq("event_id", eventId.data),
+  ]);
+  if (!current) return { error: "Ese plan ya no existe." };
+  const old = current as StoredEvent;
+  if (old.color === LOVE_COLOR) return { error: "Vuestro día 6 no se puede cambiar 💞" };
+
+  const photoDays = [...new Set(((photos ?? []) as { occurrence: string }[]).map((p) => p.occurrence))];
+  if (isRecurring(old) && isRecurring(fields)) {
+    const lost = photoDays.filter((day) => !followsRule(fields, day)).sort();
+    if (lost[0]) {
+      return {
+        error: `Hay fotos del ${formatDate(`${lost[0]}T12:00:00Z`)} que ya no encajarían con el cambio. Quita esas fotos o crea un plan nuevo.`,
+      };
+    }
+  }
+
+  const { data: saved, error } = await supabase
+    .from("events")
+    .update(fields)
+    .eq("id", old.id)
+    .select("id")
+    .maybeSingle();
+  if (error || !saved) return { error: "No se pudo guardar el plan. Inténtalo de nuevo." };
+
+  // Un plan suelto lleva sus fotos a su nuevo día.
+  const newDay = seriesStartDay(fields);
+  if (!isRecurring(old) && photoDays.some((day) => day !== newDay)) {
+    await supabase.from("event_photos").update({ occurrence: newDay }).eq("event_id", old.id);
+  }
+
+  await notifyPartner((me) => ({
+    title: "✏️ Plan cambiado",
+    body: `${me} ha cambiado: ${fields.title} ${whenLabel(fields)}`,
+    url: `/calendario/${old.id}`,
+    tag: `event-${old.id}`,
+  }));
+
+  revalidatePath("/calendario");
+  revalidatePath(`/calendario/${old.id}`);
+  revalidatePath("/inicio");
+  redirect(`/calendario/${old.id}`);
+}
+
+// ------------------------------------------------------------ Saltar una vez
+
+const skipSchema = z.object({ eventId: z.string().uuid(), day: z.string().regex(DATE_KEY) });
+
+/**
+ * Salta (o recupera) una sola vez de un plan que se repite: "este sábado
+ * no hay yoga". El resto de veces sigue igual.
+ */
+export async function setOccurrenceSkipped(
+  eventId: string,
+  day: string,
+  skipped: boolean,
+): Promise<{ error: string | null }> {
+  const parsed = skipSchema.safeParse({ eventId, day });
+  if (!parsed.success) return { error: "Datos no válidos." };
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("events")
+    .select("id, title, start_at, end_at, all_day, recurrence, recurrence_until, color, skipped_days")
+    .eq("id", parsed.data.eventId)
+    .maybeSingle();
+  if (!data) return { error: "Ese plan ya no existe." };
+  const event = data as StoredEvent;
+  if (!isRecurring(event)) return { error: "Este plan no se repite." };
+  if (event.color === LOVE_COLOR) return { error: "Vuestro día 6 no se salta 💞" };
+  if (!followsRule(event, parsed.data.day)) return { error: "Ese día no toca este plan." };
+
+  const current = new Set(event.skipped_days ?? []);
+  if (skipped) current.add(parsed.data.day);
+  else current.delete(parsed.data.day);
+
+  const { error } = await supabase
+    .from("events")
+    .update({ skipped_days: [...current].sort() })
+    .eq("id", event.id);
+  if (error) return { error: "No se pudo guardar. Inténtalo de nuevo." };
+
+  if (skipped) {
+    const title = event.title;
+    const when = formatDate(`${parsed.data.day}T12:00:00Z`);
+    await notifyPartner((me) => ({
+      title: "🚫 Esta vez no",
+      body: `${me}: el ${when} no hay «${title}»`,
+      url: `/calendario?view=month&ref=${parsed.data.day}`,
+      tag: `event-${event.id}`,
+    }));
+  }
+
+  revalidatePath("/calendario");
+  revalidatePath(`/calendario/${event.id}`);
+  revalidatePath("/inicio");
   return { error: null };
 }

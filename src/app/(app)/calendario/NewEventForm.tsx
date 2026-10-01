@@ -1,8 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Plus } from "lucide-react";
-import { createEvent, type NewEventState } from "./actions";
+import { Plus, Save } from "lucide-react";
+import { createEvent, updateEvent, type NewEventState } from "./actions";
 import { dayNumber, weekdayMon0 } from "@/lib/calendar/date-utils";
 import type { Recurrence } from "@/lib/events/recurrence";
 
@@ -23,21 +23,44 @@ function repeatOptions(date: string): { value: Recurrence; label: string }[] {
   ];
 }
 
+/** Lo que ya tiene un plan, para editarlo. */
+export type EventFormValues = {
+  eventId: string;
+  title: string;
+  date: string;
+  /** "20:00" ("" si es de todo el día). */
+  time: string;
+  allDay: boolean;
+  repeat: Recurrence;
+  until: string;
+  remind: boolean;
+  location: string;
+  description: string;
+};
+
 export function NewEventForm() {
-  const [state, formAction, isPending] = useActionState(createEvent, initialState);
-  const [allDay, setAllDay] = useState(false);
-  const [date, setDate] = useState("");
-  const [repeat, setRepeat] = useState<Recurrence>("none");
+  return <EventForm />;
+}
+
+/** Formulario de un plan: vacío para crear uno, o relleno para editarlo. */
+export function EventForm({ initial }: { initial?: EventFormValues }) {
+  const editing = !!initial;
+  const [state, formAction, isPending] = useActionState(editing ? updateEvent : createEvent, initialState);
+  const [allDay, setAllDay] = useState(initial?.allDay ?? false);
+  const [date, setDate] = useState(initial?.date ?? "");
+  const [repeat, setRepeat] = useState<Recurrence>(initial?.repeat ?? "none");
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (!isPending && !state.error) {
+    // Al crear, el formulario se vacía para el siguiente plan. Al editar,
+    // al guardar se vuelve al plan (no hay nada que vaciar).
+    if (!editing && !isPending && !state.error) {
       formRef.current?.reset();
       setAllDay(false);
       setDate("");
       setRepeat("none");
     }
-  }, [isPending, state.error]);
+  }, [editing, isPending, state.error]);
 
   return (
     <form
@@ -46,6 +69,7 @@ export function NewEventForm() {
       className="mx-5 flex flex-col gap-3 rounded-2xl border p-4"
       style={{ background: "var(--color-surface)", borderColor: "var(--color-line)" }}
     >
+      {initial ? <input type="hidden" name="eventId" value={initial.eventId} /> : null}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="title" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
           Título
@@ -55,6 +79,7 @@ export function NewEventForm() {
           name="title"
           type="text"
           required
+          defaultValue={initial?.title}
           placeholder="Cena en casa"
           className="rounded-xl border px-3 py-2.5 text-sm outline-none"
           style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
@@ -64,7 +89,7 @@ export function NewEventForm() {
       <div className="flex gap-3">
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <label htmlFor="date" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
-            Fecha
+            {editing && repeat !== "none" ? "Primer día" : "Fecha"}
           </label>
           <input
             id="date"
@@ -87,6 +112,7 @@ export function NewEventForm() {
               name="time"
               type="time"
               required={!allDay}
+              defaultValue={initial?.time || undefined}
               className="w-full min-w-0 rounded-xl border px-3 py-2.5 text-sm outline-none"
               style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
             />
@@ -136,6 +162,7 @@ export function NewEventForm() {
               name="until"
               type="date"
               min={date || undefined}
+              defaultValue={initial?.until || undefined}
               className="w-full min-w-0 rounded-xl border px-3 py-2.5 text-sm outline-none"
               style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
             />
@@ -147,6 +174,7 @@ export function NewEventForm() {
         <input
           type="checkbox"
           name="remind"
+          defaultChecked={initial?.remind}
           className="h-4 w-4 rounded"
           style={{ accentColor: "var(--color-accent-2)" }}
         />
@@ -161,6 +189,7 @@ export function NewEventForm() {
           id="location"
           name="location"
           type="text"
+          defaultValue={initial?.location}
           placeholder="En casa, restaurante..."
           className="rounded-xl border px-3 py-2.5 text-sm outline-none"
           style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
@@ -175,6 +204,7 @@ export function NewEventForm() {
           id="description"
           name="description"
           rows={2}
+          defaultValue={initial?.description}
           placeholder="Algo que recordar sobre el plan..."
           className="resize-none rounded-xl border px-3 py-2.5 text-sm outline-none"
           style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
@@ -193,8 +223,8 @@ export function NewEventForm() {
         className="mt-1 flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
         style={{ backgroundImage: "var(--color-gradient)" }}
       >
-        <Plus size={16} />
-        {isPending ? "Guardando…" : "Añadir evento"}
+        {editing ? <Save size={16} /> : <Plus size={16} />}
+        {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Añadir evento"}
       </button>
     </form>
   );
