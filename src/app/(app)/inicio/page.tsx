@@ -15,6 +15,8 @@ import type { HomeCardId } from "@/lib/prefs";
 import { getTodayMoment } from "@/lib/moments/get-moments";
 import { getNextEvent } from "@/lib/events/get-next-event";
 import { eventHref } from "@/lib/events/load";
+import { getCapsules } from "@/lib/capsules/get-capsules";
+import { CapsuleHomeCard } from "@/components/features/CapsuleHomeCard";
 import { getPinnedNote } from "@/lib/notes/get-pinned-note";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
 import { getLatestNudge } from "@/lib/nudges/get-latest-nudge";
@@ -80,13 +82,14 @@ function SectionHeader({
 }
 
 export default async function InicioPage() {
-  const [nextEvent, pinnedNote, poopSummary, latestNudge, todayMoment, prefs] = await Promise.all([
+  const [nextEvent, pinnedNote, poopSummary, latestNudge, todayMoment, prefs, { capsules }] = await Promise.all([
     getNextEvent(),
     getPinnedNote(),
     getPoopSummary(),
     getLatestNudge(),
     getTodayMoment(),
     getPrefs(),
+    getCapsules(),
   ]);
   // Tarjetas que has ocultado en Ajustes (en este dispositivo).
   const show = (id: HomeCardId) => !prefs.hiddenHome.includes(id);
@@ -162,6 +165,7 @@ export default async function InicioPage() {
       <AutoRefresh everyMs={60_000} />
       <div className="flex flex-col gap-4 pb-2">
         <MomentBanner moment={todayMoment} />
+        <CapsuleHomeCard capsules={capsules} />
         <GuideWelcome name={myName} />
 
         <Link href={nextEvent ? eventHref(nextEvent) : "/calendario"} data-tour="next-event" className="block">

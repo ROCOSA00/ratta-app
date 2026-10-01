@@ -55,7 +55,8 @@ import { markChatRead, sendMessage, sendPhotoMessage } from "@/lib/chat/actions"
 import { sendHearts } from "@/lib/hearts/actions";
 import { postMoment } from "@/lib/moments/actions";
 import { submitFlappyScore } from "@/lib/games/actions";
-import { todayKey } from "@/lib/calendar/date-utils";
+import { addDays, addMonths, todayKey } from "@/lib/calendar/date-utils";
+import { createCapsule, deleteCapsule, markCapsuleOpened } from "@/lib/capsules/actions";
 
 const ok = { error: null };
 const NOTE_ID = "11111111-1111-4111-8111-111111111111";
@@ -275,6 +276,111 @@ describe("Calendario", () => {
     await expect(deleteEvent(form({ eventId: EVENT_ID, redirect: "1" }))).rejects.toThrow("NEXT_REDIRECT:/calendario");
     expect(opsOf("events", "delete")).toHaveLength(1);
     expect(state.fake.storage.removed).toEqual([{ bucket: "event-photos", paths: ["s/a.jpg", "s/b.jpg"] }]);
+  });
+});
+
+// --------------------------------------------------- Cápsula del tiempo
+
+describe("Cápsula del tiempo", () => {
+  const SPACE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const PHOTO = `${SPACE}/dddddddd-dddd-4ddd-8ddd-dddddddddddd.jpg`;
+  const CAPSULE_ID = "66666666-6666-4666-8666-666666666666";
+  const withRpc = (fn: string, data: unknown) =>
+    createFakeSupabase({ results: { [`rpc:${fn}`]: { data, error: null } } });
+
+  beforeEach(() => {
+    state.spaceId = SPACE;
+  });
+
+  it("guarda una carta y avisa a tu pareja de que existe, sin contarle nada", async () => {
+    state.fake = withRpc("create_capsule", CAPSULE_ID);
+    const openOn = addMonths(todayKey(), 1);
+    const res = await createCapsule({
+      title: " Para ti ",
+      body: "Te quiero muchísimo, secreto",
+      openOn,
+      hint: "Con café",
+      photoPath: PHOTO,
+    });
+    expect(res).toEqual({ error: null, id: CAPSULE_ID });
+    expect(state.fake.rpcCalls[0]).toEqual({
+      fn: "create_capsule",
+      args: {
+        p_space_id: SPACE,
+        p_open_on: openOn,
+        p_hint: "Con café",
+        p_title: "Para ti",
+        p_body: "Te quiero muchísimo, secreto",
+        p_photo_path: PHOTO,
+      },
+    });
+    expect(state.notified[0]).toMatchObject({ title: "💌 Cápsula del tiempo", url: "/capsulas" });
+    expect(state.notified[0]?.body).toMatch(/^Rokito te ha escrito una carta\. Se abrirá el \d+ \w+ \d{4}\.$/);
+    expect(JSON.stringify(state.notified)).not.toMatch(/secreto|Para ti|café/);
+  });
+
+  it("tiene que abrirse de mañana en adelante y como mucho en 10 años", async () => {
+    const base = { title: "T", body: "B" };
+    expect((await createCapsule({ ...base, openOn: todayKey() })).error).toBe("Tiene que abrirse de mañana en adelante.");
+    expect((await createCapsule({ ...base, openOn: addMonths(todayKey(), 121) })).error).toBe(
+      "Como mucho, dentro de 10 años.",
+    );
+    state.fake = withRpc("create_capsule", CAPSULE_ID);
+    expect((await createCapsule({ ...base, openOn: addDays(todayKey(), 1) })).error).toBeNull();
+  });
+
+  it("rechaza cartas vacías, demasiado largas o con fotos de otro espacio", async () => {
+    const openOn = addMonths(todayKey(), 1);
+    expect((await createCapsule({ title: "", body: "B", openOn })).error).toBe("Ponle un título a la carta.");
+    expect((await createCapsule({ title: "T", body: "  ", openOn })).error).toBe("Escribe algo en la carta.");
+    expect((await createCapsule({ title: "T", body: "x".repeat(5001), openOn })).error).toBe("Máximo 5000 caracteres.");
+    expect(
+      (
+        await createCapsule({
+          title: "T",
+          body: "B",
+          openOn,
+          photoPath: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/dddddddd-dddd-4ddd-8ddd-dddddddddddd.jpg",
+        })
+      ).error,
+    ).toBe("Foto no válida.");
+    expect(state.fake.rpcCalls).toHaveLength(0);
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("borrar una carta quita también su foto y vuelve a la lista", async () => {
+    state.fake = createFakeSupabase({
+      results: {
+        "capsule_contents:select": { data: { photo_path: PHOTO }, error: null },
+        "capsules:delete": { data: { id: CAPSULE_ID }, error: null },
+      },
+    });
+    await expect(deleteCapsule(form({ capsuleId: CAPSULE_ID }))).rejects.toThrow("NEXT_REDIRECT:/capsulas");
+    expect(opsOf("capsules", "delete")[0]?.filters).toEqual([["id", CAPSULE_ID]]);
+    expect(state.fake.storage.removed).toEqual([{ bucket: "capsules", paths: [PHOTO] }]);
+  });
+
+  it("si no se pudo borrar (no es tuya), no toca la foto", async () => {
+    state.fake = createFakeSupabase({
+      results: {
+        "capsule_contents:select": { data: { photo_path: PHOTO }, error: null },
+        "capsules:delete": { data: null, error: null },
+      },
+    });
+    await expect(deleteCapsule(form({ capsuleId: CAPSULE_ID }))).rejects.toThrow("NEXT_REDIRECT");
+    expect(state.fake.storage.removed).toHaveLength(0);
+  });
+
+  it("al abrirla por primera vez avisa a quien la escribió; las siguientes, no", async () => {
+    state.fake = withRpc("open_capsule", true);
+    await markCapsuleOpened(CAPSULE_ID);
+    expect(state.fake.rpcCalls[0]).toEqual({ fn: "open_capsule", args: { p_capsule_id: CAPSULE_ID } });
+    expect(state.notified[0]).toMatchObject({ title: "💌 Carta abierta", body: "Rokito acaba de abrir tu carta" });
+
+    state.fake = withRpc("open_capsule", false);
+    state.notified = [];
+    await markCapsuleOpened(CAPSULE_ID);
+    expect(state.notified).toHaveLength(0);
   });
 });
 

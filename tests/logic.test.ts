@@ -22,6 +22,7 @@ import {
   type Series,
 } from "@/lib/events/recurrence";
 import { reminderMessage } from "@/lib/events/reminder-message";
+import { capsuleDateOptions, countdownLabel as capsuleCountdown } from "@/lib/capsules/config";
 
 describe("Hora de Madrid", () => {
   it("convierte la hora escrita en el formulario al instante UTC correcto (verano, invierno, medianoche)", () => {
@@ -526,5 +527,29 @@ describe("Aviso del día antes", () => {
       title: "⏰ Mañana tenéis 2 planes",
       body: "💞 DÍA CON EL AMOR DE MI VIDA · Cena (21:00)",
     });
+  });
+});
+
+describe("Cápsula del tiempo: fechas", () => {
+  it("propone el próximo día 6, el aniversario, un mes y un año", () => {
+    expect(capsuleDateOptions("2026-10-01")).toEqual([
+      { label: "Próximo día 6 (6 oct 2026)", date: "2026-10-06" },
+      { label: "Aniversario (6 mar 2027)", date: "2027-03-06" },
+      { label: "Dentro de un mes", date: "2026-11-01" },
+      { label: "Dentro de un año", date: "2027-10-01" },
+    ]);
+  });
+
+  it("si hoy es día 6, el próximo es el del mes que viene; y no repite fechas", () => {
+    const options = capsuleDateOptions("2027-02-06");
+    // El próximo 6, el aniversario y "dentro de un mes" caen el mismo día.
+    expect(options.map((o) => o.date)).toEqual(["2027-03-06", "2028-02-06"]);
+    expect(options[0]?.label).toBe("Próximo día 6 (6 mar 2027)");
+  });
+
+  it("cuenta atrás", () => {
+    expect(capsuleCountdown("2026-10-02", "2026-10-01")).toBe("Se abre mañana");
+    expect(capsuleCountdown("2027-03-06", "2026-10-01")).toBe("Se abre en 156 días");
+    expect(capsuleCountdown("2026-10-01", "2026-10-01")).toBe("Ya se puede abrir");
   });
 });

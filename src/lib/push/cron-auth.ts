@@ -14,7 +14,7 @@ export const pushTargetsSchema = z
 
 /**
  * Comprueba la clave con la que llaman los "despertadores" de Supabase
- * (pg_cron + pg_net) a /api/momento y /api/recordatorios. No hay sesión:
+ * (pg_cron + pg_net) a /api/momento, /api/recordatorios y /api/capsulas. No hay sesión:
  * la clave es MOMENT_CRON_SECRET en Vercel, la misma que está en Vault.
  * Devuelve null si vale, o la respuesta de error que hay que dar.
  */
