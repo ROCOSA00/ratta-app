@@ -417,6 +417,29 @@ a:active {
   }
 }
 
+/* ---------- Casillas de fecha y hora ----------
+ * En el iPhone (Safari), <input type="date|time"> ignora el ancho que le
+ * das y se queda con uno mínimo propio: en el formulario de planes, la
+ * fecha y la hora se montaban una encima de la otra. Sin el aspecto nativo
+ * sí respetan el ancho; la altura mínima evita que, vacías, se encojan, y
+ * el texto queda a la izquierda como en el resto de casillas. */
+input[type="date"],
+input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 2.75rem;
+}
+
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+}
+
 /* ---------- Día con el amor de mi vida (cada día 6) ---------- */
 .love-day {
   box-shadow: 0 8px 24px -10px rgba(225, 34, 94, 0.55);

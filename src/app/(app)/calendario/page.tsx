@@ -86,10 +86,8 @@ export default async function CalendarioPage({
 
         {view === "list" ? <EventList events={events} /> : null}
 
-        <div className="px-5">
-          <div data-tour="cal-new" id="nuevo-plan" className="scroll-mt-24">
-            <NewEventForm prefillTitle={params.titulo?.slice(0, 200)} />
-          </div>
+        <div data-tour="cal-new" id="nuevo-plan" className="scroll-mt-24">
+          <NewEventForm prefillTitle={params.titulo?.slice(0, 200)} />
         </div>
       </div>
     </>
