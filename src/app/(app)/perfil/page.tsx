@@ -161,6 +161,7 @@ export default async function PerfilPage() {
         />
         <LinkRow
           href="/capsulas"
+          tour="perfil-capsulas"
           icon={Mail}
           tint="var(--color-accent)"
           title="Cápsulas del tiempo"
@@ -168,6 +169,7 @@ export default async function PerfilPage() {
         />
         <LinkRow
           href="/deseos"
+          tour="perfil-deseos"
           icon={Sparkles}
           tint="var(--color-accent-2)"
           title="Lista de deseos"
@@ -175,6 +177,7 @@ export default async function PerfilPage() {
         />
         <LinkRow
           href="/wrapped"
+          tour="perfil-wrapped"
           icon={Gift}
           tint="var(--color-accent)"
           title="Ratta Wrapped"

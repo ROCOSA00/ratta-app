@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { MarkGuideSeen } from "@/components/features/GuideWelcome";
-import { StartTourButton } from "@/components/tour/StartTourButton";
+import { StartNewsButton, StartTourButton } from "@/components/tour/StartTourButton";
 
 function Section({
   icon: Icon,
@@ -81,6 +81,7 @@ export default function GuiaPage() {
 
       <div className="mt-5 flex flex-col gap-4 pb-4">
         <StartTourButton />
+        <StartNewsButton />
 
         <p className="mx-5 text-sm leading-relaxed" style={{ color: "var(--color-muted)" }}>
           Ratta es vuestro rincón privado: solo existen dos cuentas, la tuya y la de tu pareja, y nadie

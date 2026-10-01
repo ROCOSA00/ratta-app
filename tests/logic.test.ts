@@ -9,7 +9,20 @@ import { lateLabel } from "@/lib/moments/config";
 import { collides, flap, gapFor, newGame, RAT_X, speedFor, step, STEP, WORLD_H, type GameState } from "@/lib/flappy/engine";
 import { summarizePlayer } from "@/lib/games/get-flappy-summary";
 import { DEFAULT_PREFS, htmlAttributes, parsePrefs, serializePrefs } from "@/lib/prefs";
-import { TOUR_STEPS } from "@/components/tour/steps";
+import { NEWS_STEPS, TOUR_STEPS } from "@/components/tour/steps";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
+
+/** Todo el código de src/ en un solo texto (para buscar los data-tour). */
+function readAllSources(dir: string): string {
+  return readdirSync(dir)
+    .map((name) => {
+      const path = join(dir, name);
+      if (statSync(path).isDirectory()) return readAllSources(path);
+      return /\.tsx?$/.test(name) ? readFileSync(path, "utf8") : "";
+    })
+    .join("\n");
+}
 import { STATUS_OPTIONS, findStatus } from "@/lib/status/options";
 import { clampView, cropRect, initialView, scaleFor, zoomAround } from "@/lib/images/crop";
 import {
@@ -321,10 +334,13 @@ describe("Ajustes (cookie de preferencias)", () => {
   });
 });
 
-describe("Tutorial interactivo", () => {
+describe.each([
+  ["general", TOUR_STEPS],
+  ["de novedades", NEWS_STEPS],
+] as const)("Tutorial interactivo %s", (_name, steps) => {
   it("cada paso tiene id único, título y texto; los de tocar tienen algo que tocar", () => {
-    expect(new Set(TOUR_STEPS.map((s) => s.id)).size).toBe(TOUR_STEPS.length);
-    for (const step of TOUR_STEPS) {
+    expect(new Set(steps.map((s) => s.id)).size).toBe(steps.length);
+    for (const step of steps) {
       expect(step.title.length).toBeGreaterThan(0);
       expect(step.body.length).toBeGreaterThan(0);
       if (step.action === "tap") expect(step.target).toMatch(/^nav-/);
@@ -332,11 +348,20 @@ describe("Tutorial interactivo", () => {
   });
 
   it("cada «toca» lleva a la pantalla del paso siguiente", () => {
-    TOUR_STEPS.forEach((step, i) => {
+    steps.forEach((step, i) => {
       if (step.action !== "tap") return;
-      const next = TOUR_STEPS[i + 1];
+      const next = steps[i + 1];
       expect(next?.path).toBe(`/${step.target!.slice("nav-".length)}`);
     });
+  });
+
+  it("todo lo que resalta existe de verdad en la app (data-tour)", () => {
+    const source = readAllSources(join(process.cwd(), "src"));
+    for (const step of steps) {
+      if (!step.target || step.target.startsWith("nav-")) continue;
+      const literal = new RegExp(`(data-tour|tour)=\\{?"${step.target}"|"${step.target}"\\s*:`);
+      expect(literal.test(source), `falta data-tour="${step.target}"`).toBe(true);
+    }
   });
 });
 

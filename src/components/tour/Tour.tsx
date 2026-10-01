@@ -3,16 +3,26 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { X } from "lucide-react";
-import { TOUR_STEPS, type TourStep } from "./steps";
+import { NEWS_STEPS, NEWS_VERSION, TOUR_STEPS, type TourStep } from "./steps";
 
 // Recordar que ya se hizo el tutorial (solo en este dispositivo).
 const SEEN_KEY = "ratta:tour-seen";
+// Y qué versión de las novedades se vio por última vez.
+const NEWS_SEEN_KEY = "ratta:news-seen";
 const PAD = 8;
 // Si lo que hay que resaltar no aparece (p. ej. una tarjeta oculta en
 // Ajustes), la tarjeta sale centrada para no quedarse atascado.
 const FIND_TIMEOUT_MS = 2500;
 
-type TourContextValue = { start: () => void; active: boolean };
+/** "main": el tutorial de toda la app. "news": solo lo nuevo. */
+export type TourId = "main" | "news";
+
+const TOURS: Record<TourId, { steps: readonly TourStep[]; label: string }> = {
+  main: { steps: TOUR_STEPS, label: "Tutorial" },
+  news: { steps: NEWS_STEPS, label: "Novedades" },
+};
+
+type TourContextValue = { start: (tour?: TourId) => void; active: boolean };
 const TourContext = createContext<TourContextValue>({ start: () => {}, active: false });
 
 export const useTour = () => useContext(TourContext);
@@ -33,34 +43,62 @@ export function hasSeenTour(): boolean {
   }
 }
 
+export function markNewsSeen() {
+  try {
+    window.localStorage.setItem(NEWS_SEEN_KEY, NEWS_VERSION);
+  } catch {
+    // Sin almacenamiento: no pasa nada.
+  }
+}
+
+/** ¿Ya se vieron (o se descartaron) las novedades de esta versión? */
+export function hasSeenNews(): boolean {
+  try {
+    return window.localStorage.getItem(NEWS_SEEN_KEY) === NEWS_VERSION;
+  } catch {
+    // Sin almacenamiento, mejor no insistir en cada visita.
+    return true;
+  }
+}
+
 type Rect = { top: number; left: number; width: number; height: number };
 
 export function TourProvider({ children }: { children: React.ReactNode }) {
   const [index, setIndex] = useState<number | null>(null);
+  const [tour, setTour] = useState<TourId>("main");
   const router = useRouter();
+  const { steps, label } = TOURS[tour];
 
-  const start = useCallback(() => {
-    setIndex(0);
-    router.push("/inicio");
-  }, [router]);
+  const start = useCallback(
+    (which: TourId = "main") => {
+      setTour(which);
+      setIndex(0);
+      router.push("/inicio");
+    },
+    [router],
+  );
 
   const value = useMemo(() => ({ start, active: index !== null }), [start, index]);
 
   const finish = useCallback(() => {
-    markTourSeen();
+    if (tour === "news") markNewsSeen();
+    else markTourSeen();
     setIndex(null);
-  }, []);
+  }, [tour]);
+
+  const step = index !== null ? steps[index] : undefined;
 
   return (
     <TourContext.Provider value={value}>
       {children}
-      {index !== null && TOUR_STEPS[index] ? (
+      {index !== null && step ? (
         <TourOverlay
-          key={TOUR_STEPS[index].id}
-          step={TOUR_STEPS[index]}
+          key={`${tour}-${step.id}`}
+          step={step}
+          label={label}
           number={index + 1}
-          total={TOUR_STEPS.length}
-          onNext={() => (index + 1 < TOUR_STEPS.length ? setIndex(index + 1) : finish())}
+          total={steps.length}
+          onNext={() => (index + 1 < steps.length ? setIndex(index + 1) : finish())}
           onClose={finish}
         />
       ) : null}
@@ -70,12 +108,14 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
 
 function TourOverlay({
   step,
+  label,
   number,
   total,
   onNext,
   onClose,
 }: {
   step: TourStep;
+  label: string;
   number: number;
   total: number;
   onNext: () => void;
@@ -183,7 +223,7 @@ function TourOverlay({
       >
         <div className="flex items-start justify-between gap-2">
           <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--color-accent)" }}>
-            Tutorial · {number} de {total}
+            {label} · {number} de {total}
           </p>
           <button
             type="button"

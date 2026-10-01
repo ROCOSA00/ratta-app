@@ -196,11 +196,19 @@ export function SettingsForm({ initial }: { initial: Prefs }) {
       <Section icon={Play} title="Tutorial">
         <button
           type="button"
-          onClick={start}
+          onClick={() => start()}
           className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white"
           style={{ backgroundImage: "var(--color-gradient)" }}
         >
           <Play size={16} /> Hacer el tutorial interactivo
+        </button>
+        <button
+          type="button"
+          onClick={() => start("news")}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold"
+          style={{ borderColor: "var(--color-accent)", color: "var(--color-accent)" }}
+        >
+          🎁 Ver las novedades
         </button>
         <Link
           href="/perfil/guia"
