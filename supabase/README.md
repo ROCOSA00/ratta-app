@@ -20,7 +20,39 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Editar planes y saltar una vez — ⏳ pendiente
+## Cápsula del tiempo — ⏳ pendiente
+
+`20261003100000_time_capsules.sql`. Aplicar en el SQL Editor antes de
+publicar el código que la usa. **No hay que programar nada nuevo** en
+pg_cron: `event_reminders_tick()` (ya programada cada hora) llama ahora
+también a `capsule_tick()`.
+
+- `capsules`: quién la escribió, cuándo se abre (de mañana a 10 años
+  vista), una pista opcional, y cuándo se avisó y se abrió. La ven los dos.
+- `capsule_contents`: título, carta y foto. **La RLS solo deja leerla a
+  quien la escribió o a partir del día de apertura**; la foto (almacén
+  privado `capsules`) igual. El bloqueo no depende de la app.
+- `create_capsule()` crea las dos filas de una vez (con la RLS de quien
+  llama). `open_capsule()` apunta la primera vez que la abre quien la
+  recibe (para avisar a quien la escribió). Nadie puede cambiar la fecha.
+- `capsule_tick()`: el día de apertura, desde las 9:00 de Madrid, avisa
+  una vez a quien la recibe por `/api/capsulas` (sin el contenido).
+
+Validada en Postgres 16 local, encima de las anteriores:
+
+| Caso | Resultado |
+|---|---|
+| Escribir para mañana / para 2027 | permitido |
+| Para hoy, para dentro de 14 años, foto de otra carpeta | rechazado |
+| Tu pareja ve la cápsula y la pista / el contenido | sí / 0 filas |
+| Tu pareja abre una cerrada / la borra / cambia la fecha | no / 0 filas / 0 filas |
+| Llega el día: tu pareja la lee | sí; `open_capsule` true la 1.ª vez, false después |
+| Quien la escribió la "abre" | false (no cuenta) |
+| Foto de una carta cerrada vista por tu pareja / por ti | 0 / 1 |
+| Aviso a las 8:59 / a las 9:00 dos veces | nada / una llamada, solo al móvil de quien la recibe |
+| Persona de fuera | 0 cápsulas, 0 contenidos |
+
+## Editar planes y saltar una vez — ✅ ya aplicada
 
 `20261002100000_event_edit_skip.sql`. Aplicar en el SQL Editor antes de
 publicar el código que la usa.

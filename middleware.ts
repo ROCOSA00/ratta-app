@@ -50,9 +50,9 @@ export const config = {
   matcher: [
     // sw.js y manifest.json son públicos a propósito: el navegador los pide
     // sin sesión (instalar la app, recibir notificaciones) y no contienen datos.
-    // /api/momento y /api/recordatorios los llaman los despertadores de
+    // /api/momento, /api/recordatorios y /api/capsulas los llaman los despertadores de
     // Supabase, sin sesión: se protegen con su propia clave (ver
     // src/lib/push/cron-auth.ts).
-    "/((?!_next/static|_next/image|favicon.ico|sw\\.js$|manifest\\.json$|api/momento$|api/recordatorios$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sw\\.js$|manifest\\.json$|api/momento$|api/recordatorios$|api/capsulas$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

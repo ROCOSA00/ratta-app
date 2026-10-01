@@ -334,6 +334,13 @@ puntuales según se van usando:
   que se repite no se deja un cambio que dejaría fotos sueltas) y, si se
   repite, «Esta vez no» para quitar un solo día, que luego se puede
   recuperar. Migración `20261002100000_event_edit_skip.sql`.
+- **Cápsula del tiempo 💌** (`/capsulas`, desde Perfil e Inicio): una
+  carta (con foto si quieres) que se queda cerrada hasta el día que
+  elijas (atajos: el próximo día 6, el aniversario, un mes, un año). Tu
+  pareja ve que existe, la cuenta atrás y una pista, pero el contenido lo
+  bloquea la base de datos hasta ese día. Ese día le llega un aviso, abre
+  el sobre con una animación y a ti te avisa de que la ha abierto.
+  Migración `20261003100000_time_capsules.sql`.
 
 ## Notas de seguridad
 
