@@ -20,7 +20,7 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Chat: responder y reacciones — ⏳ pendiente
+## Chat: responder y reacciones — ✅ ya aplicada
 
 `20261004100000_chat_reactions_replies.sql`. Aplicar en el SQL Editor
 antes de publicar el código que la usa.
