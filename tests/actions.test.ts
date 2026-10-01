@@ -51,7 +51,7 @@ import { sendNudge } from "@/lib/nudges/actions";
 import { updateDisplayName, updateStatus } from "@/lib/profile/actions";
 import { changePassword, signIn } from "@/lib/auth/actions";
 import { addMemory, deleteMemory } from "@/lib/memories/actions";
-import { markChatRead, sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
+import { markChatRead, reactToMessage, sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
 import { sendHearts } from "@/lib/hearts/actions";
 import { postMoment } from "@/lib/moments/actions";
 import { submitFlappyScore } from "@/lib/games/actions";
@@ -820,9 +820,43 @@ describe("Chat", () => {
       sender_id: "user-me",
       body: "Te quiero",
       image_path: null,
+      reply_to: null,
     });
     expect(res.message?.image_url).toBeNull();
     expect(state.notified).toEqual([{ title: "💬 Rokito", body: "Te quiero", url: "/chat", tag: "chat" }]);
+  });
+
+  const MSG_ID = "77777777-7777-4777-8777-777777777777";
+
+  it("responde a un mensaje (texto o foto)", async () => {
+    await sendMessage("¡Sí!", MSG_ID);
+    expect(opsOf("messages", "insert")[0]?.payload).toMatchObject({ body: "¡Sí!", reply_to: MSG_ID });
+    expect((await sendMessage("hola", "no-es-uuid")).error).toBe("Mensaje no válido.");
+  });
+
+  it("reacciona a un mensaje de tu pareja y le avisa con un trocito del texto", async () => {
+    state.fake = createFakeSupabase({
+      results: {
+        "messages:select": { data: { sender_id: "user-partner", body: "¿Cenamos sushi esta noche?", image_path: null }, error: null },
+      },
+    });
+    expect(await reactToMessage(MSG_ID, "❤️")).toEqual({ error: null });
+    expect(state.fake.rpcCalls).toEqual([{ fn: "react_to_message", args: { p_message_id: MSG_ID, p_emoji: "❤️" } }]);
+    expect(state.notified).toEqual([
+      { title: "❤️ Rokito", body: "Ha reaccionado a «¿Cenamos sushi esta noche?»", url: "/chat", tag: "chat-reaction" },
+    ]);
+  });
+
+  it("quitar la reacción o reaccionar a un mensaje tuyo no avisa; emojis raros, no", async () => {
+    expect(await reactToMessage(MSG_ID, null)).toEqual({ error: null });
+    expect(state.fake.rpcCalls[0]?.args).toEqual({ p_message_id: MSG_ID, p_emoji: null });
+    state.fake = createFakeSupabase({
+      results: { "messages:select": { data: { sender_id: "user-me", body: "yo", image_path: null }, error: null } },
+    });
+    await reactToMessage(MSG_ID, "😂");
+    expect(state.notified).toHaveLength(0);
+    expect((await reactToMessage(MSG_ID, "💩")).error).toBe("Reacción no válida.");
+    expect((await reactToMessage("x", "❤️")).error).toBe("Reacción no válida.");
   });
 
   it("no envía mensajes vacíos ni gigantes, y no avisa", async () => {
@@ -869,6 +903,7 @@ describe("Chat", () => {
       sender_id: "user-me",
       body: "Mira",
       image_path: CHAT_PHOTO,
+      reply_to: null,
     });
     expect(res.message?.image_url).toBe(`https://signed.test/chat/${CHAT_PHOTO}`);
     expect(state.notified).toEqual([{ title: "💬 Rokito", body: "📷 Mira", url: "/chat", tag: "chat" }]);

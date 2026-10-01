@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
-import { CHAT_BUCKET, CHAT_COLUMNS, SIGNED_URL_SECONDS, type ChatMessage } from "@/lib/chat/types";
+import { CHAT_BUCKET, CHAT_COLUMNS, SIGNED_URL_SECONDS, type ChatMessage, type ChatReactions } from "@/lib/chat/types";
 import { ChatRoom } from "./ChatRoom";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getTogetherInfo, TOGETHER_SINCE } from "@/lib/couple";
@@ -38,10 +38,20 @@ export default async function ChatPage() {
   // Enlaces temporales para las fotos, todos de una vez (el almacén es privado).
   const rows = ((messages ?? []) as Omit<ChatMessage, "image_url">[]).reverse();
   const paths = rows.flatMap((m) => (m.image_path ? [m.image_path] : []));
-  const { data: signed } =
+  const ids = rows.map((m) => m.id);
+  // Fotos y reacciones de estos mensajes, a la vez.
+  const [{ data: signed }, { data: reactionRows }] = await Promise.all([
     paths.length > 0
-      ? await supabase.storage.from(CHAT_BUCKET).createSignedUrls(paths, SIGNED_URL_SECONDS)
-      : { data: [] };
+      ? supabase.storage.from(CHAT_BUCKET).createSignedUrls(paths, SIGNED_URL_SECONDS)
+      : Promise.resolve({ data: [] as { path: string | null; signedUrl: string }[] }),
+    ids.length > 0
+      ? supabase.from("message_reactions").select("message_id, user_id, emoji").in("message_id", ids).not("emoji", "is", null)
+      : Promise.resolve({ data: [] }),
+  ]);
+  const initialReactions: ChatReactions = {};
+  for (const r of (reactionRows ?? []) as { message_id: string; user_id: string; emoji: string }[]) {
+    (initialReactions[r.message_id] ??= {})[r.user_id] = r.emoji;
+  }
   const urlByPath = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]));
   const initialMessages: ChatMessage[] = rows.map((m) => ({
     ...m,
@@ -70,6 +80,7 @@ export default async function ChatPage() {
       partnerName={partner?.display_name ?? "Tu pareja"}
       partnerAvatar={partner?.avatar_url ?? null}
       initialMessages={initialMessages}
+      initialReactions={initialReactions}
       card={
         partner
           ? {

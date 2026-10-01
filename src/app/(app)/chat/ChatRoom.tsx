@@ -2,10 +2,16 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
-import { ImagePlus, SendHorizontal, X } from "lucide-react";
+import { Copy, ImagePlus, Reply, SendHorizontal, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { markChatRead, sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
-import { CHAT_BUCKET, SIGNED_URL_SECONDS, type ChatMessage } from "@/lib/chat/types";
+import { markChatRead, reactToMessage, sendMessage, sendPhotoMessage } from "@/lib/chat/actions";
+import {
+  CHAT_BUCKET,
+  REACTION_EMOJIS,
+  SIGNED_URL_SECONDS,
+  type ChatMessage,
+  type ChatReactions,
+} from "@/lib/chat/types";
 import { resizeImage } from "@/lib/images/resize";
 import { TIME_ZONE } from "@/lib/format-date";
 import { MemberCard, type MemberCardPerson } from "@/components/features/MemberCard";
@@ -33,9 +39,37 @@ function isChatRow(value: unknown): value is ChatRow {
     typeof v.sender_id === "string" &&
     typeof v.body === "string" &&
     (v.image_path === null || v.image_path === undefined || typeof v.image_path === "string") &&
+    (v.reply_to === null || v.reply_to === undefined || typeof v.reply_to === "string") &&
     typeof v.created_at === "string"
   );
 }
+
+type ReactionRow = { message_id: string; user_id: string; emoji: string | null };
+
+function isReactionRow(value: unknown): value is ReactionRow {
+  const v = value as Partial<ReactionRow> | null;
+  return (
+    typeof v?.message_id === "string" &&
+    typeof v.user_id === "string" &&
+    (v.emoji === null || typeof v.emoji === "string")
+  );
+}
+
+/** Pone o quita la reacción de una persona en el mapa de reacciones. */
+function withReaction(current: ChatReactions, messageId: string, userId: string, emoji: string | null): ChatReactions {
+  const forMessage = { ...(current[messageId] ?? {}) };
+  if (emoji) forMessage[userId] = emoji;
+  else delete forMessage[userId];
+  return { ...current, [messageId]: forMessage };
+}
+
+/** Un trozo corto del mensaje, para citarlo. */
+function snippet(m: ChatMessage): string {
+  if (m.body) return m.body.length > 80 ? `${m.body.slice(0, 79)}…` : m.body;
+  return m.image_path ? "📷 Foto" : "";
+}
+
+const LONG_PRESS_MS = 450;
 
 function daySeparator(key: string): string {
   const today = todayKey();
@@ -50,6 +84,7 @@ export function ChatRoom({
   partnerName,
   partnerAvatar,
   initialMessages,
+  initialReactions,
   card,
 }: {
   spaceId: string;
@@ -57,6 +92,7 @@ export function ChatRoom({
   partnerName: string;
   partnerAvatar: string | null;
   initialMessages: ChatMessage[];
+  initialReactions: ChatReactions;
   /** Datos del carnet de tu pareja (se abre tocando su cara o su nombre). */
   card: { person: MemberCardPerson; partnerName: string; sinceLabel: string; daysTogether: number } | null;
 }) {
@@ -70,6 +106,73 @@ export function ChatRoom({
   const [error, setError] = useState<string | null>(null);
   const [isSending, startSending] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [reactions, setReactions] = useState(initialReactions);
+  const [menuFor, setMenuFor] = useState<ChatMessage | null>(null);
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const [flashId, setFlashId] = useState<string | null>(null);
+  const press = useRef<{ timer: number; x: number; y: number; fired: boolean } | null>(null);
+
+  useEffect(() => {
+    setReactions((current) => ({ ...current, ...initialReactions }));
+  }, [initialReactions]);
+
+  // Mantener pulsado un mensaje (o clic derecho en el ordenador) abre el menú.
+  function pressHandlers(m: ChatMessage) {
+    const cancel = () => {
+      if (press.current) window.clearTimeout(press.current.timer);
+    };
+    return {
+      onPointerDown: (e: React.PointerEvent) => {
+        cancel();
+        const timer = window.setTimeout(() => {
+          if (press.current) press.current.fired = true;
+          setMenuFor(m);
+          if ("vibrate" in navigator) navigator.vibrate?.(15);
+        }, LONG_PRESS_MS);
+        press.current = { timer, x: e.clientX, y: e.clientY, fired: false };
+      },
+      onPointerMove: (e: React.PointerEvent) => {
+        const p = press.current;
+        if (p && Math.abs(e.clientX - p.x) + Math.abs(e.clientY - p.y) > 10) cancel();
+      },
+      onPointerUp: cancel,
+      onPointerCancel: cancel,
+      onPointerLeave: cancel,
+      onContextMenu: (e: React.MouseEvent) => {
+        e.preventDefault();
+        cancel();
+        setMenuFor(m);
+      },
+    };
+  }
+
+  /** Tras una pulsación larga no cuenta el toque (no abre la foto). */
+  function consumedLongPress(): boolean {
+    const fired = press.current?.fired ?? false;
+    if (press.current) press.current.fired = false;
+    return fired;
+  }
+
+  function react(m: ChatMessage, emoji: string) {
+    const mineNow = reactions[m.id]?.[myId] ?? null;
+    const next = mineNow === emoji ? null : emoji;
+    setMenuFor(null);
+    setReactions((current) => withReaction(current, m.id, myId, next));
+    void reactToMessage(m.id, next).then((result) => {
+      if (result.error) {
+        setReactions((current) => withReaction(current, m.id, myId, mineNow));
+        setError(result.error);
+      }
+    });
+  }
+
+  function jumpTo(id: string) {
+    const el = document.getElementById(`msg-${id}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setFlashId(id);
+    window.setTimeout(() => setFlashId((current) => (current === id ? null : current)), 1200);
+  }
 
   // Si el servidor trae mensajes nuevos (al volver a la app), se mezclan.
   useEffect(() => {
@@ -113,6 +216,15 @@ export function ChatRoom({
             })();
           },
         )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "message_reactions", filter: `space_id=eq.${spaceId}` },
+          (payload) => {
+            if (!isReactionRow(payload.new)) return;
+            const { message_id, user_id, emoji } = payload.new;
+            setReactions((current) => withReaction(current, message_id, user_id, emoji));
+          },
+        )
         .subscribe();
     })();
 
@@ -140,7 +252,7 @@ export function ChatRoom({
   // taparían los últimos mensajes.
   useEffect(() => {
     window.scrollTo({ top: document.documentElement.scrollHeight });
-  }, [messages.length, photo]);
+  }, [messages.length, photo, replyTo]);
 
   useEffect(() => {
     if (!photo) return;
@@ -179,12 +291,13 @@ export function ChatRoom({
           setError("No se pudo subir la foto. Inténtalo de nuevo.");
           return;
         }
-        const result = await sendPhotoMessage({ path, caption: body });
+        const result = await sendPhotoMessage({ path, caption: body, replyTo: replyTo?.id ?? null });
         if (result.message) {
           const sent = result.message;
           setMessages((current) => mergeMessages(current, [sent]));
           setText("");
           clearPhoto();
+          setReplyTo(null);
         } else {
           // Que no quede una foto huérfana en el almacén si no se pudo enviar.
           await supabase.storage.from(CHAT_BUCKET).remove([path]);
@@ -194,20 +307,26 @@ export function ChatRoom({
       return;
     }
 
+    const replying = replyTo;
     setText("");
+    setReplyTo(null);
     startSending(async () => {
-      const result = await sendMessage(body);
+      const result = await sendMessage(body, replying?.id ?? null);
       if (result.message) {
         const sent = result.message;
         setMessages((current) => mergeMessages(current, [sent]));
       } else {
         setText(body);
+        setReplyTo(replying);
         setError(result.error);
       }
     });
   }
 
   let lastDay = "";
+  const byId = new Map(messages.map((m) => [m.id, m]));
+  const nameOf = (senderId: string) => (senderId === myId ? "Tú" : partnerName);
+  const bottomPadding = photo && replyTo ? "pb-72" : photo ? "pb-56" : replyTo ? "pb-52" : "pb-36";
 
   return (
     <>
@@ -259,7 +378,7 @@ export function ChatRoom({
         />
       ) : null}
 
-      <div className={`flex flex-col gap-1 px-4 pt-3 ${photo ? "pb-56" : "pb-36"}`}>
+      <div className={`flex flex-col gap-1 px-4 pt-3 ${bottomPadding}`}>
         {messages.length === 0 ? (
           <p className="mt-10 text-center text-sm" style={{ color: "var(--color-muted)" }}>
             Aún no hay mensajes. ¡Escribe el primero! 💌
@@ -272,8 +391,10 @@ export function ChatRoom({
           const showDay = day !== lastDay;
           lastDay = day;
           const hasPhoto = !!m.image_path;
+          const original = m.reply_to ? byId.get(m.reply_to) : undefined;
+          const messageReactions = Object.values(reactions[m.id] ?? {});
           return (
-            <div key={m.id} className="flex flex-col">
+            <div key={m.id} id={`msg-${m.id}`} className="flex flex-col">
               {showDay ? (
                 <p
                   className="mx-auto my-2 rounded-full px-3 py-0.5 text-[11px] font-medium capitalize"
@@ -282,15 +403,36 @@ export function ChatRoom({
                   {daySeparator(day)}
                 </p>
               ) : null}
-              <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+              <div className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
                 <div
-                  className={`max-w-[78%] rounded-2xl text-[15px] leading-snug ${hasPhoto ? "p-1" : "px-3.5 py-2"} ${mine ? "rounded-br-md text-white" : "rounded-bl-md border"}`}
+                  {...pressHandlers(m)}
+                  className={`chat-bubble max-w-[78%] select-none rounded-2xl text-[15px] leading-snug transition-transform ${hasPhoto ? "p-1" : "px-3.5 py-2"} ${mine ? "rounded-br-md text-white" : "rounded-bl-md border"} ${flashId === m.id ? "chat-flash" : ""}`}
                   style={
                     mine
                       ? { backgroundImage: "var(--color-gradient)" }
                       : { background: "var(--color-surface)", borderColor: "var(--color-line)", color: "var(--color-ink)" }
                   }
                 >
+                  {m.reply_to ? (
+                    <button
+                      type="button"
+                      onClick={() => original && jumpTo(original.id)}
+                      className={`mb-1.5 block w-full rounded-lg border-l-[3px] px-2 py-1 text-left text-xs ${hasPhoto ? "mx-1 mt-1 w-[calc(100%-0.5rem)]" : ""}`}
+                      style={{
+                        background: mine ? "rgba(255,255,255,0.18)" : "var(--color-line)",
+                        borderColor: mine ? "rgba(255,255,255,0.8)" : "var(--color-accent)",
+                      }}
+                    >
+                      {original ? (
+                        <>
+                          <span className="block font-semibold">{nameOf(original.sender_id)}</span>
+                          <span className="line-clamp-2 opacity-85">{snippet(original)}</span>
+                        </>
+                      ) : (
+                        <span className="opacity-80">↩︎ Mensaje anterior</span>
+                      )}
+                    </button>
+                  ) : null}
                   {hasPhoto ? (
                     m.image_url ? (
                       // Recuadro de tamaño fijo: el hueco existe antes de que
@@ -298,7 +440,9 @@ export function ChatRoom({
                       // Tocándola se ve entera.
                       <button
                         type="button"
-                        onClick={() => setViewing(m.image_url)}
+                        onClick={() => {
+                          if (!consumedLongPress()) setViewing(m.image_url);
+                        }}
                         className="relative block aspect-square w-60 max-w-full overflow-hidden rounded-xl"
                         aria-label="Ver foto en grande"
                       >
@@ -318,6 +462,24 @@ export function ChatRoom({
                     </p>
                   </div>
                 </div>
+                {messageReactions.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setMenuFor(m)}
+                    aria-label="Reacciones"
+                    className="chat-reaction -mt-2 mx-2 flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[13px] leading-none shadow-sm"
+                    style={{ background: "var(--color-surface)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
+                  >
+                    {[...new Set(messageReactions)].map((emoji) => (
+                      <span key={emoji}>{emoji}</span>
+                    ))}
+                    {messageReactions.length > 1 && new Set(messageReactions).size === 1 ? (
+                      <span className="ml-0.5 text-[11px] font-semibold" style={{ color: "var(--color-muted)" }}>
+                        {messageReactions.length}
+                      </span>
+                    ) : null}
+                  </button>
+                ) : null}
               </div>
             </div>
           );
@@ -348,6 +510,32 @@ export function ChatRoom({
             }
           }}
         />
+
+        {replyTo ? (
+          <div
+            className="flex items-center gap-2 rounded-2xl border px-3 py-2"
+            style={{ background: "var(--color-surface)", borderColor: "var(--color-line)" }}
+          >
+            <Reply size={16} style={{ color: "var(--color-accent)" }} className="shrink-0" />
+            <div className="min-w-0 flex-1 border-l-[3px] pl-2" style={{ borderColor: "var(--color-accent)" }}>
+              <p className="text-xs font-semibold" style={{ color: "var(--color-accent)" }}>
+                Respondiendo a {replyTo.sender_id === myId ? "ti" : partnerName}
+              </p>
+              <p className="truncate text-xs" style={{ color: "var(--color-muted)" }}>
+                {snippet(replyTo)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setReplyTo(null)}
+              aria-label="No responder"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+              style={{ background: "var(--color-bg)", color: "var(--color-muted)" }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ) : null}
 
         {photoPreview ? (
           <div
@@ -411,6 +599,80 @@ export function ChatRoom({
           </button>
         </div>
       </form>
+
+      {menuFor ? (
+        <div
+          role="dialog"
+          aria-label="Opciones del mensaje"
+          className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-[2px]"
+          onClick={() => setMenuFor(null)}
+        >
+          <div
+            className="sheet-up mx-auto w-full max-w-md rounded-t-3xl border-t p-4"
+            style={{
+              background: "var(--color-surface)",
+              borderColor: "var(--color-line)",
+              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {snippet(menuFor) ? (
+              <p className="mb-3 line-clamp-2 px-1 text-sm" style={{ color: "var(--color-muted)" }}>
+                {nameOf(menuFor.sender_id)}: {snippet(menuFor)}
+              </p>
+            ) : null}
+            <div className="flex justify-between gap-1">
+              {REACTION_EMOJIS.map((emoji) => {
+                const chosen = reactions[menuFor.id]?.[myId] === emoji;
+                return (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => react(menuFor, emoji)}
+                    aria-label={`Reaccionar con ${emoji}`}
+                    aria-pressed={chosen}
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-2xl transition-transform active:scale-90"
+                    style={{
+                      background: chosen ? "color-mix(in srgb, var(--color-accent) 20%, transparent)" : "var(--color-bg)",
+                      boxShadow: chosen ? "inset 0 0 0 2px var(--color-accent)" : undefined,
+                    }}
+                  >
+                    {emoji}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-3 flex flex-col">
+              <button
+                type="button"
+                onClick={() => {
+                  setReplyTo(menuFor);
+                  setMenuFor(null);
+                }}
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium"
+                style={{ color: "var(--color-ink)" }}
+              >
+                <Reply size={18} style={{ color: "var(--color-accent)" }} />
+                Responder
+              </button>
+              {menuFor.body ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(menuFor.body);
+                    setMenuFor(null);
+                  }}
+                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium"
+                  style={{ color: "var(--color-ink)" }}
+                >
+                  <Copy size={18} style={{ color: "var(--color-accent)" }} />
+                  Copiar texto
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {viewing ? (
         <div

@@ -341,6 +341,13 @@ puntuales según se van usando:
   bloquea la base de datos hasta ese día. Ese día le llega un aviso, abre
   el sobre con una animación y a ti te avisa de que la ha abierto.
   Migración `20261003100000_time_capsules.sql`.
+- **Chat: reacciones y responder**: mantener pulsado un mensaje (o clic
+  derecho) abre un menú con ❤️😂😮😢🔥👍🐀, «Responder» y «Copiar texto».
+  Las reacciones llegan al momento a tu pareja (y un aviso si es a un
+  mensaje suyo); al responder, el original se cita encima y tocándolo se
+  salta a él. Migración `20261004100000_chat_reactions_replies.sql`.
+- **El día 6 en Inicio**: si el próximo plan es vuestro día, «Próximo
+  evento» sale con su tarjeta de corazones y los meses que cumplís.
 
 ## Notas de seguridad
 

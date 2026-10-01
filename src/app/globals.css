@@ -582,3 +582,52 @@ a:active {
     transform: none;
   }
 }
+
+/* ---------- Chat: mantener pulsado, reacciones y responder ---------- */
+.chat-bubble {
+  -webkit-touch-callout: none;
+}
+
+.chat-bubble:active {
+  transform: scale(0.98);
+}
+
+.chat-flash {
+  animation: chat-flash 1.2s ease-out;
+}
+
+@keyframes chat-flash {
+  0%,
+  40% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 60%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 3px transparent;
+  }
+}
+
+.chat-reaction {
+  animation: chat-reaction-pop 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes chat-reaction-pop {
+  from {
+    transform: scale(0.4);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.sheet-up {
+  animation: sheet-up 220ms ease-out;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
