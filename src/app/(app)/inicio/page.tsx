@@ -17,6 +17,7 @@ import { getNextEvent } from "@/lib/events/get-next-event";
 import { eventHref, LOVE_COLOR } from "@/lib/events/load";
 import { getCapsules } from "@/lib/capsules/get-capsules";
 import { CapsuleHomeCard } from "@/components/features/CapsuleHomeCard";
+import { wrappedPeriod, yearLabel } from "@/lib/wrapped/period";
 import { getPinnedNote } from "@/lib/notes/get-pinned-note";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
 import { getLatestNudge } from "@/lib/nudges/get-latest-nudge";
@@ -97,6 +98,7 @@ export default async function InicioPage() {
   const myName = poopSummary ? poopSummary.displayNameById.get(poopSummary.currentUserId) : undefined;
   const greeting = greetingFor(madridHour(new Date()));
   const together = getTogetherInfo();
+  const wrapped = wrappedPeriod(todayKey());
 
   return (
     <>
@@ -165,6 +167,24 @@ export default async function InicioPage() {
       <AutoRefresh everyMs={60_000} />
       <div className="flex flex-col gap-4 pb-2">
         <MomentBanner moment={todayMoment} />
+        {wrapped.complete ? (
+          // La semana del aniversario: el resumen del año que acaba de terminar.
+          <Link
+            href="/wrapped"
+            className="love-day relative mx-5 flex items-center gap-3 overflow-hidden rounded-2xl p-4 text-white"
+            style={{ backgroundImage: "var(--color-gradient)" }}
+          >
+            <span aria-hidden className="love-day-hearts" />
+            <span className="capsule-wiggle flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20 text-2xl">
+              🎁
+            </span>
+            <div className="relative min-w-0 flex-1">
+              <p className="text-sm font-bold">¡Vuestro Ratta Wrapped está listo!</p>
+              <p className="mt-0.5 text-xs font-semibold opacity-95">Así fue {yearLabel(wrapped.year)} juntos</p>
+            </div>
+            <ChevronRight size={18} className="relative" />
+          </Link>
+        ) : null}
         <CapsuleHomeCard capsules={capsules} />
         <GuideWelcome name={myName} />
 

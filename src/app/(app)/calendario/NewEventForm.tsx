@@ -87,7 +87,7 @@ export function EventForm({ initial, prefillTitle }: { initial?: EventFormValues
       </div>
 
       <div className="flex gap-3">
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex min-w-0 flex-[3] flex-col gap-1.5">
           <label htmlFor="date" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
             {editing && repeat !== "none" ? "Primer día" : "Fecha"}
           </label>
@@ -103,7 +103,7 @@ export function EventForm({ initial, prefillTitle }: { initial?: EventFormValues
           />
         </div>
         {allDay ? null : (
-          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <div className="flex min-w-0 flex-[2] flex-col gap-1.5">
             <label htmlFor="time" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
               Hora
             </label>

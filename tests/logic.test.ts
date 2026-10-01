@@ -23,6 +23,8 @@ import {
 } from "@/lib/events/recurrence";
 import { reminderMessage } from "@/lib/events/reminder-message";
 import { capsuleDateOptions, countdownLabel as capsuleCountdown } from "@/lib/capsules/config";
+import { wrappedPeriod, yearLabel } from "@/lib/wrapped/period";
+import { buildSlides, type WrappedStats } from "@/lib/wrapped/slides";
 
 describe("Hora de Madrid", () => {
   it("convierte la hora escrita en el formulario al instante UTC correcto (verano, invierno, medianoche)", () => {
@@ -551,5 +553,95 @@ describe("Cápsula del tiempo: fechas", () => {
     expect(capsuleCountdown("2026-10-02", "2026-10-01")).toBe("Se abre mañana");
     expect(capsuleCountdown("2027-03-06", "2026-10-01")).toBe("Se abre en 156 días");
     expect(capsuleCountdown("2026-10-01", "2026-10-01")).toBe("Ya se puede abrir");
+  });
+});
+
+describe("Ratta Wrapped", () => {
+  it("el año en curso va del último 6 de marzo a hoy", () => {
+    expect(wrappedPeriod("2026-10-01")).toEqual({ from: "2026-03-06", to: "2026-10-01", year: 1, complete: false });
+    expect(wrappedPeriod("2027-12-25")).toEqual({ from: "2027-03-06", to: "2027-12-25", year: 2, complete: false });
+  });
+
+  it("la semana del aniversario enseña el año que acaba de terminar", () => {
+    const first = { from: "2026-03-06", to: "2027-03-05", year: 1, complete: true };
+    expect(wrappedPeriod("2027-03-06")).toEqual(first);
+    expect(wrappedPeriod("2027-03-12")).toEqual(first);
+    expect(wrappedPeriod("2027-03-13")).toEqual({ from: "2027-03-06", to: "2027-03-13", year: 2, complete: false });
+  });
+
+  it("nombra los años", () => {
+    expect(yearLabel(1)).toBe("vuestro primer año");
+    expect(yearLabel(3)).toBe("vuestro tercer año");
+    expect(yearLabel(11)).toBe("vuestro año nº 11");
+  });
+
+  const empty: WrappedStats = {
+    period: { from: "2026-03-06", to: "2027-03-05", year: 1, complete: true },
+    daysTogether: 365,
+    messages: { r: 0, g: 0 },
+    chatPhotos: 0,
+    reactions: {},
+    moments: { r: 0, g: 0 },
+    momentsOnTime: { r: 0, g: 0 },
+    plans: 0,
+    loveDays: 0,
+    memories: 0,
+    hearts: { r: 0, g: 0 },
+    flappyBest: { r: 0, g: 0 },
+    trono: { r: 0, g: 0 },
+    wishesDone: 0,
+    capsulesOpened: 0,
+    memoryPhoto: null,
+  };
+  const names = { r: "Rokito", g: "Giselz" };
+
+  it("sin datos, solo el principio, los días juntos y el final", () => {
+    const slides = buildSlides(empty, ["r", "g"], names);
+    expect(slides.map((s) => s.id)).toEqual(["intro", "days", "end"]);
+    expect(slides[0]).toMatchObject({ big: "¡Feliz aniversario!", unit: "Así fue vuestro primer año juntos" });
+    expect(slides[1]).toMatchObject({ big: 365, unit: "días juntos" });
+  });
+
+  it("con datos: quién habla más, la reacción favorita, el más puntual y el rey del Trono", () => {
+    const slides = buildSlides(
+      {
+        ...empty,
+        messages: { r: 1200, g: 1500 },
+        chatPhotos: 80,
+        reactions: { "❤️": 120, "😂": 300, "💩": 999 },
+        moments: { r: 100, g: 90 },
+        momentsOnTime: { r: 50, g: 81 },
+        plans: 40,
+        loveDays: 12,
+        wishesDone: 3,
+        hearts: { r: 5000, g: 5000 },
+        flappyBest: { r: 31, g: 12 },
+        trono: { r: 200, g: 150 },
+        memories: 25,
+        capsulesOpened: 1,
+        memoryPhoto: { url: "https://x/y.jpg", caption: "Playa" },
+      },
+      ["r", "g"],
+      names,
+    );
+    const by = Object.fromEntries(slides.map((s) => [s.id, s]));
+    expect(slides.map((s) => s.id)).toEqual([
+      "intro", "days", "chat", "reaction", "moments", "plans", "hearts", "flappy", "trono", "memories", "end",
+    ]);
+    expect(by.chat).toMatchObject({ big: 2700, lines: ["…y 80 fotos 📷", "Giselz es quien más habla 🗣️"] });
+    expect(by.reaction).toMatchObject({ big: "😂", unit: "300 veces" });
+    expect(by.moments?.lines).toEqual(["Giselz es quien más llega a tiempo (90 %) ⏱️"]);
+    expect(by.plans?.lines).toEqual([
+      "…y 12 días 6 con el amor de vuestra vida 💞",
+      "Cumplisteis 3 deseos de la lista ✨",
+    ]);
+    expect(by.hearts?.lines).toEqual(["¡Empate de amor! 🥰"]);
+    expect(by.flappy).toMatchObject({ big: 31, lines: ["Campeón/a: Rokito 🏆"] });
+    expect(by.trono?.lines).toEqual(["Rokito reina en el Trono 👑"]);
+    expect(by.memories?.photo).toEqual({ url: "https://x/y.jpg", caption: "Playa" });
+    expect(by.chat?.bars).toEqual([
+      { label: "Rokito", value: 1200 },
+      { label: "Giselz", value: 1500 },
+    ]);
   });
 });
