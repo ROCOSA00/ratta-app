@@ -20,7 +20,7 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Cápsula del tiempo — ⏳ pendiente
+## Cápsula del tiempo — ✅ ya aplicada
 
 `20261003100000_time_capsules.sql`. Aplicar en el SQL Editor antes de
 publicar el código que la usa. **No hay que programar nada nuevo** en
