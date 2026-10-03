@@ -20,6 +20,28 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Reto de las uñas — ⏳ pendiente
+
+`20261006100000_nail_challenge.sql`. Aplicar en el SQL Editor antes de
+publicar el código que la usa.
+
+- `nail_challenges`: el día en que empieza el reto de cada persona (no en
+  el futuro).
+- `nail_bites`: los días con mordiscos y cuántas veces (1 a 50), con nota
+  opcional. Solo dentro de tu reto: desde que empezó y hasta hoy.
+- Los dos ven el reto del otro (para animarse); cada uno solo toca el suyo.
+
+Validada en Postgres 16 local:
+
+| Caso | Resultado |
+|---|---|
+| Empezar tu reto / el de tu pareja / en el futuro | permitido / RLS lo rechaza / RLS lo rechaza |
+| Apuntar ayer, y volver a apuntarlo (upsert) | permitido; se actualiza la cifra |
+| Antes de empezar / mañana / 0 veces | RLS lo rechaza / RLS lo rechaza / `CHECK` |
+| Tu pareja ve tu reto y tus días | sí |
+| Tu pareja apunta, cambia o borra tus días | RLS lo rechaza / 0 filas / 0 filas |
+| Persona de fuera | 0 filas |
+
 ## Lista de deseos — ✅ ya aplicada
 
 `20261005100000_wishes.sql`. Aplicar en el SQL Editor antes de publicar

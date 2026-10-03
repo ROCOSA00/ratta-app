@@ -782,3 +782,20 @@ input[type="time"]::-webkit-date-and-time-value {
     transform: none;
   }
 }
+
+/* ---------- Reto de las uñas ---------- */
+.nails-flame {
+  display: inline-block;
+  animation: nails-flame 1.6s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+@keyframes nails-flame {
+  0%,
+  100% {
+    transform: scale(1) rotate(-3deg);
+  }
+  50% {
+    transform: scale(1.12) rotate(3deg);
+  }
+}

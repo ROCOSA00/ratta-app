@@ -358,6 +358,12 @@ puntuales según se van usando:
   datos (sin traer los mensajes). La semana de cada aniversario enseña el
   año que acaba de terminar y sale un aviso en Inicio; el resto del año,
   «vuestro año, hasta hoy». Lógica en `src/lib/wrapped/`, con tests.
+- **Reto de las uñas 💅** (`/juegos/unas`): días sin morderse las uñas.
+  Racha con llama, medallas (1 día … 1 año), «Me las he mordido» con
+  cuántas veces (hoy, ayer o tocando cualquier día del calendario, que
+  sale verde o rojo con «×2»), estadísticas y el reto de tu pareja con un
+  botón de «💪 Ánimos». Lógica en `src/lib/nails/stats.ts`, con tests.
+  Migración `20261006100000_nail_challenge.sql`.
 - **Novedades 🎁**: al entrar tras una actualización sale una vez el aviso
   «¡Hay sorpresitas por aquí que no te puedes perder!» y, si quieres, un
   tutorial interactivo solo con lo nuevo (`NEWS_STEPS` en

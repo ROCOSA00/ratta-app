@@ -58,6 +58,7 @@ import { submitFlappyScore } from "@/lib/games/actions";
 import { addDays, addMonths, todayKey } from "@/lib/calendar/date-utils";
 import { createCapsule, deleteCapsule, markCapsuleOpened } from "@/lib/capsules/actions";
 import { addWish, deleteWish, toggleWish } from "@/lib/wishes/actions";
+import { sendNailCheer, setNailBites, startNailChallenge } from "@/lib/nails/actions";
 
 const ok = { error: null };
 const NOTE_ID = "11111111-1111-4111-8111-111111111111";
@@ -277,6 +278,67 @@ describe("Calendario", () => {
     await expect(deleteEvent(form({ eventId: EVENT_ID, redirect: "1" }))).rejects.toThrow("NEXT_REDIRECT:/calendario");
     expect(opsOf("events", "delete")).toHaveLength(1);
     expect(state.fake.storage.removed).toEqual([{ bucket: "event-photos", paths: ["s/a.jpg", "s/b.jpg"] }]);
+  });
+});
+
+// ------------------------------------------------------ Reto de las uñas
+
+describe("Reto de las uñas", () => {
+  const withChallenge = (startedOn: string | null) =>
+    createFakeSupabase({
+      results: { "nail_challenges:select": { data: startedOn ? { started_on: startedOn } : null, error: null } },
+    });
+
+  it("empieza el reto hoy (o cambia el día), a tu nombre", async () => {
+    expect(await startNailChallenge()).toEqual({ error: null });
+    expect(opsOf("nail_challenges", "upsert")[0]?.payload).toEqual({
+      space_id: "space-1",
+      user_id: "user-me",
+      started_on: todayKey(),
+    });
+    expect((await startNailChallenge(addDays(todayKey(), 1))).error).toBe("El reto no puede empezar en el futuro.");
+    expect((await startNailChallenge("mañana")).error).toBe("Fecha no válida.");
+  });
+
+  it("apunta los mordiscos de un día, y 0 lo deja limpio", async () => {
+    const start = addDays(todayKey(), -5);
+    state.fake = withChallenge(start);
+    const yesterday = addDays(todayKey(), -1);
+    expect(await setNailBites({ day: yesterday, count: 2, note: " nervios " })).toEqual({ error: null });
+    expect(opsOf("nail_bites", "upsert")[0]?.payload).toMatchObject({
+      space_id: "space-1",
+      user_id: "user-me",
+      day: yesterday,
+      count: 2,
+      note: "nervios",
+    });
+
+    state.fake = withChallenge(start);
+    await setNailBites({ day: yesterday, count: 0 });
+    expect(opsOf("nail_bites", "delete")[0]?.filters).toEqual([
+      ["space_id", "space-1"],
+      ["user_id", "user-me"],
+      ["day", yesterday],
+    ]);
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("no deja apuntar el futuro, antes de empezar, sin reto ni cifras raras", async () => {
+    state.fake = withChallenge(todayKey());
+    expect((await setNailBites({ day: addDays(todayKey(), 1), count: 1 })).error).toBe("No se puede apuntar el futuro 🔮");
+    expect((await setNailBites({ day: addDays(todayKey(), -1), count: 1 })).error).toBe(
+      "Ese día aún no habías empezado el reto.",
+    );
+    expect((await setNailBites({ day: todayKey(), count: 51 })).error).toMatch(/Más de 50/);
+    expect((await setNailBites({ day: todayKey(), count: 1.5 })).error).toBeTruthy();
+    state.fake = withChallenge(null);
+    expect((await setNailBites({ day: todayKey(), count: 1 })).error).toBe("Primero empieza el reto.");
+    expect(opsOf("nail_bites", "upsert")).toHaveLength(0);
+  });
+
+  it("mandar ánimos avisa a tu pareja", async () => {
+    await sendNailCheer();
+    expect(state.notified[0]).toMatchObject({ title: "💪 ¡Ánimo con las uñas!", url: "/juegos/unas" });
   });
 });
 
