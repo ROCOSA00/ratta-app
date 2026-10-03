@@ -11,7 +11,10 @@ export type NailPerson = {
   bites: NailBite[];
 };
 
-/** Tu reto y el de tu pareja (los dos se ven; cada uno toca el suyo). */
+/**
+ * Tu reto y el de tu pareja. Los dos se ven, y los mordiscos de cualquiera
+ * de los dos retos los puede apuntar cualquiera (empezarlo, solo cada uno).
+ */
 export async function getNails(): Promise<{ me: NailPerson; partner: NailPerson | null } | null> {
   const spaceId = await getCurrentSpaceId();
   if (!spaceId) return null;
@@ -23,7 +26,7 @@ export async function getNails(): Promise<{ me: NailPerson; partner: NailPerson 
       supabase.from("space_members").select("user_id").eq("space_id", spaceId),
       supabase.from("profiles").select("id, display_name"),
       supabase.from("nail_challenges").select("user_id, started_on").eq("space_id", spaceId),
-      supabase.from("nail_bites").select("user_id, day, count, note").eq("space_id", spaceId).order("day"),
+      supabase.from("nail_bites").select("user_id, day, count, note, reported_by").eq("space_id", spaceId).order("day"),
     ]);
   const myId = auth.user?.id;
   if (!myId) return null;
@@ -34,10 +37,11 @@ export async function getNails(): Promise<{ me: NailPerson; partner: NailPerson 
   const startOf = new Map(
     ((challenges ?? []) as { user_id: string; started_on: string }[]).map((c) => [c.user_id, c.started_on]),
   );
+  type BiteRow = { user_id: string; day: string; count: number; note: string | null; reported_by: string | null };
   const bitesOf = (id: string): NailBite[] =>
-    ((bites ?? []) as (NailBite & { user_id: string })[])
+    ((bites ?? []) as BiteRow[])
       .filter((b) => b.user_id === id)
-      .map(({ day, count, note }) => ({ day, count, note }));
+      .map(({ day, count, note, reported_by }) => ({ day, count, note, reportedBy: reported_by }));
   const person = (id: string): NailPerson => ({
     id,
     name: nameOf.get(id) ?? "Tu pareja",
