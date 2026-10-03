@@ -37,6 +37,7 @@ import {
 import { reminderMessage } from "@/lib/events/reminder-message";
 import { capsuleDateOptions, countdownLabel as capsuleCountdown } from "@/lib/capsules/config";
 import { wrappedPeriod, yearLabel } from "@/lib/wrapped/period";
+import { cheer, nailStats, nextMilestone } from "@/lib/nails/stats";
 import { buildSlides, type WrappedStats } from "@/lib/wrapped/slides";
 
 describe("Hora de Madrid", () => {
@@ -668,5 +669,47 @@ describe("Ratta Wrapped", () => {
       { label: "Rokito", value: 1200 },
       { label: "Giselz", value: 1500 },
     ]);
+  });
+});
+
+describe("Reto de las uñas", () => {
+  const START = "2026-10-03";
+
+  it("el primer día, limpio, ya cuenta como 1", () => {
+    expect(nailStats(START, START, [])).toMatchObject({ streak: 1, best: 1, totalDays: 1, cleanDays: 1, biteDays: 0 });
+  });
+
+  it("sin mordiscos, la racha son todos los días del reto", () => {
+    expect(nailStats(START, "2026-10-12", [])).toMatchObject({ streak: 10, best: 10, totalDays: 10 });
+  });
+
+  it("un día con mordiscos corta la racha; la mejor se guarda", () => {
+    const stats = nailStats(START, "2026-10-12", [
+      { day: "2026-10-08", count: 2, note: "nervios" },
+      { day: "2026-10-09", count: 1, note: null },
+    ]);
+    // Limpios: 3-7 (5 días), mordiscos 8 y 9, limpios 10-12 (3 días).
+    expect(stats).toMatchObject({ streak: 3, best: 5, cleanDays: 8, biteDays: 2, totalBites: 3 });
+    expect(stats.byDay).toEqual({ "2026-10-08": 2, "2026-10-09": 1 });
+  });
+
+  it("si te las muerdes hoy, la racha es 0", () => {
+    expect(nailStats(START, "2026-10-05", [{ day: "2026-10-05", count: 1, note: null }]).streak).toBe(0);
+  });
+
+  it("ignora días fuera del reto", () => {
+    const stats = nailStats(START, "2026-10-05", [
+      { day: "2026-10-01", count: 3, note: null },
+      { day: "2026-10-09", count: 3, note: null },
+    ]);
+    expect(stats).toMatchObject({ streak: 3, biteDays: 0, totalBites: 0 });
+  });
+
+  it("medallas y ánimos", () => {
+    expect(nextMilestone(0)?.label).toBe("1 día");
+    expect(nextMilestone(5)?.label).toBe("1 semana");
+    expect(nextMilestone(400)).toBeNull();
+    expect(cheer(1, false)).toMatch(/Primer día/);
+    expect(cheer(10, true)).toMatch(/tropiezo/);
   });
 });

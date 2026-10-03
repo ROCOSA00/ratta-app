@@ -6,7 +6,7 @@
 
 export type RecordedOp = {
   table: string;
-  kind: "insert" | "update" | "delete" | "select";
+  kind: "insert" | "update" | "upsert" | "delete" | "select";
   payload?: unknown;
   filters: [string, unknown][];
 };
@@ -41,6 +41,12 @@ export function createFakeSupabase(options: {
     const chain = {
       insert(payload: unknown) {
         op.kind = "insert";
+        op.payload = payload;
+        ops.push(op);
+        return chain;
+      },
+      upsert(payload: unknown) {
+        op.kind = "upsert";
         op.payload = payload;
         ops.push(op);
         return chain;

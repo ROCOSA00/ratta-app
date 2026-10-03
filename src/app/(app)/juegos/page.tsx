@@ -4,6 +4,9 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
 import { getHeartsSummary } from "@/lib/hearts/get-hearts-summary";
 import { getFlappySummary } from "@/lib/games/get-flappy-summary";
+import { getNails } from "@/lib/nails/get-nails";
+import { nailStats } from "@/lib/nails/stats";
+import { todayKey } from "@/lib/calendar/date-utils";
 
 function GameCard({
   href,
@@ -54,7 +57,12 @@ function GameCard({
 }
 
 export default async function JuegosPage() {
-  const [poop, hearts, flappy] = await Promise.all([getPoopSummary(), getHeartsSummary(), getFlappySummary()]);
+  const [poop, hearts, flappy, nails] = await Promise.all([
+    getPoopSummary(),
+    getHeartsSummary(),
+    getFlappySummary(),
+    getNails(),
+  ]);
 
   let poopToday: string | null = null;
   if (poop) {
@@ -72,6 +80,15 @@ export default async function JuegosPage() {
   const flappyRecords = flappy
     ? `Récord: tú ${flappy.me.best}${flappy.partner ? ` · ${flappy.partner.name} ${flappy.partner.best}` : ""}`
     : null;
+
+  const today = todayKey();
+  const streakOf = (p: { startedOn: string | null; bites: Parameters<typeof nailStats>[2] } | null | undefined) =>
+    p?.startedOn ? `${nailStats(p.startedOn, today, p.bites).streak} 🔥` : null;
+  const nailParts = [
+    streakOf(nails?.me) ? `tú ${streakOf(nails?.me)}` : null,
+    streakOf(nails?.partner) ? `${nails?.partner?.name} ${streakOf(nails?.partner)}` : null,
+  ].filter(Boolean);
+  const nailsToday = nailParts.length > 0 ? `Racha: ${nailParts.join(" · ")}` : "¡Empieza tu reto hoy!";
 
   return (
     <>
@@ -100,6 +117,14 @@ export default async function JuegosPage() {
           description="Toca para volar y esquiva las tuberías"
           today={flappyRecords}
           tint="var(--color-accent-2)"
+        />
+        <GameCard
+          href="/juegos/unas"
+          emoji="💅"
+          title="Reto de las uñas"
+          description="Días sin morderte las uñas"
+          today={nailsToday}
+          tint="#16a34a"
         />
       </div>
     </>
