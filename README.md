@@ -363,7 +363,10 @@ puntuales según se van usando:
   cuántas veces (hoy, ayer o tocando cualquier día del calendario, que
   sale verde o rojo con «×2»), estadísticas y el reto de tu pareja con un
   botón de «💪 Ánimos». Lógica en `src/lib/nails/stats.ts`, con tests.
-  Migración `20261006100000_nail_challenge.sql`.
+  Migración `20261006100000_nail_challenge.sql`. Tu pareja también puede
+  apuntar (o corregir) tus mordiscos aunque no tenga reto propio: ve el
+  tuyo en grande, te llega un aviso («😬 ¡Pillado!») y en ese día pone
+  «Lo apuntó Giselz» (`20261007100000_nail_bites_partner.sql`).
 - **Novedades 🎁**: al entrar tras una actualización sale una vez el aviso
   «¡Hay sorpresitas por aquí que no te puedes perder!» y, si quieres, un
   tutorial interactivo solo con lo nuevo (`NEWS_STEPS` en

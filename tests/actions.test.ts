@@ -304,17 +304,20 @@ describe("Reto de las uñas", () => {
     const start = addDays(todayKey(), -5);
     state.fake = withChallenge(start);
     const yesterday = addDays(todayKey(), -1);
-    expect(await setNailBites({ day: yesterday, count: 2, note: " nervios " })).toEqual({ error: null });
+    expect(await setNailBites({ userId: "user-me", day: yesterday, count: 2, note: " nervios " })).toEqual({
+      error: null,
+    });
     expect(opsOf("nail_bites", "upsert")[0]?.payload).toMatchObject({
       space_id: "space-1",
       user_id: "user-me",
       day: yesterday,
       count: 2,
       note: "nervios",
+      reported_by: "user-me",
     });
 
     state.fake = withChallenge(start);
-    await setNailBites({ day: yesterday, count: 0 });
+    await setNailBites({ userId: "user-me", day: yesterday, count: 0 });
     expect(opsOf("nail_bites", "delete")[0]?.filters).toEqual([
       ["space_id", "space-1"],
       ["user_id", "user-me"],
@@ -325,15 +328,47 @@ describe("Reto de las uñas", () => {
 
   it("no deja apuntar el futuro, antes de empezar, sin reto ni cifras raras", async () => {
     state.fake = withChallenge(todayKey());
-    expect((await setNailBites({ day: addDays(todayKey(), 1), count: 1 })).error).toBe("No se puede apuntar el futuro 🔮");
-    expect((await setNailBites({ day: addDays(todayKey(), -1), count: 1 })).error).toBe(
-      "Ese día aún no habías empezado el reto.",
+    const me = "user-me";
+    expect((await setNailBites({ userId: me, day: addDays(todayKey(), 1), count: 1 })).error).toBe(
+      "No se puede apuntar el futuro 🔮",
     );
-    expect((await setNailBites({ day: todayKey(), count: 51 })).error).toMatch(/Más de 50/);
-    expect((await setNailBites({ day: todayKey(), count: 1.5 })).error).toBeTruthy();
+    expect((await setNailBites({ userId: me, day: addDays(todayKey(), -1), count: 1 })).error).toBe(
+      "Ese día aún no había empezado el reto.",
+    );
+    expect((await setNailBites({ userId: me, day: todayKey(), count: 51 })).error).toMatch(/Más de 50/);
+    expect((await setNailBites({ userId: me, day: todayKey(), count: 1.5 })).error).toBeTruthy();
     state.fake = withChallenge(null);
-    expect((await setNailBites({ day: todayKey(), count: 1 })).error).toBe("Primero empieza el reto.");
+    expect((await setNailBites({ userId: me, day: todayKey(), count: 1 })).error).toBe("Primero empieza el reto.");
+    expect((await setNailBites({ userId: "user-partner", day: todayKey(), count: 1 })).error).toBe(
+      "Ese reto no existe.",
+    );
     expect(opsOf("nail_bites", "upsert")).toHaveLength(0);
+  });
+
+  it("tu pareja puede apuntar tus mordiscos, y te avisa", async () => {
+    // Aquí "user-me" es Giselz apuntando en el reto de Rokito ("user-rokito").
+    state.fake = withChallenge(addDays(todayKey(), -5));
+    expect(await setNailBites({ userId: "user-rokito", day: todayKey(), count: 2 })).toEqual({ error: null });
+    expect(opsOf("nail_challenges", "select")[0]?.filters).toEqual([
+      ["space_id", "space-1"],
+      ["user_id", "user-rokito"],
+    ]);
+    expect(opsOf("nail_bites", "upsert")[0]?.payload).toMatchObject({
+      user_id: "user-rokito",
+      reported_by: "user-me",
+      count: 2,
+    });
+    expect(state.notified[0]).toEqual({
+      title: "😬 ¡Pillado!",
+      body: "Rokito ha apuntado que hoy te has mordido las uñas (2 veces)",
+      url: "/juegos/unas",
+      tag: "nails-bite",
+    });
+
+    state.fake = withChallenge(addDays(todayKey(), -5));
+    state.notified = [];
+    await setNailBites({ userId: "user-rokito", day: addDays(todayKey(), -1), count: 0 });
+    expect(state.notified[0]?.body).toBe("Rokito ha quitado los mordiscos de ayer. ¡Bien!");
   });
 
   it("mandar ánimos avisa a tu pareja", async () => {

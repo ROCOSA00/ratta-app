@@ -20,7 +20,30 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Reto de las uñas — ⏳ pendiente
+## Reto de las uñas: tu pareja también apunta — ⏳ pendiente
+
+`20261007100000_nail_bites_partner.sql`. Aplicar en el SQL Editor antes
+de publicar el código que la usa.
+
+- `nail_bites.reported_by`: quién apuntó cada día.
+- Las políticas de insertar, cambiar y borrar mordiscos ya no exigen ser
+  el dueño del reto: vale cualquiera de vuestro espacio, siempre a su
+  propio nombre (`reported_by = auth.uid()`), en un reto que exista,
+  desde que empezó y nunca en el futuro. Empezar o cambiar el reto sigue
+  siendo solo de cada uno.
+
+Validada en Postgres 16 local, encima de la anterior:
+
+| Caso | Resultado |
+|---|---|
+| Giselz apunta hoy en el reto de Rokito | permitido |
+| …a nombre de otro / en un reto que no existe / antes de empezar | RLS lo rechaza |
+| Giselz cambia el inicio del reto de Rokito | RLS lo rechaza |
+| Giselz corrige el día; luego lo corrige Rokito | permitido (queda a nombre del último) |
+| Persona de fuera apunta o borra | RLS lo rechaza / 0 filas |
+| Giselz borra un día de Rokito | permitido |
+
+## Reto de las uñas — ✅ ya aplicada
 
 `20261006100000_nail_challenge.sql`. Aplicar en el SQL Editor antes de
 publicar el código que la usa.

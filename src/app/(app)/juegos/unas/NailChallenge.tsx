@@ -16,9 +16,9 @@ function plural(n: number, one: string, many: string) {
 }
 
 export function NailChallenge({ me, partner, today }: { me: NailPerson; partner: NailPerson | null; today: string }) {
-  const [editing, setEditing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [showStart, setShowStart] = useState(false);
   const router = useRouter();
 
   function run(action: () => Promise<{ error: string | null }>, after?: () => void) {
@@ -33,25 +33,175 @@ export function NailChallenge({ me, partner, today }: { me: NailPerson; partner:
     });
   }
 
-  if (!me.startedOn) {
+  // Solo los retos ya empezados (con su día de inicio).
+  const mine = me.startedOn ? { ...me, startedOn: me.startedOn } : null;
+  const partnerActive = partner?.startedOn ? { ...partner, startedOn: partner.startedOn } : null;
+
+  // Sin reto propio ni de tu pareja: a empezar.
+  if (!mine && !partnerActive) {
     return (
       <div className="mt-5 flex flex-col gap-4 pb-4">
         <StartCard today={today} pending={isPending} onStart={(day) => run(() => startNailChallenge(day))} />
         {error ? <ErrorText text={error} /> : null}
-        {partner?.startedOn ? <PartnerCard partner={partner} today={today} /> : null}
       </div>
     );
   }
 
-  const stats = nailStats(me.startedOn, today, me.bites);
+  return (
+    <div className="mt-5 flex flex-col gap-4 pb-4">
+      {mine ? (
+        <ChallengeView
+          person={mine}
+          viewerId={me.id}
+          otherName={partner?.name ?? "tu pareja"}
+          today={today}
+          pending={isPending}
+          run={run}
+        />
+      ) : null}
+      {partnerActive ? (
+        <ChallengeView
+          person={partnerActive}
+          viewerId={me.id}
+          otherName={me.name}
+          today={today}
+          pending={isPending}
+          run={run}
+          // Si tú no tienes reto, el de tu pareja sale en grande.
+          compact={!!mine}
+        />
+      ) : null}
+      {error ? <ErrorText text={error} /> : null}
+
+      {me.startedOn ? (
+        <ChangeStart
+          startedOn={me.startedOn}
+          today={today}
+          pending={isPending}
+          onChange={(day) => run(() => startNailChallenge(day))}
+        />
+      ) : showStart ? (
+        <StartCard today={today} pending={isPending} onStart={(day) => run(() => startNailChallenge(day))} />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowStart(true)}
+          className="mx-5 text-center text-xs font-medium underline"
+          style={{ color: "var(--color-muted)" }}
+        >
+          ¿Y tú? Empezar mi propio reto
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Un reto: el tuyo o el de tu pareja. Los mordiscos los puede apuntar
+ * cualquiera de los dos; en el de tu pareja, los botones hablan de ella/él.
+ * En modo compacto (tu pareja, cuando tú también tienes reto) se ve una
+ * tarjeta pequeña con su racha, ánimos y su calendario.
+ */
+function ChallengeView({
+  person,
+  viewerId,
+  otherName,
+  today,
+  pending,
+  run,
+  compact = false,
+}: {
+  person: NailPerson & { startedOn: string };
+  viewerId: string;
+  /** El nombre de la otra persona (para «Lo apuntó Giselz»). */
+  otherName: string;
+  today: string;
+  pending: boolean;
+  run: (action: () => Promise<{ error: string | null }>, after?: () => void) => void;
+  compact?: boolean;
+}) {
+  const [editing, setEditing] = useState<string | null>(null);
+  const [cheered, setCheered] = useState(false);
+  const isMine = person.id === viewerId;
+  const stats = nailStats(person.startedOn, today, person.bites);
   const bitToday = (stats.byDay[today] ?? 0) > 0;
   const next = nextMilestone(stats.streak);
   const previousMilestone = [...NAIL_MILESTONES].reverse().find((m) => m.days <= stats.streak);
   const progressFrom = previousMilestone?.days ?? 0;
   const progress = next ? (stats.streak - progressFrom) / (next.days - progressFrom) : 1;
+  const bitLabel = isMine ? "😬 Me las he mordido" : "😬 Se las ha mordido";
+
+  const cheerButton = isMine ? null : (
+    <button
+      type="button"
+      disabled={cheered || pending}
+      onClick={() => run(() => sendNailCheer(), () => setCheered(true))}
+      className="shrink-0 rounded-2xl px-4 py-3.5 text-sm font-bold text-white disabled:opacity-70"
+      style={{ backgroundImage: "var(--color-gradient)" }}
+    >
+      {cheered ? "¡Enviado! 💌" : "💪 Ánimos"}
+    </button>
+  );
+
+  const sheet = editing ? (
+    <BiteSheet
+      key={editing}
+      day={editing}
+      today={today}
+      startedOn={person.startedOn}
+      title={isMine ? "😬 ¿Cuántas veces?" : `😬 ¿Cuántas veces se las ha mordido ${person.name}?`}
+      current={stats.byDay[editing] ?? 0}
+      currentNote={person.bites.find((b) => b.day === editing)?.note ?? ""}
+      reportedBy={reporterLabel(person.bites.find((b) => b.day === editing)?.reportedBy, person, viewerId, otherName)}
+      pending={pending}
+      onDayChange={setEditing}
+      onClose={() => setEditing(null)}
+      onSave={(count, note) =>
+        run(() => setNailBites({ userId: person.id, day: editing, count, note }), () => setEditing(null))
+      }
+    />
+  ) : null;
+
+  if (compact) {
+    return (
+      <div className="flex flex-col gap-2">
+        <div
+          className="mx-5 flex items-center gap-3 rounded-2xl border p-4"
+          style={{ background: "var(--color-surface)", borderColor: "var(--color-line)" }}
+        >
+          <span className="text-3xl">{stats.streak > 0 ? "🔥" : "😬"}</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold" style={{ color: "var(--color-ink)" }}>
+              {person.name} lleva {plural(stats.streak, "día", "días")}
+            </p>
+            <p className="text-xs" style={{ color: "var(--color-muted)" }}>
+              Mejor racha: {plural(stats.best, "día", "días")}
+            </p>
+          </div>
+          {cheerButton}
+        </div>
+        <button
+          type="button"
+          onClick={() => setEditing(today)}
+          className="mx-5 rounded-2xl px-4 py-3 text-sm font-bold text-white"
+          style={{ background: BAD }}
+        >
+          {bitLabel}
+        </button>
+        <CalendarCard
+          title={`Calendario de ${person.name}`}
+          startedOn={person.startedOn}
+          today={today}
+          byDay={stats.byDay}
+          onPick={setEditing}
+        />
+        {sheet}
+      </div>
+    );
+  }
 
   return (
-    <div className="mt-5 flex flex-col gap-4 pb-4">
+    <>
       {/* La racha */}
       <div
         className="relative mx-5 overflow-hidden rounded-3xl p-5 text-center text-white shadow-lg"
@@ -61,13 +211,21 @@ export function NailChallenge({ me, partner, today }: { me: NailPerson; partner:
             : "linear-gradient(150deg, #22c55e, #0d9488)",
         }}
       >
-        <p className="text-xs font-bold uppercase tracking-[0.18em] opacity-90">Racha actual</p>
+        <p className="text-xs font-bold uppercase tracking-[0.18em] opacity-90">
+          {isMine ? "Racha actual" : `Reto de ${person.name}`}
+        </p>
         <p className="mt-1 flex items-center justify-center gap-2">
           <span className={`text-5xl ${stats.streak > 0 ? "nails-flame" : ""}`}>{stats.streak > 0 ? "🔥" : "😬"}</span>
           <span className="font-mono-nums text-7xl font-black leading-none">{stats.streak}</span>
         </p>
         <p className="mt-1 text-base font-semibold">
-          {stats.streak === 1 ? "día sin morderte las uñas" : "días sin morderte las uñas"}
+          {isMine
+            ? stats.streak === 1
+              ? "día sin morderte las uñas"
+              : "días sin morderte las uñas"
+            : stats.streak === 1
+              ? "día sin morderse las uñas"
+              : "días sin morderse las uñas"}
         </p>
         <p className="mt-2 text-sm opacity-95">{cheer(stats.streak, bitToday)}</p>
         {next ? (
@@ -89,55 +247,43 @@ export function NailChallenge({ me, partner, today }: { me: NailPerson; partner:
         <button
           type="button"
           onClick={() => setEditing(today)}
-          className="flex-1 rounded-2xl px-4 py-3.5 text-sm font-bold text-white shadow"
+          className="min-w-0 flex-1 rounded-2xl px-4 py-3.5 text-sm font-bold text-white shadow"
           style={{ background: BAD }}
         >
-          😬 Me las he mordido
+          {bitLabel}
         </button>
+        {cheerButton}
       </div>
       {bitToday ? (
         <p className="mx-5 -mt-2 text-center text-xs" style={{ color: "var(--color-muted)" }}>
-          Hoy llevas {plural(stats.byDay[today] ?? 0, "vez", "veces")}. Toca hoy en el calendario para cambiarlo.
+          Hoy {isMine ? "llevas" : "lleva"} {plural(stats.byDay[today] ?? 0, "vez", "veces")}. Toca hoy en el calendario
+          para cambiarlo.
         </p>
       ) : null}
-      {error ? <ErrorText text={error} /> : null}
 
       <StatsGrid stats={stats} />
       <Medals best={stats.best} />
-
       <CalendarCard
-        title="Tu calendario"
-        startedOn={me.startedOn}
+        title={isMine ? "Tu calendario" : `Calendario de ${person.name}`}
+        startedOn={person.startedOn}
         today={today}
         byDay={stats.byDay}
-        onPick={(day) => setEditing(day)}
+        onPick={setEditing}
       />
-
-      {partner?.startedOn ? <PartnerCard partner={partner} today={today} /> : null}
-
-      <ChangeStart
-        startedOn={me.startedOn}
-        today={today}
-        pending={isPending}
-        onChange={(day) => run(() => startNailChallenge(day))}
-      />
-
-      {editing ? (
-        <BiteSheet
-          key={editing}
-          day={editing}
-          today={today}
-          startedOn={me.startedOn}
-          current={stats.byDay[editing] ?? 0}
-          currentNote={me.bites.find((b) => b.day === editing)?.note ?? ""}
-          pending={isPending}
-          onDayChange={setEditing}
-          onClose={() => setEditing(null)}
-          onSave={(count, note) => run(() => setNailBites({ day: editing, count, note }), () => setEditing(null))}
-        />
-      ) : null}
-    </div>
+      {sheet}
+    </>
   );
+}
+
+/** "Lo apuntaste tú" / "Lo apuntó Giselz", solo si no lo apuntó la persona del reto. */
+function reporterLabel(
+  reportedBy: string | null | undefined,
+  person: NailPerson,
+  viewerId: string,
+  otherName: string,
+): string | null {
+  if (!reportedBy || reportedBy === person.id) return null;
+  return reportedBy === viewerId ? "Lo apuntaste tú" : `Lo apuntó ${otherName}`;
 }
 
 function ErrorText({ text }: { text: string }) {
@@ -327,47 +473,6 @@ function CalendarCard({
   );
 }
 
-function PartnerCard({ partner, today }: { partner: NailPerson; today: string }) {
-  const [sent, setSent] = useState(false);
-  const [isPending, startTransition] = useTransition();
-  if (!partner.startedOn) return null;
-  const stats = nailStats(partner.startedOn, today, partner.bites);
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div
-        className="mx-5 flex items-center gap-3 rounded-2xl border p-4"
-        style={{ background: "var(--color-surface)", borderColor: "var(--color-line)" }}
-      >
-        <span className="text-3xl">{stats.streak > 0 ? "🔥" : "😬"}</span>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold" style={{ color: "var(--color-ink)" }}>
-            {partner.name} lleva {plural(stats.streak, "día", "días")}
-          </p>
-          <p className="text-xs" style={{ color: "var(--color-muted)" }}>
-            Mejor racha: {plural(stats.best, "día", "días")}
-          </p>
-        </div>
-        <button
-          type="button"
-          disabled={sent || isPending}
-          onClick={() =>
-            startTransition(async () => {
-              await sendNailCheer();
-              setSent(true);
-            })
-          }
-          className="shrink-0 rounded-full px-3 py-2 text-xs font-bold text-white disabled:opacity-70"
-          style={{ backgroundImage: "var(--color-gradient)" }}
-        >
-          {sent ? "¡Enviado! 💌" : "💪 Ánimos"}
-        </button>
-      </div>
-      <CalendarCard title={`Calendario de ${partner.name}`} startedOn={partner.startedOn} today={today} byDay={stats.byDay} />
-    </div>
-  );
-}
-
 function ChangeStart({
   startedOn,
   today,
@@ -424,6 +529,8 @@ function BiteSheet({
   day,
   today,
   startedOn,
+  title,
+  reportedBy,
   current,
   currentNote,
   pending,
@@ -434,6 +541,8 @@ function BiteSheet({
   day: string;
   today: string;
   startedOn: string;
+  title: string;
+  reportedBy: string | null;
   current: number;
   currentNote: string;
   pending: boolean;
@@ -465,7 +574,7 @@ function BiteSheet({
       >
         <div className="flex items-center justify-between">
           <p className="text-base font-bold" style={{ color: "var(--color-ink)" }}>
-            😬 ¿Cuántas veces?
+            {title}
           </p>
           <button type="button" onClick={onClose} aria-label="Cerrar" style={{ color: "var(--color-muted)" }}>
             <X size={18} />
@@ -490,7 +599,7 @@ function BiteSheet({
           ))}
           {!quickDays.includes(day) ? (
             <span
-              className="rounded-full px-3 py-1.5 text-xs font-semibold capitalize text-white"
+              className="rounded-full px-3 py-1.5 text-xs font-semibold text-white first-letter:uppercase"
               style={{ background: "var(--color-accent)" }}
             >
               {dayLabel(day)}
@@ -526,6 +635,12 @@ function BiteSheet({
             <Plus size={20} />
           </button>
         </div>
+
+        {reportedBy ? (
+          <p className="mt-3 text-center text-xs" style={{ color: "var(--color-muted)" }}>
+            👀 {reportedBy}
+          </p>
+        ) : null}
 
         <input
           value={note}

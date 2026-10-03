@@ -1,6 +1,12 @@
 import { addDays, daysBetween } from "@/lib/calendar/date-utils";
 
-export type NailBite = { day: string; count: number; note: string | null };
+export type NailBite = {
+  day: string;
+  count: number;
+  note: string | null;
+  /** Quién lo apuntó (tú o tu pareja). */
+  reportedBy?: string | null;
+};
 
 export type NailStats = {
   /** Días seguidos sin morderse, contando hoy si hoy va limpio. */
