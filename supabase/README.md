@@ -20,7 +20,7 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Reto de las uñas — ⏳ pendiente
+## Reto de las uñas — ✅ ya aplicada
 
 `20261006100000_nail_challenge.sql`. Aplicar en el SQL Editor antes de
 publicar el código que la usa.
