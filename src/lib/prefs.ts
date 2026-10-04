@@ -10,6 +10,7 @@ export type TextSize = "normal" | "large";
 
 /** Tarjetas de Inicio que se pueden ocultar. */
 export const HOME_CARDS = [
+  { id: "pet", label: "Kofi (vuestra mascota)" },
   { id: "memory", label: "Recuerdo del día" },
   { id: "question", label: "Pregunta del día" },
   { id: "nudge", label: "Cariño (mensajitos)" },

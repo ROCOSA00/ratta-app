@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ComponentType, ReactNode } from "react";
-import { Bell, BookHeart, ChevronRight, Gift, Images, KeyRound, LogOut, Mail, Settings, Smile, Sparkles, UserPen } from "lucide-react";
+import { Bell, BookHeart, ChevronRight, Gift, Images, KeyRound, LogOut, Mail, PawPrint, Settings, Smile, Sparkles, UserPen } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
 import { getTogetherInfo, TOGETHER_SINCE } from "@/lib/couple";
@@ -158,6 +158,14 @@ export default async function PerfilPage() {
           tint="var(--color-accent-2)"
           title="Recuerdos"
           subtitle="Vuestras fotos juntos"
+        />
+        <LinkRow
+          href="/mascota"
+          tour="perfil-mascota"
+          icon={PawPrint}
+          tint="#ea580c"
+          title="Kofi 🐱"
+          subtitle="Su edad, cumpleaños, fotos, peso y diario"
         />
         <LinkRow
           href="/capsulas"

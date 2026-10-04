@@ -38,6 +38,8 @@ import { reminderMessage } from "@/lib/events/reminder-message";
 import { capsuleDateOptions, countdownLabel as capsuleCountdown } from "@/lib/capsules/config";
 import { wrappedPeriod, yearLabel } from "@/lib/wrapped/period";
 import { cheer, nailStats, nextMilestone } from "@/lib/nails/stats";
+import { ageLabel, humanYears, lifeStage, nextCelebration, wholeMonths } from "@/lib/pets/age";
+import { formatWeight } from "@/lib/pets/config";
 import { buildSlides, type WrappedStats } from "@/lib/wrapped/slides";
 
 describe("Hora de Madrid", () => {
@@ -711,5 +713,46 @@ describe("Reto de las uñas", () => {
     expect(nextMilestone(400)).toBeNull();
     expect(cheer(1, false)).toMatch(/Primer día/);
     expect(cheer(10, true)).toMatch(/tropiezo/);
+  });
+});
+
+describe("Kofi 🐱 (nació el 15 de agosto de 2026)", () => {
+  const BORN = "2026-08-15";
+
+  it("su edad: en semanas hasta las 8, luego meses y días, luego años", () => {
+    expect(ageLabel(BORN, "2026-08-15")).toBe("¡Nace hoy!");
+    expect(ageLabel(BORN, "2026-08-18")).toBe("3 días");
+    expect(ageLabel(BORN, "2026-10-03")).toBe("7 semanas");
+    expect(ageLabel(BORN, "2026-10-04")).toBe("7 semanas y 1 día");
+    expect(ageLabel(BORN, "2026-10-10")).toBe("1 mes y 25 días");
+    expect(ageLabel(BORN, "2026-10-15")).toBe("2 meses");
+    expect(ageLabel(BORN, "2027-08-15")).toBe("1 año");
+    expect(ageLabel(BORN, "2028-11-20")).toBe("2 años y 3 meses");
+    expect(wholeMonths(BORN, "2026-10-14")).toBe(1);
+  });
+
+  it("su próxima celebración: cada mes el primer año, luego cada año", () => {
+    expect(nextCelebration(BORN, "2026-10-04")).toEqual({ day: "2026-10-15", label: "2 meses", birthday: false, daysLeft: 11 });
+    expect(nextCelebration(BORN, "2026-10-15")).toMatchObject({ label: "2 meses", daysLeft: 0 });
+    expect(nextCelebration(BORN, "2026-08-15")).toMatchObject({ label: "1 mes", daysLeft: 31 });
+    expect(nextCelebration(BORN, "2027-07-20")).toMatchObject({ day: "2027-08-15", label: "1 año", birthday: true });
+    expect(nextCelebration(BORN, "2027-08-15")).toMatchObject({ label: "1 año", daysLeft: 0, birthday: true });
+    expect(nextCelebration(BORN, "2027-09-01")).toMatchObject({ day: "2028-08-15", label: "2 años", birthday: true });
+  });
+
+  it("en años humanos y su etapa", () => {
+    expect(humanYears(BORN, BORN)).toBe(0);
+    expect(humanYears(BORN, "2026-10-04")).toBe(2);
+    expect(humanYears(BORN, "2027-08-15")).toBe(15);
+    expect(humanYears(BORN, "2028-08-15")).toBe(24);
+    expect(humanYears(BORN, "2030-08-15")).toBe(32);
+    expect(lifeStage(BORN, "2026-10-04")).toBe("Gatito 🍼");
+    expect(lifeStage(BORN, "2027-08-15")).toBe("Junior 🐾");
+  });
+
+  it("el peso, bonito", () => {
+    expect(formatWeight(850)).toBe("850 g");
+    expect(formatWeight(1250)).toBe("1,25 kg");
+    expect(formatWeight(4000)).toBe("4 kg");
   });
 });

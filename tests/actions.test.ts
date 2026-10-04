@@ -59,6 +59,7 @@ import { addDays, addMonths, todayKey } from "@/lib/calendar/date-utils";
 import { createCapsule, deleteCapsule, markCapsuleOpened } from "@/lib/capsules/actions";
 import { addWish, deleteWish, toggleWish } from "@/lib/wishes/actions";
 import { sendNailCheer, setNailBites, startNailChallenge } from "@/lib/nails/actions";
+import { addPetEvent, addPetPhoto, setPetPhoto, setPetWeight, updatePet } from "@/lib/pets/actions";
 
 const ok = { error: null };
 const NOTE_ID = "11111111-1111-4111-8111-111111111111";
@@ -278,6 +279,80 @@ describe("Calendario", () => {
     await expect(deleteEvent(form({ eventId: EVENT_ID, redirect: "1" }))).rejects.toThrow("NEXT_REDIRECT:/calendario");
     expect(opsOf("events", "delete")).toHaveLength(1);
     expect(state.fake.storage.removed).toEqual([{ bucket: "event-photos", paths: ["s/a.jpg", "s/b.jpg"] }]);
+  });
+});
+
+// ------------------------------------------------------------- Mascota
+
+describe("Kofi 🐱", () => {
+  const SPACE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const PET = "99999999-9999-4999-8999-999999999999";
+  const PHOTO = `${SPACE}/dddddddd-dddd-4ddd-8ddd-dddddddddddd.jpg`;
+  const withKofi = (photo: string | null = null) =>
+    createFakeSupabase({
+      results: {
+        "pets:select": { data: { id: PET, name: "Kofi", born_on: "2026-08-15", photo_path: photo }, error: null },
+      },
+    });
+
+  beforeEach(() => {
+    state.spaceId = SPACE;
+    state.fake = withKofi();
+  });
+
+  it("solo toca mascotas de vuestro espacio", async () => {
+    state.fake = createFakeSupabase({ results: { "pets:select": { data: null, error: null } } });
+    expect((await setPetWeight(PET, { day: "2026-10-03", grams: 850 })).error).toMatch(/No encuentro/);
+    expect((await setPetWeight("no-es-uuid", { day: "2026-10-03", grams: 850 })).error).toBeTruthy();
+    expect(state.fake.ops.filter((o) => o.kind !== "select")).toHaveLength(0);
+  });
+
+  it("apunta el peso (uno por día) y no en el futuro ni antes de nacer", async () => {
+    expect(await setPetWeight(PET, { day: "2026-10-03", grams: 850 })).toEqual({ error: null });
+    expect(opsOf("pets", "select")[0]?.filters).toEqual([
+      ["id", PET],
+      ["space_id", SPACE],
+    ]);
+    expect(opsOf("pet_weights", "upsert")[0]?.payload).toEqual({
+      pet_id: PET,
+      space_id: SPACE,
+      day: "2026-10-03",
+      grams: 850,
+      created_by: "user-me",
+    });
+    expect((await setPetWeight(PET, { day: addDays(todayKey(), 1), grams: 850 })).error).toMatch(/futuro/);
+    expect((await setPetWeight(PET, { day: "2026-08-01", grams: 850 })).error).toBe("Ese día aún no había nacido.");
+    expect((await setPetWeight(PET, { day: "2026-10-03", grams: 8.5 })).error).toBe("En gramos, sin decimales.");
+  });
+
+  it("el diario avisa a tu pareja", async () => {
+    expect(
+      await addPetEvent(PET, { day: "2026-10-01", kind: "vacuna", title: "Primera vacuna", note: "" }),
+    ).toEqual({ error: null });
+    expect(opsOf("pet_events", "insert")[0]?.payload).toMatchObject({ kind: "vacuna", title: "Primera vacuna", note: null });
+    expect(state.notified[0]).toMatchObject({ title: "💉 Kofi", body: "Rokito ha apuntado: Primera vacuna", url: "/mascota" });
+    expect((await addPetEvent(PET, { day: "2026-10-01", kind: "baño", title: "x" })).error).toBe("Tipo no válido.");
+  });
+
+  it("fotos: del álbum (con aviso) y de la ficha (borra la anterior)", async () => {
+    expect(await addPetPhoto(PET, { path: PHOTO, caption: "Durmiendo", takenOn: "2026-10-04" })).toEqual({ error: null });
+    expect(opsOf("pet_photos", "insert")[0]?.payload).toMatchObject({ storage_path: PHOTO, taken_on: "2026-10-04" });
+    expect(state.notified[0]).toMatchObject({ title: "📸 Nueva foto de Kofi", body: "Rokito ha subido una foto: Durmiendo" });
+    expect((await addPetPhoto(PET, { path: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/dddddddd-dddd-4ddd-8ddd-dddddddddddd.jpg", takenOn: "2026-10-04" })).error).toBe("Foto no válida.");
+
+    const OLD = `${SPACE}/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee.jpg`;
+    state.fake = withKofi(OLD);
+    expect(await setPetPhoto(PET, PHOTO)).toEqual({ error: null });
+    expect(opsOf("pets", "update")[0]?.payload).toEqual({ photo_path: PHOTO });
+    expect(state.fake.storage.removed).toEqual([{ bucket: "pets", paths: [OLD] }]);
+  });
+
+  it("cambia el nombre y el día que llegó a casa (entre su nacimiento y hoy)", async () => {
+    expect(await updatePet(PET, { name: " Kofi ", adoptedOn: "2026-09-28" })).toEqual({ error: null });
+    expect(opsOf("pets", "update")[0]?.payload).toEqual({ name: "Kofi", adopted_on: "2026-09-28" });
+    expect((await updatePet(PET, { name: "Kofi", adoptedOn: "2026-08-01" })).error).toBe(
+      "Tiene que ser entre el día que nació y hoy.",
+    );
   });
 });
 

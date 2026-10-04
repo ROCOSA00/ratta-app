@@ -20,7 +20,33 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Reto de las uñas: tu pareja también apunta — ⏳ pendiente
+## Mascotas (Kofi 🐱) — ⏳ pendiente
+
+`20261008100000_pets.sql`. Aplicar en el SQL Editor antes de publicar el
+código que la usa.
+
+- `pets`: ficha (nombre, emoji, nacimiento, llegada a casa, foto). Crea a
+  Kofi (nacido el 15 de agosto de 2026).
+- `pet_weights` (un peso por día, nunca en el futuro), `pet_events`
+  (vacuna, desparasitación, veterinario, primera vez, nota) y
+  `pet_photos` (álbum). Todo por espacio, los dos ven y tocan todo; lo
+  nuevo, siempre a tu nombre.
+- Almacén privado `pets` (`<space_id>/<uuid>.jpg`).
+- En el calendario: «🎂 Cumpleaños de Kofi», cada 15 de agosto desde 2027,
+  todo el día y con aviso la noche antes.
+
+Validada en Postgres 16 local:
+
+| Caso | Resultado |
+|---|---|
+| Kofi y su cumpleaños creados | sí (cada año, con aviso) |
+| Llegada a casa antes de nacer | rechazado por el `CHECK` |
+| Peso hoy / en el futuro / a nombre de tu pareja | permitido / RLS lo rechaza / RLS lo rechaza |
+| Tipo de diario inventado | rechazado por el `CHECK` |
+| Foto del álbum en vuestra carpeta | permitido |
+| Persona de fuera ve, cambia o crea mascotas | 0 filas / 0 filas / RLS lo rechaza |
+
+## Reto de las uñas: tu pareja también apunta — ✅ ya aplicada
 
 `20261007100000_nail_bites_partner.sql`. Aplicar en el SQL Editor antes
 de publicar el código que la usa.
