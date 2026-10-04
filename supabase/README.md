@@ -20,7 +20,7 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
-## Mascotas (Kofi 🐱) — ⏳ pendiente
+## Mascotas (Kofi 🐱) — ✅ ya aplicada
 
 `20261008100000_pets.sql`. Aplicar en el SQL Editor antes de publicar el
 código que la usa.
