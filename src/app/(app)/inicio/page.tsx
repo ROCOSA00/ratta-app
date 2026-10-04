@@ -17,6 +17,8 @@ import { getNextEvent } from "@/lib/events/get-next-event";
 import { eventHref, LOVE_COLOR } from "@/lib/events/load";
 import { getCapsules } from "@/lib/capsules/get-capsules";
 import { CapsuleHomeCard } from "@/components/features/CapsuleHomeCard";
+import { PetHomeCard } from "@/components/features/PetHomeCard";
+import { getPets } from "@/lib/pets/get-pet";
 import { wrappedPeriod, yearLabel } from "@/lib/wrapped/period";
 import { getPinnedNote } from "@/lib/notes/get-pinned-note";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
@@ -83,7 +85,7 @@ function SectionHeader({
 }
 
 export default async function InicioPage() {
-  const [nextEvent, pinnedNote, poopSummary, latestNudge, todayMoment, prefs, { capsules }] = await Promise.all([
+  const [nextEvent, pinnedNote, poopSummary, latestNudge, todayMoment, prefs, { capsules }, pets] = await Promise.all([
     getNextEvent(),
     getPinnedNote(),
     getPoopSummary(),
@@ -91,6 +93,7 @@ export default async function InicioPage() {
     getTodayMoment(),
     getPrefs(),
     getCapsules(),
+    getPets(),
   ]);
   // Tarjetas que has ocultado en Ajustes (en este dispositivo).
   const show = (id: HomeCardId) => !prefs.hiddenHome.includes(id);
@@ -186,6 +189,7 @@ export default async function InicioPage() {
           </Link>
         ) : null}
         <CapsuleHomeCard capsules={capsules} />
+        {show("pet") ? <PetHomeCard pet={pets[0]} /> : null}
         <GuideWelcome name={myName} />
 
         {nextEvent && nextEvent.color === LOVE_COLOR ? (

@@ -15,7 +15,9 @@ function GameCard({
   description,
   today,
   tint,
+  tour,
 }: {
+  tour?: string;
   href: string;
   emoji: string;
   title: string;
@@ -26,6 +28,7 @@ function GameCard({
   return (
     <Link
       href={href}
+      data-tour={tour}
       className="mx-5 flex items-center gap-4 rounded-2xl border p-4"
       style={{
         background: `color-mix(in srgb, ${tint} 7%, var(--color-surface))`,
@@ -120,6 +123,7 @@ export default async function JuegosPage() {
         />
         <GameCard
           href="/juegos/unas"
+          tour="games-nails"
           emoji="💅"
           title="Reto de las uñas"
           description="Días sin morderte las uñas"

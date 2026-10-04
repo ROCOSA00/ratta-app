@@ -3,20 +3,12 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { hasSeenNews, markNewsSeen, useTour } from "./Tour";
+import { NEWS_ITEMS } from "./steps";
 
-const NEWS = [
-  { emoji: "💞", label: "Vuestro día 6" },
-  { emoji: "🔁", label: "Planes que se repiten" },
-  { emoji: "🔔", label: "Aviso el día antes" },
-  { emoji: "💬", label: "Reacciones en el chat" },
-  { emoji: "💌", label: "Cápsula del tiempo" },
-  { emoji: "✨", label: "Lista de deseos" },
-  { emoji: "🎁", label: "Ratta Wrapped" },
-  { emoji: "✏️", label: "Editar planes" },
-];
+
 
 // Emojis que flotan alrededor del regalo.
-const FLOATERS = ["💞", "✨", "💌", "🎉", "🐀", "⭐"];
+const FLOATERS = ["🐱", "✨", "🐾", "🎉", "🐀", "💅"];
 
 // Esperar a que termine la pantalla de carga antes de enseñarlo.
 const DELAY_MS = 1600;
@@ -87,11 +79,11 @@ export function WhatsNewPopup() {
             ¡Hay sorpresitas por aquí que no te puedes perder!
           </h2>
           <p className="mt-1 text-center text-sm" style={{ color: "var(--color-muted)" }}>
-            Hemos preparado un montón de cosas nuevas para vosotros 🐀💞
+            Hemos preparado cosas nuevas para vosotros (y para Kofi) 🐀💞
           </p>
 
           <ul className="mt-4 grid grid-cols-2 gap-1.5">
-            {NEWS.map((item, i) => (
+            {NEWS_ITEMS.map((item, i) => (
               <li
                 key={item.label}
                 className="news-chip flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-xs font-semibold"

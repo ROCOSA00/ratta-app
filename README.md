@@ -367,6 +367,15 @@ puntuales según se van usando:
   apuntar (o corregir) tus mordiscos aunque no tenga reto propio: ve el
   tuyo en grande, te llega un aviso («😬 ¡Pillado!») y en ese día pone
   «Lo apuntó Giselz» (`20261007100000_nail_bites_partner.sql`).
+- **Kofi 🐱** (`/mascota`, desde Inicio y Perfil): la ficha de vuestra
+  mascota con su foto (con el editor de recorte), su edad («7 semanas y
+  1 día»; luego meses y años), días en el mundo y en casa, años humanos
+  aproximados y su etapa; la cuenta atrás para cuando cumple meses (el
+  primer año) o años, con fiesta el mismo día; un álbum donde cada foto
+  dice qué edad tenía; su peso con gráfica; y un diario (vacunas,
+  veterinario, primeras veces…). Su cumpleaños está en el calendario.
+  Lógica de edades en `src/lib/pets/age.ts`, con tests. Migración
+  `20261008100000_pets.sql`.
 - **Novedades 🎁**: al entrar tras una actualización sale una vez el aviso
   «¡Hay sorpresitas por aquí que no te puedes perder!» y, si quieres, un
   tutorial interactivo solo con lo nuevo (`NEWS_STEPS` en

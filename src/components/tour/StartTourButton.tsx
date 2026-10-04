@@ -44,7 +44,7 @@ export function StartNewsButton() {
           Novedades
         </span>
         <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
-          Lo último: día 6, planes que se repiten, cápsulas, deseos, Wrapped…
+          Lo último: el rincón de Kofi 🐱 y el reto de las uñas 💅
         </span>
       </span>
     </button>
