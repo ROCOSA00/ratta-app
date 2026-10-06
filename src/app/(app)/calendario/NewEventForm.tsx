@@ -5,6 +5,7 @@ import { Plus, Save, X } from "lucide-react";
 import { createEvent, updateEvent, type NewEventState } from "./actions";
 import { dayLabel, dayNumber, weekdayMon0 } from "@/lib/calendar/date-utils";
 import type { Recurrence } from "@/lib/events/recurrence";
+import { PickerField } from "@/components/shared/PickerField";
 
 const initialState: NewEventState = { error: null };
 
@@ -133,6 +134,8 @@ export function EventForm({
   const [allDay, setAllDay] = useState(initial?.allDay ?? false);
   const [date, setDate] = useState(initial?.date ?? defaultDate ?? "");
   const [repeat, setRepeat] = useState<Recurrence>(initial?.repeat ?? "none");
+  const [time, setTime] = useState(initial?.time ?? "");
+  const [until, setUntil] = useState(initial?.until ?? "");
   const formRef = useRef<HTMLFormElement>(null);
   // Se ha enviado el formulario (para no confundir el primer render con
   // un plan recién creado).
@@ -146,6 +149,8 @@ export function EventForm({
     formRef.current?.reset();
     setAllDay(false);
     setDate(defaultDate ?? "");
+    setTime("");
+    setUntil("");
     setRepeat("none");
     onCreated?.();
   }, [editing, isPending, state.error, defaultDate, onCreated]);
@@ -182,14 +187,15 @@ export function EventForm({
           <label htmlFor="date" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
             {editing && repeat !== "none" ? "Primer día" : "Fecha"}
           </label>
-          <input
+          <PickerField
             id="date"
             name="date"
             type="date"
             required
             value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full min-w-0 rounded-xl border px-3 py-2.5 text-sm outline-none"
+            onChange={setDate}
+            placeholder="Elige el día"
+            className="rounded-xl border px-3 py-2.5 text-sm outline-none"
             style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
           />
         </div>
@@ -198,13 +204,15 @@ export function EventForm({
             <label htmlFor="time" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
               Hora
             </label>
-            <input
+            <PickerField
               id="time"
               name="time"
               type="time"
               required={!allDay}
-              defaultValue={initial?.time || undefined}
-              className="w-full min-w-0 rounded-xl border px-3 py-2.5 text-sm outline-none"
+              value={time}
+              onChange={setTime}
+              placeholder="--:--"
+              className="rounded-xl border px-3 py-2.5 text-sm outline-none"
               style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
             />
           </div>
@@ -250,13 +258,15 @@ export function EventForm({
               <label htmlFor="until" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
                 Hasta (opcional)
               </label>
-              <input
+              <PickerField
                 id="until"
                 name="until"
                 type="date"
                 min={date || undefined}
-                defaultValue={initial?.until || undefined}
-                className="w-full min-w-0 rounded-xl border px-3 py-2.5 text-sm outline-none"
+                value={until}
+                onChange={setUntil}
+                placeholder="Para siempre"
+                className="rounded-xl border px-3 py-2.5 text-sm outline-none"
                 style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
               />
             </div>

@@ -9,6 +9,7 @@ import { resizeImage } from "@/lib/images/resize";
 import { createCapsule } from "@/lib/capsules/actions";
 import { CAPSULE_BUCKET, CAPSULE_LIMITS, shortDate } from "@/lib/capsules/config";
 import { addDays } from "@/lib/calendar/date-utils";
+import { PickerField } from "@/components/shared/PickerField";
 
 const fieldStyle = { background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" };
 
@@ -112,14 +113,16 @@ export function CapsuleForm({
         </div>
         <label className="mt-1 flex items-center gap-2 text-xs" style={{ color: "var(--color-muted)" }}>
           O el día que quieras:
-          <input
+          <PickerField
             type="date"
             required
             value={openOn}
             min={tomorrow}
-            onChange={(e) => setOpenOn(e.target.value)}
-            className="min-w-0 flex-1 rounded-xl border px-3 py-2 text-sm outline-none"
+            onChange={setOpenOn}
+            className="rounded-xl border px-3 py-2 text-sm outline-none"
             style={fieldStyle}
+            placeholder="Elige el día"
+            wrapperClassName="flex-1"
           />
         </label>
         {openOn ? (

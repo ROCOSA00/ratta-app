@@ -22,6 +22,7 @@ import { findKind, formatWeight, PET_BUCKET, PET_EVENT_KINDS, type PetEventKind 
 import type { Pet, PetEvent, PetPhoto, PetWeight } from "@/lib/pets/get-pet";
 import { dayLabel, daysBetween } from "@/lib/calendar/date-utils";
 import { WeightChart } from "./WeightChart";
+import { PickerField } from "@/components/shared/PickerField";
 
 type Tab = "album" | "peso" | "diario";
 type Run = (action: () => Promise<{ error: string | null }>, after?: () => void) => void;
@@ -227,13 +228,15 @@ function Hero({
           </label>
           <label className="text-xs font-semibold">
             Día que llegó a casa
-            <input
+            <PickerField
               type="date"
               value={adoptedOn}
               min={pet.born_on}
               max={today}
-              onChange={(e) => setAdoptedOn(e.target.value)}
-              className="mt-1 rounded-xl border px-3 py-2 text-sm"
+              onChange={setAdoptedOn}
+              className="rounded-xl border px-3 py-2 text-sm"
+              placeholder="Elige el día"
+              wrapperClassName="mt-1"
             />
           </label>
           <div className="flex gap-2">
@@ -393,14 +396,16 @@ function Album({
           />
           <label className="flex items-center gap-2 text-xs" style={{ color: "var(--color-muted)" }}>
             Fecha
-            <input
+            <PickerField
               type="date"
               value={takenOn}
               min={pet.born_on}
               max={today}
-              onChange={(e) => setTakenOn(e.target.value)}
-              className="min-w-0 flex-1 rounded-xl border px-3 py-2 text-sm"
+              onChange={setTakenOn}
+              className="rounded-xl border px-3 py-2 text-sm"
               style={fieldStyle}
+              placeholder="Elige el día"
+              wrapperClassName="flex-1"
             />
           </label>
           {error ? (
@@ -566,15 +571,17 @@ function Weights({
               g
             </span>
           </label>
-          <input
+          <PickerField
             type="date"
             value={day}
             min={pet.born_on}
             max={today}
-            onChange={(e) => setDay(e.target.value)}
+            onChange={setDay}
             aria-label="Día"
-            className="min-w-0 flex-[3] rounded-xl border px-3 py-2 text-sm"
+            className="rounded-xl border px-3 py-2 text-sm"
             style={fieldStyle}
+            placeholder="Elige el día"
+            wrapperClassName="flex-[3]"
           />
         </div>
         <button
@@ -701,14 +708,16 @@ function Diary({
           style={fieldStyle}
         />
         <div className="flex gap-2">
-          <input
+          <PickerField
             type="date"
             value={day}
             min={pet.born_on}
-            onChange={(e) => setDay(e.target.value)}
+            onChange={setDay}
             aria-label="Día"
-            className="min-w-0 flex-1 rounded-xl border px-3 py-2 text-sm"
+            className="rounded-xl border px-3 py-2 text-sm"
             style={fieldStyle}
+            placeholder="Elige el día"
+            wrapperClassName="flex-1"
           />
           <button
             type="submit"
