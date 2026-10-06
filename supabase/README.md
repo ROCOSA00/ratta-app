@@ -20,6 +20,29 @@ Database > Connection string, no la anon key). Alternativa sin CLI:
 pegar el contenido de cada fichero, en orden, en el **SQL Editor** del
 panel de Supabase.
 
+## Fotos de un día del calendario — ⏳ pendiente
+
+`20261009100000_day_photos.sql`. Aplicar en el SQL Editor antes de
+publicar el código que la usa.
+
+- `day_photos`: fotos de un día sin plan («porque sí»), con nota opcional.
+  Usan el almacén privado `event-photos` (carpeta `<space_id>/`), que ya
+  tiene sus reglas. Los dos las ven y las quitan; subirlas, a tu nombre y
+  de hoy o de días pasados.
+- Las preguntas del día no necesitan nada nuevo: ya se guardaban por día
+  (`question_rounds.round_date`). El calendario las enseña con la misma
+  regla de siempre (la respuesta de tu pareja, solo si respondiste tú).
+
+Validada en Postgres 16 local:
+
+| Caso | Resultado |
+|---|---|
+| Foto de un día pasado, a tu nombre | permitido |
+| Foto de mañana / a nombre de tu pareja | RLS lo rechaza |
+| Ruta fuera de vuestra carpeta | rechazado por el `CHECK` |
+| Tu pareja la quita | permitido |
+| Persona de fuera la ve o la quita | 0 filas |
+
 ## Mascotas (Kofi 🐱) — ✅ ya aplicada
 
 `20261008100000_pets.sql`. Aplicar en el SQL Editor antes de publicar el

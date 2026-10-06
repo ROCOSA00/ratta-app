@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Plus, Save } from "lucide-react";
+import { Plus, Save, X } from "lucide-react";
 import { createEvent, updateEvent, type NewEventState } from "./actions";
-import { dayNumber, weekdayMon0 } from "@/lib/calendar/date-utils";
+import { dayLabel, dayNumber, weekdayMon0 } from "@/lib/calendar/date-utils";
 import type { Recurrence } from "@/lib/events/recurrence";
 
 const initialState: NewEventState = { error: null };
@@ -38,34 +38,125 @@ export type EventFormValues = {
   description: string;
 };
 
-export function NewEventForm({ prefillTitle }: { prefillTitle?: string }) {
-  return <EventForm prefillTitle={prefillTitle} />;
+/**
+ * «Crear un plan»: un botón que abre el formulario con una explicación de
+ * cada cosa. Se abre solo si llega un título (desde la lista de deseos).
+ * `defaultDate`: el día que estás mirando en el mes.
+ */
+export function NewEventForm({ prefillTitle, defaultDate }: { prefillTitle?: string; defaultDate?: string }) {
+  const [open, setOpen] = useState(!!prefillTitle);
+  const [created, setCreated] = useState(false);
+
+  if (!open) {
+    return (
+      <div className="mx-5 flex flex-col gap-2">
+        {created ? (
+          <p className="text-center text-sm font-semibold" style={{ color: "var(--color-accent-2)" }}>
+            ✅ ¡Plan creado! Ya está en el calendario.
+          </p>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => {
+            setCreated(false);
+            setOpen(true);
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-bold text-white shadow-lg"
+          style={{ backgroundImage: "var(--color-gradient)" }}
+        >
+          <Plus size={18} />
+          Crear un plan
+          {defaultDate ? <span className="font-medium opacity-90">· {dayLabel(defaultDate)}</span> : null}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div
+        className="mx-5 rounded-2xl border p-4 text-sm"
+        style={{
+          background: "color-mix(in srgb, var(--color-accent-2) 6%, var(--color-surface))",
+          borderColor: "color-mix(in srgb, var(--color-accent-2) 18%, var(--color-line))",
+          color: "var(--color-ink)",
+        }}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <p className="font-bold">📅 Nuevo plan</p>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="Cerrar"
+            className="-mr-1 -mt-1 rounded-full p-1"
+            style={{ color: "var(--color-muted)" }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <ul className="mt-2 flex flex-col gap-1.5 text-xs" style={{ color: "var(--color-muted)" }}>
+          <li>📝 <b>Título y día</b>, y la hora (o marca «Todo el día»).</li>
+          <li>🔁 <b>Se repite</b>: cada semana, cada 2 semanas, cada mes o cada año, hasta el día que quieras.</li>
+          <li>🔔 <b>Avisarnos el día antes</b>: os llega una notificación la noche anterior, a las 20:00.</li>
+          <li>📍 <b>Ubicación y notas</b>, si queréis. A tu pareja le llega un aviso del plan nuevo.</li>
+          <li>👆 Luego, tocando el plan, podéis editarlo, añadirle fotos o, si se repite, quitar un solo día.</li>
+        </ul>
+      </div>
+      <EventForm
+        prefillTitle={prefillTitle}
+        defaultDate={defaultDate}
+        onCreated={() => {
+          setCreated(true);
+          setOpen(false);
+        }}
+      />
+    </div>
+  );
 }
 
 /** Formulario de un plan: vacío para crear uno, o relleno para editarlo. */
-export function EventForm({ initial, prefillTitle }: { initial?: EventFormValues; prefillTitle?: string }) {
+export function EventForm({
+  initial,
+  prefillTitle,
+  defaultDate,
+  onCreated,
+}: {
+  initial?: EventFormValues;
+  prefillTitle?: string;
+  /** Día con el que empieza el formulario al crear. */
+  defaultDate?: string;
+  /** Al crear un plan con éxito. */
+  onCreated?: () => void;
+}) {
   const editing = !!initial;
   const [state, formAction, isPending] = useActionState(editing ? updateEvent : createEvent, initialState);
   const [allDay, setAllDay] = useState(initial?.allDay ?? false);
-  const [date, setDate] = useState(initial?.date ?? "");
+  const [date, setDate] = useState(initial?.date ?? defaultDate ?? "");
   const [repeat, setRepeat] = useState<Recurrence>(initial?.repeat ?? "none");
   const formRef = useRef<HTMLFormElement>(null);
+  // Se ha enviado el formulario (para no confundir el primer render con
+  // un plan recién creado).
+  const submitted = useRef(false);
 
   useEffect(() => {
-    // Al crear, el formulario se vacía para el siguiente plan. Al editar,
-    // al guardar se vuelve al plan (no hay nada que vaciar).
-    if (!editing && !isPending && !state.error) {
-      formRef.current?.reset();
-      setAllDay(false);
-      setDate("");
-      setRepeat("none");
-    }
-  }, [editing, isPending, state.error]);
+    // Al crear, tras guardar bien, el formulario se vacía para el siguiente
+    // plan. Al editar, al guardar se vuelve al plan (no hay nada que vaciar).
+    if (editing || isPending || state.error || !submitted.current) return;
+    submitted.current = false;
+    formRef.current?.reset();
+    setAllDay(false);
+    setDate(defaultDate ?? "");
+    setRepeat("none");
+    onCreated?.();
+  }, [editing, isPending, state.error, defaultDate, onCreated]);
 
   return (
     <form
       ref={formRef}
       action={formAction}
+      onSubmit={() => {
+        submitted.current = true;
+      }}
       className="mx-5 flex flex-col gap-3 rounded-2xl border p-4"
       style={{ background: "var(--color-surface)", borderColor: "var(--color-line)" }}
     >
@@ -227,7 +318,7 @@ export function EventForm({ initial, prefillTitle }: { initial?: EventFormValues
         style={{ backgroundImage: "var(--color-gradient)" }}
       >
         {editing ? <Save size={16} /> : <Plus size={16} />}
-        {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Añadir evento"}
+        {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Crear plan"}
       </button>
     </form>
   );

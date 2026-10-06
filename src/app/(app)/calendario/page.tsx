@@ -9,6 +9,9 @@ import { MonthView } from "./MonthView";
 import { WeekView } from "./WeekView";
 import { MomentPhotos } from "@/components/features/MomentPhotos";
 import { getMomentDaysInRange, getMomentForDay, type MomentPhoto } from "@/lib/moments/get-moments";
+import { getDayExtras, getPhotoDays } from "@/lib/day/get-day";
+import { DayPhotos } from "./DayPhotos";
+import { DayQuestion } from "./DayQuestion";
 
 const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -27,6 +30,8 @@ export default async function CalendarioPage({
   let events: EventRow[] = [];
   let momentDays = new Set<string>();
   let dayMoment: { photos: MomentPhoto[]; names: Record<string, string> } | null = null;
+  let photoDays = new Set<string>();
+  let dayExtras: Awaited<ReturnType<typeof getDayExtras>> | null = null;
 
   if (spaceId) {
     if (view === "list") {
@@ -36,15 +41,22 @@ export default async function CalendarioPage({
       // monthGridKeys()/weekKeys() siempre devuelven arrays no vacíos (42 y 7 keys).
       const from = keys[0]!;
       const to = keys[keys.length - 1]!;
-      // Los planes y los Momentos del mes se piden a la vez, no uno tras otro.
-      const [inRange, moments] = await Promise.all([
+      // Los planes, los Momentos y lo del día elegido (fotos y pregunta) se
+      // piden a la vez, no uno tras otro.
+      const [inRange, moments, extras] = await Promise.all([
         getEventsInRange(spaceId, from, to),
         view === "month"
-          ? Promise.all([getMomentDaysInRange(spaceId, from, to), getMomentForDay(spaceId, refKey)])
+          ? Promise.all([
+              getMomentDaysInRange(spaceId, from, to),
+              getMomentForDay(spaceId, refKey),
+              getPhotoDays(spaceId, from, to),
+            ])
           : null,
+        view === "month" ? getDayExtras(spaceId, refKey) : null,
       ]);
       events = inRange;
-      if (moments) [momentDays, dayMoment] = moments;
+      if (moments) [momentDays, dayMoment, photoDays] = moments;
+      dayExtras = extras;
     }
   }
 
@@ -60,7 +72,7 @@ export default async function CalendarioPage({
 
         {view === "month" ? (
           <>
-            <MonthView refKey={refKey} events={events} momentDays={momentDays} />
+            <MonthView refKey={refKey} events={events} momentDays={momentDays} photoDays={photoDays} />
             {dayMoment && dayMoment.photos.length > 0 ? (
               <div className="mx-5">
                 <p
@@ -79,6 +91,17 @@ export default async function CalendarioPage({
               </p>
               <EventList events={selectedDayEvents} emptyMessage="Sin planes este día." />
             </div>
+            {dayExtras?.question ? <DayQuestion question={dayExtras.question} isToday={refKey === todayKey()} /> : null}
+            {spaceId && dayExtras ? (
+              <DayPhotos
+                key={refKey}
+                spaceId={spaceId}
+                day={refKey}
+                canAdd={refKey <= todayKey()}
+                photos={dayExtras.photos}
+                names={dayExtras.names}
+              />
+            ) : null}
           </>
         ) : null}
 
@@ -87,7 +110,10 @@ export default async function CalendarioPage({
         {view === "list" ? <EventList events={events} /> : null}
 
         <div data-tour="cal-new" id="nuevo-plan" className="scroll-mt-24">
-          <NewEventForm prefillTitle={params.titulo?.slice(0, 200)} />
+          <NewEventForm
+            prefillTitle={params.titulo?.slice(0, 200)}
+            defaultDate={view === "month" ? refKey : undefined}
+          />
         </div>
       </div>
     </>
