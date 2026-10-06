@@ -441,3 +441,68 @@ export async function setOccurrenceSkipped(
   revalidatePath("/inicio");
   return { error: null };
 }
+
+// ------------------------------------------------------------ Fotos del día
+
+const dayPhotoSchema = z.object({
+  day: z.string().regex(DATE_KEY, "Fecha no válida."),
+  path: z.string().regex(PHOTO_PATH_RE, "Ruta de foto no válida."),
+  caption: z.string().trim().max(140, "Máximo 140 caracteres.").optional(),
+});
+
+/**
+ * Una foto de un día, sin plan («porque sí»), que el navegador ya subió a
+ * "event-photos". De hoy o de días pasados; avisa a tu pareja.
+ */
+export async function addDayPhoto(input: { day: string; path: string; caption?: string }): Promise<{ error: string | null }> {
+  const parsed = dayPhotoSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  if (parsed.data.day > todayKey()) return { error: "Podréis poner fotos cuando llegue ese día 📅" };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
+  const spaceId = await getCurrentSpaceId();
+  if (!spaceId) return { error: "No perteneces a ningún espacio todavía." };
+  if (!parsed.data.path.startsWith(`${spaceId}/`)) return { error: "Ruta de foto no válida." };
+
+  const { error } = await supabase.from("day_photos").insert({
+    space_id: spaceId,
+    day: parsed.data.day,
+    storage_path: parsed.data.path,
+    caption: parsed.data.caption || null,
+    uploaded_by: user.id,
+  });
+  if (error) return { error: "No se pudo guardar la foto. Inténtalo de nuevo." };
+
+  const day = parsed.data.day;
+  const when = day === todayKey() ? "de hoy" : `del ${formatDate(`${day}T12:00:00Z`)}`;
+  await notifyPartner((me) => ({
+    title: "📷 Foto nueva en el calendario",
+    body: `${me} ha añadido una foto ${when}`,
+    url: `/calendario?view=month&ref=${day}`,
+    tag: `day-photos-${day}`,
+  }));
+
+  revalidatePath("/calendario");
+  return { error: null };
+}
+
+export async function deleteDayPhoto(photoId: string): Promise<{ error: string | null }> {
+  if (!z.string().uuid().safeParse(photoId).success) return { error: "Foto no válida." };
+  const supabase = await createClient();
+  // La RLS exige que la foto sea de vuestro espacio.
+  const { data } = await supabase
+    .from("day_photos")
+    .delete()
+    .eq("id", photoId)
+    .select("storage_path")
+    .maybeSingle();
+  const deleted = data as { storage_path: string } | null;
+  if (!deleted) return { error: "No se pudo quitar la foto." };
+  await supabase.storage.from(EVENT_PHOTOS_BUCKET).remove([deleted.storage_path]);
+  revalidatePath("/calendario");
+  return { error: null };
+}

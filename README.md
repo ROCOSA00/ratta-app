@@ -367,6 +367,13 @@ puntuales según se van usando:
   apuntar (o corregir) tus mordiscos aunque no tenga reto propio: ve el
   tuyo en grande, te llega un aviso («😬 ¡Pillado!») y en ese día pone
   «Lo apuntó Giselz» (`20261007100000_nail_bites_partner.sql`).
+- **El día en el calendario**: al tocar un día del mes, además de sus
+  planes y del Momento Ratta, salen la **pregunta del día** con lo que
+  respondisteis (la de tu pareja, solo si respondiste tú) y las **fotos
+  del día**: se pueden añadir a cualquier día pasado o de hoy, sin plan,
+  porque sí (🖼️ en el mes). Y «Crear un plan» es ahora un botón que abre
+  el formulario con una explicación de cada cosa, empezando en el día que
+  estás mirando. Migración `20261009100000_day_photos.sql`.
 - **Kofi 🐱** (`/mascota`, desde Inicio y Perfil): la ficha de vuestra
   mascota con su foto (con el editor de recorte), su edad («7 semanas y
   1 día»; luego meses y años), días en el mundo y en casa, años humanos

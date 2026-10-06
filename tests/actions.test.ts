@@ -37,8 +37,10 @@ import {
   updateNoteTitle,
 } from "@/app/(app)/notas/actions";
 import {
+  addDayPhoto,
   addEventPhoto,
   createEvent,
+  deleteDayPhoto,
   deleteEvent,
   deleteEventPhoto,
   setEventReminder,
@@ -708,6 +710,57 @@ describe("Editar planes y saltar una vez", () => {
     expect((await setOccurrenceSkipped(EVENT_ID, "2026-11-03", true)).error).toBe("Vuestro día 6 no se salta 💞");
     expect((await setOccurrenceSkipped(EVENT_ID, "mañana", true)).error).toBe("Datos no válidos.");
     expect(opsOf("events", "update")).toHaveLength(0);
+  });
+});
+
+// ----------------------------------------------------- Fotos del día
+
+describe("Fotos del día (porque sí)", () => {
+  const SPACE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const PATH = `${SPACE}/dddddddd-dddd-4ddd-8ddd-dddddddddddd.jpg`;
+
+  beforeEach(() => {
+    state.spaceId = SPACE;
+  });
+
+  it("añade una foto a un día pasado, a tu nombre, y avisa a tu pareja", async () => {
+    expect(await addDayPhoto({ day: "2026-10-01", path: PATH })).toEqual({ error: null });
+    expect(opsOf("day_photos", "insert")[0]?.payload).toEqual({
+      space_id: SPACE,
+      day: "2026-10-01",
+      storage_path: PATH,
+      caption: null,
+      uploaded_by: "user-me",
+    });
+    expect(state.notified[0]).toMatchObject({
+      title: "📷 Foto nueva en el calendario",
+      url: "/calendario?view=month&ref=2026-10-01",
+    });
+    expect(state.notified[0]?.body).toMatch(/^Rokito ha añadido una foto del jue, 1 oct$/);
+  });
+
+  it("hoy dice «de hoy»; el futuro, otras carpetas y rutas raras, no", async () => {
+    await addDayPhoto({ day: todayKey(), path: PATH });
+    expect(state.notified[0]?.body).toBe("Rokito ha añadido una foto de hoy");
+    state.fake = createFakeSupabase();
+    expect((await addDayPhoto({ day: addDays(todayKey(), 1), path: PATH })).error).toMatch(/cuando llegue ese día/);
+    expect(
+      (await addDayPhoto({ day: "2026-10-01", path: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/dddddddd-dddd-4ddd-8ddd-dddddddddddd.jpg" }))
+        .error,
+    ).toBe("Ruta de foto no válida.");
+    expect((await addDayPhoto({ day: "2026-10-01", path: "../x.jpg" })).error).toBe("Ruta de foto no válida.");
+    expect(opsOf("day_photos", "insert")).toHaveLength(0);
+  });
+
+  it("quitar una foto del día borra la fila y el fichero", async () => {
+    state.fake = createFakeSupabase({
+      results: { "day_photos:delete": { data: { storage_path: PATH }, error: null } },
+    });
+    expect(await deleteDayPhoto(PHOTO_ID)).toEqual({ error: null });
+    expect(state.fake.storage.removed).toEqual([{ bucket: "event-photos", paths: [PATH] }]);
+    state.fake = createFakeSupabase({ results: { "day_photos:delete": { data: null, error: null } } });
+    expect((await deleteDayPhoto(PHOTO_ID)).error).toBe("No se pudo quitar la foto.");
+    expect(state.fake.storage.removed).toHaveLength(0);
   });
 });
 

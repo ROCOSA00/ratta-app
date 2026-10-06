@@ -16,11 +16,14 @@ export function MonthView({
   refKey,
   events,
   momentDays,
+  photoDays = new Set(),
 }: {
   refKey: string;
   events: EventRow[];
   /** Días con fotos del Momento Ratta. */
   momentDays: Set<string>;
+  /** Días con fotos «porque sí». */
+  photoDays?: Set<string>;
 }) {
   const grid = monthGridKeys(refKey);
   const today = todayKey();
@@ -76,6 +79,7 @@ export function MonthView({
           const isSelected = key === refKey;
           const hasEvents = eventDays.has(key);
           const hasMoment = momentDays.has(key);
+          const hasPhotos = photoDays.has(key);
           const isLove = loveDays.has(key);
 
           return (
@@ -115,6 +119,11 @@ export function MonthView({
                 {hasMoment ? (
                   <span className="text-[8px] leading-none" aria-label="Momento Ratta">
                     📸
+                  </span>
+                ) : null}
+                {hasPhotos ? (
+                  <span className="text-[8px] leading-none" aria-label="Fotos del día">
+                    🖼️
                   </span>
                 ) : null}
               </span>

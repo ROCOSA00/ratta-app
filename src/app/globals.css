@@ -440,6 +440,24 @@ input[type="time"]::-webkit-date-and-time-value {
   margin: 0;
 }
 
+/* En PickerField: el icono propio del navegador (Chrome) se hace invisible
+ * y ocupa toda la casilla, así un toque en cualquier sitio abre el
+ * selector; y vacía, sus «dd/mm/aaaa» no se ven bajo nuestro texto de ayuda
+ * (al escribir con el teclado, sí). */
+.picker-field input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.picker-field input[data-empty="true"]:not(:focus)::-webkit-datetime-edit {
+  color: transparent;
+}
+
 /* ---------- Día con el amor de mi vida (cada día 6) ---------- */
 .love-day {
   box-shadow: 0 8px 24px -10px rgba(225, 34, 94, 0.55);

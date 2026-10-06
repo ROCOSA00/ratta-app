@@ -7,6 +7,7 @@ import { sendNailCheer, setNailBites, startNailChallenge } from "@/lib/nails/act
 import { cheer, NAIL_MILESTONES, nailStats, nextMilestone, type NailStats } from "@/lib/nails/stats";
 import type { NailPerson } from "@/lib/nails/get-nails";
 import { addDays, dayLabel, dayNumber, monthLabel, startOfMonth, weekdayMon0, WEEKDAY_LABELS } from "@/lib/calendar/date-utils";
+import { PickerField } from "@/components/shared/PickerField";
 
 const GOOD = "#16a34a";
 const BAD = "#e11d48";
@@ -309,12 +310,14 @@ function StartCard({ today, pending, onStart }: { today: string; pending: boolea
       </p>
       <label className="mt-1 flex w-full max-w-xs items-center gap-2 text-xs font-semibold">
         Empiezo el
-        <input
+        <PickerField
           type="date"
           value={day}
           max={today}
-          onChange={(e) => setDay(e.target.value)}
-          className="min-w-0 flex-1 rounded-xl bg-white px-3 py-2 text-sm text-[#1b1216]"
+          onChange={setDay}
+          className="rounded-xl bg-white px-3 py-2 text-sm text-[#1b1216]"
+          placeholder="Elige el día"
+          wrapperClassName="flex-1"
         />
       </label>
       <button
@@ -500,13 +503,15 @@ function ChangeStart({
   }
   return (
     <div className="mx-5 flex items-center gap-2">
-      <input
+      <PickerField
         type="date"
         value={day}
         max={today}
-        onChange={(e) => setDay(e.target.value)}
-        className="flex-1 rounded-xl border px-3 py-2 text-sm"
+        onChange={setDay}
+        className="rounded-xl border px-3 py-2 text-sm"
         style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
+        placeholder="Elige el día"
+        wrapperClassName="flex-1"
       />
       <button
         type="button"

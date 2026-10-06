@@ -101,15 +101,15 @@ export const TOUR_STEPS: readonly TourStep[] = [
     target: "cal-views",
     action: "next",
     title: "Tres formas de verlo",
-    body: "Mes (con 💞 vuestro día 6 y 📸 los días con Momento Ratta), Semana y Lista (lo próximo). En Mes, toca un día para verlo.",
+    body: "Mes (con 💞 vuestro día 6, 📸 los días con Momento Ratta y 🖼️ los que tienen fotos), Semana y Lista. En Mes, toca un día: verás sus planes, la pregunta del día que respondisteis y sus fotos (podéis añadir las que queráis, porque sí).",
   },
   {
     id: "cal-new",
     path: "/calendario",
     target: "cal-new",
     action: "next",
-    title: "Añadir un plan ➕",
-    body: "Título, fecha y hora, y listo. Puede repetirse (cada sábado, cada mes…) y avisaros la noche antes. Toca cualquier plan para abrirlo y, desde ese día, añadirle fotos.",
+    title: "Crear un plan ➕",
+    body: "Toca «Crear un plan» y te explica cada cosa: título, día y hora, si se repite (cada sábado, cada mes…) y si os avisa la noche antes. Toca cualquier plan para abrirlo, editarlo o añadirle fotos.",
   },
   {
     id: "go-games",

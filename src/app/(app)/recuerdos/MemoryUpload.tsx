@@ -7,6 +7,7 @@ import { ImagePlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { resizeImage } from "@/lib/images/resize";
 import { addMemory } from "@/lib/memories/actions";
+import { PickerField } from "@/components/shared/PickerField";
 
 export function MemoryUpload({ spaceId }: { spaceId: string }) {
   const [file, setFile] = useState<File | null>(null);
@@ -121,12 +122,13 @@ export function MemoryUpload({ spaceId }: { spaceId: string }) {
           />
           <label className="flex flex-col gap-1.5 text-xs font-medium" style={{ color: "var(--color-muted)" }}>
             ¿Cuándo fue? (opcional)
-            <input
+            <PickerField
               type="date"
               value={takenOn}
-              onChange={(e) => setTakenOn(e.target.value)}
+              onChange={setTakenOn}
               className="rounded-xl border px-3 py-2.5 text-sm outline-none"
               style={fieldStyle}
+              placeholder="Elige el día"
             />
           </label>
           {error ? (
