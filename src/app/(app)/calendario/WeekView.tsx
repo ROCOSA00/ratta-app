@@ -73,7 +73,7 @@ export function WeekView({ refKey, events }: { refKey: string; events: EventRow[
             {dayEvents.length > 0 ? (
               <ul className="flex flex-col gap-2">
                 {dayEvents.map((event) => (
-                  <EventCard key={`${event.id}-${event.day}`} event={event} />
+                  <EventCard key={`${event.id}-${event.day}`} event={event} onDay />
                 ))}
               </ul>
             ) : (

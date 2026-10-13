@@ -9,6 +9,7 @@ import {
   monthLabel,
   todayKey,
   WEEKDAY_LABELS,
+  weekdayMon0,
 } from "@/lib/calendar/date-utils";
 import { LOVE_COLOR, type EventRow } from "@/lib/events/load";
 
@@ -27,7 +28,20 @@ export function MonthView({
 }) {
   const grid = monthGridKeys(refKey);
   const today = todayKey();
-  const eventDays = new Set(events.filter((e) => e.color !== LOVE_COLOR).map((e) => e.day));
+  const trips = events.filter((e) => e.last_day !== e.first_day);
+  const eventDays = new Set(
+    events.filter((e) => e.color !== LOVE_COLOR && e.last_day === e.first_day).map((e) => e.day),
+  );
+  // Días de viaje: una barra que los une. Empieza en el primer día y acaba
+  // en el último (si se juntan dos viajes, sigue mientras alguno siga).
+  const tripDays = new Map<string, { first: boolean; last: boolean }>();
+  for (const trip of trips) {
+    const prev = tripDays.get(trip.day);
+    tripDays.set(trip.day, {
+      first: (prev?.first ?? true) && trip.day === trip.first_day,
+      last: (prev?.last ?? true) && trip.day === trip.last_day,
+    });
+  }
   const loveDays = new Set(events.filter((e) => e.color === LOVE_COLOR).map((e) => e.day));
   const prevRef = addMonths(refKey, -1);
   const nextRef = addMonths(refKey, 1);
@@ -81,6 +95,10 @@ export function MonthView({
           const hasMoment = momentDays.has(key);
           const hasPhotos = photoDays.has(key);
           const isLove = loveDays.has(key);
+          const trip = tripDays.get(key);
+          // La barra se corta al cambiar de semana (lunes y domingo).
+          const barStarts = trip ? trip.first || weekdayMon0(key) === 0 : false;
+          const barEnds = trip ? trip.last || weekdayMon0(key) === 6 : false;
 
           return (
             <Link
@@ -127,6 +145,22 @@ export function MonthView({
                   </span>
                 ) : null}
               </span>
+              {trip ? (
+                <span
+                  aria-label="De viaje"
+                  className="absolute bottom-[3px] h-[4px]"
+                  style={{
+                    // Ocupa también el hueco entre días para que la barra se vea seguida.
+                    left: trip.first ? "22%" : barStarts ? "3px" : "-2px",
+                    right: trip.last ? "22%" : barEnds ? "3px" : "-2px",
+                    borderTopLeftRadius: barStarts ? 9999 : 0,
+                    borderBottomLeftRadius: barStarts ? 9999 : 0,
+                    borderTopRightRadius: barEnds ? 9999 : 0,
+                    borderBottomRightRadius: barEnds ? 9999 : 0,
+                    background: isSelected ? "rgba(255,255,255,0.85)" : "var(--color-accent-2)",
+                  }}
+                />
+              ) : null}
               <LinkPending />
             </Link>
           );

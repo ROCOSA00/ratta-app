@@ -39,6 +39,7 @@ export default async function EditarPlanPage({ params }: { params: Promise<{ id:
     date: event.first_day,
     time: event.all_day ? "" : wallClock.format(new Date(event.start_at)),
     allDay: event.all_day,
+    endDate: event.last_day !== event.first_day ? event.last_day : "",
     repeat: event.recurrence,
     until: event.recurrence_until ?? "",
     remind: event.remind_day_before,

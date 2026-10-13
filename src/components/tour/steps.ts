@@ -109,7 +109,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     target: "cal-new",
     action: "next",
     title: "Crear un plan ➕",
-    body: "Toca «Crear un plan» y te explica cada cosa: título, día y hora, si se repite (cada sábado, cada mes…) y si os avisa la noche antes. Toca cualquier plan para abrirlo, editarlo o añadirle fotos.",
+    body: "Toca «Crear un plan» y te explica cada cosa: título, día y hora, varios días para un viaje 🧳, si se repite (cada sábado, cada mes…) y si os avisa la noche antes. Toca cualquier plan para abrirlo, editarlo o añadirle fotos.",
   },
   {
     id: "go-games",
