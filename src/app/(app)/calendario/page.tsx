@@ -89,7 +89,7 @@ export default async function CalendarioPage({
                 {dayLabel(refKey)}
                 {refKey === todayKey() ? " · hoy" : ""}
               </p>
-              <EventList events={selectedDayEvents} emptyMessage="Sin planes este día." />
+              <EventList events={selectedDayEvents} emptyMessage="Sin planes este día." onDay />
             </div>
             {dayExtras?.question ? <DayQuestion question={dayExtras.question} isToday={refKey === todayKey()} /> : null}
             {spaceId && dayExtras ? (

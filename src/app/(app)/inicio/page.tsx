@@ -15,6 +15,7 @@ import type { HomeCardId } from "@/lib/prefs";
 import { getTodayMoment } from "@/lib/moments/get-moments";
 import { getNextEvent } from "@/lib/events/get-next-event";
 import { eventHref, LOVE_COLOR } from "@/lib/events/load";
+import { eventWhenLabel, isMultiDay } from "@/lib/events/when";
 import { getCapsules } from "@/lib/capsules/get-capsules";
 import { CapsuleHomeCard } from "@/components/features/CapsuleHomeCard";
 import { PetHomeCard } from "@/components/features/PetHomeCard";
@@ -23,7 +24,7 @@ import { wrappedPeriod, yearLabel } from "@/lib/wrapped/period";
 import { getPinnedNote } from "@/lib/notes/get-pinned-note";
 import { getPoopSummary } from "@/lib/poop/get-poop-summary";
 import { getLatestNudge } from "@/lib/nudges/get-latest-nudge";
-import { formatDate, formatDateTime, formatRelative } from "@/lib/format-date";
+import { formatDate, formatRelative } from "@/lib/format-date";
 import { daysBetween, madridHour, todayKey, toDateKey } from "@/lib/calendar/date-utils";
 import { getTogetherInfo, loveDayLabel } from "@/lib/couple";
 
@@ -232,11 +233,13 @@ export default async function InicioPage() {
                       className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold"
                       style={{ background: "var(--color-accent-2)", color: "#ffffff" }}
                     >
-                      {countdownLabel(nextEvent.start_at)}
+                      {isMultiDay(nextEvent) && nextEvent.first_day <= todayKey()
+                        ? "🧳 ¡De viaje!"
+                        : countdownLabel(nextEvent.start_at)}
                     </span>
                   </div>
                   <p className="mt-0.5 text-sm" style={{ color: "var(--color-muted)" }}>
-                    {nextEvent.all_day ? formatDate(nextEvent.start_at) : formatDateTime(nextEvent.start_at)}
+                    {eventWhenLabel(nextEvent)}
                   </p>
                 </>
               ) : (

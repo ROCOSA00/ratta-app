@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { Bell, CalendarDays, MapPin, Repeat } from "lucide-react";
-import { formatDate, formatDateTime } from "@/lib/format-date";
+import { Bell, CalendarDays, Luggage, MapPin, Repeat } from "lucide-react";
+import { formatDate } from "@/lib/format-date";
 import { ConfirmDeleteButton } from "@/components/shared/ConfirmDeleteButton";
 import { eventHref, LOVE_COLOR, type EventRow } from "@/lib/events/load";
 import { recurrenceLabel } from "@/lib/events/recurrence";
+import { spanDayLabel } from "@/lib/events/span";
+import { eventWhenLabel, isMultiDay } from "@/lib/events/when";
 import { loveDayLabel } from "@/lib/couple";
 import { deleteEvent } from "./actions";
 
@@ -36,9 +38,15 @@ function LoveDayCard({ event }: { event: EventRow }) {
   );
 }
 
-export function EventCard({ event }: { event: EventRow }) {
+/**
+ * `onDay`: la tarjeta sale bajo un día concreto (mes o semana); en un
+ * viaje, dice qué día del viaje es.
+ */
+export function EventCard({ event, onDay = false }: { event: EventRow; onDay?: boolean }) {
   if (event.color === LOVE_COLOR) return <LoveDayCard event={event} />;
   const repeats = recurrenceLabel(event);
+  const trip = isMultiDay(event);
+  const Icon = trip ? Luggage : CalendarDays;
 
   return (
     <li
@@ -56,7 +64,7 @@ export function EventCard({ event }: { event: EventRow }) {
             color: "var(--color-accent-2)",
           }}
         >
-          <CalendarDays size={16} strokeWidth={2.3} />
+          <Icon size={16} strokeWidth={2.3} />
         </span>
 
         <div className="min-w-0 flex-1">
@@ -67,8 +75,16 @@ export function EventCard({ event }: { event: EventRow }) {
             ) : null}
           </p>
           <p className="mt-0.5 text-xs font-medium" style={{ color: "var(--color-accent-2)" }}>
-            {event.all_day ? formatDate(event.start_at) : formatDateTime(event.start_at)}
+            {eventWhenLabel(event)}
           </p>
+          {trip && onDay ? (
+            <p
+              className="mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-bold"
+              style={{ background: "var(--color-accent-2)", color: "#ffffff" }}
+            >
+              🧳 {spanDayLabel(event.day, event.first_day, event.last_day)}
+            </p>
+          ) : null}
           {repeats ? (
             <p className="mt-1 flex items-center gap-1 text-xs" style={{ color: "var(--color-muted)" }}>
               <Repeat size={12} />
@@ -112,9 +128,12 @@ export function EventCard({ event }: { event: EventRow }) {
 export function EventList({
   events,
   emptyMessage = "No hay eventos próximos todavía.",
+  onDay = false,
 }: {
   events: EventRow[];
   emptyMessage?: string;
+  /** Son los planes de un día concreto. */
+  onDay?: boolean;
 }) {
   if (events.length === 0) {
     return (
@@ -133,7 +152,7 @@ export function EventList({
   return (
     <ul className="mx-5 flex flex-col gap-2">
       {events.map((event) => (
-        <EventCard key={`${event.id}-${event.day}`} event={event} />
+        <EventCard key={`${event.id}-${event.day}`} event={event} onDay={onDay} />
       ))}
     </ul>
   );

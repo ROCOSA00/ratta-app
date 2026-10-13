@@ -256,6 +256,44 @@ describe("Calendario", () => {
     });
   });
 
+  it("guarda un viaje de varios días: del primer día a las 00:00 al último a las 23:59, sin repetirse", async () => {
+    const res = await createEvent(
+      ok,
+      form({ title: "Roma", date: "2026-10-09", endDate: "2026-10-12", multiDay: "on", time: "", repeat: "weekly", remind: "on" }),
+    );
+    expect(res).toEqual({ error: null });
+    expect(opsOf("events", "insert")[0]?.payload).toMatchObject({
+      title: "Roma",
+      all_day: true,
+      start_at: "2026-10-08T22:00:00.000Z",
+      end_at: "2026-10-12T21:59:00.000Z",
+      recurrence: "none",
+      recurrence_until: null,
+      remind_day_before: true,
+    });
+    expect(state.notified[0]?.body).toMatch(/Roma \(vie 9 – lun 12 oct · 4 días\)$/);
+  });
+
+  it("un viaje necesita un último día posterior al primero y de como mucho 60 días", async () => {
+    const trip = (endDate: string) => form({ title: "Viaje", date: "2026-10-09", endDate, multiDay: "on" });
+    expect((await createEvent(ok, trip(""))).error).toBe("Elige el último día.");
+    expect((await createEvent(ok, trip("2026-10-09"))).error).toBe("El último día tiene que ser después del primero.");
+    expect((await createEvent(ok, trip("2026-10-01"))).error).toBe("El último día tiene que ser después del primero.");
+    expect((await createEvent(ok, trip("2026-12-08"))).error).toBe("Como mucho 60 días seguidos.");
+    expect(state.fake.ops).toHaveLength(0);
+    // 60 días justos, sí.
+    expect((await createEvent(ok, trip("2026-12-07"))).error).toBeNull();
+  });
+
+  it("sin marcar «Varios días», el último día se ignora", async () => {
+    await createEvent(ok, form({ title: "Cena", date: "2026-10-09", time: "21:00", endDate: "2026-10-12" }));
+    expect(opsOf("events", "insert")[0]?.payload).toMatchObject({
+      start_at: "2026-10-09T19:00:00.000Z",
+      end_at: "2026-10-09T20:00:00.000Z",
+      all_day: false,
+    });
+  });
+
   it("pide la hora si no es de todo el día", async () => {
     const res = await createEvent(ok, form({ title: "Cena", date: "2026-09-25", time: "", location: "", description: "" }));
     expect(res.error).toBe("Elige una hora.");

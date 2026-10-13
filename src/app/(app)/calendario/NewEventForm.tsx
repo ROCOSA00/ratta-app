@@ -3,11 +3,23 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Plus, Save, X } from "lucide-react";
 import { createEvent, updateEvent, type NewEventState } from "./actions";
-import { dayLabel, dayNumber, weekdayMon0 } from "@/lib/calendar/date-utils";
+import { addDays, dayLabel, dayNumber, weekdayMon0 } from "@/lib/calendar/date-utils";
 import type { Recurrence } from "@/lib/events/recurrence";
+import { MAX_SPAN_DAYS, spanLabel, spanLength } from "@/lib/events/span";
 import { PickerField } from "@/components/shared/PickerField";
 
 const initialState: NewEventState = { error: null };
+
+const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+const nextDay = (key: string) => addDays(key, 1);
+
+/** "vie 10 – lun 13 oct · 4 días", si las dos fechas están bien. */
+function spanSummary(first: string, last: string): string | null {
+  if (!DATE_KEY.test(first) || !DATE_KEY.test(last) || last <= first) return null;
+  const days = spanLength(first, last);
+  if (days > MAX_SPAN_DAYS) return `Como mucho ${MAX_SPAN_DAYS} días seguidos.`;
+  return `${spanLabel(first, last)} · ${days} días`;
+}
 
 const WEEKDAYS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábados", "domingos"];
 
@@ -32,6 +44,8 @@ export type EventFormValues = {
   /** "20:00" ("" si es de todo el día). */
   time: string;
   allDay: boolean;
+  /** Último día, si es de varios días ("" si no). */
+  endDate: string;
   repeat: Recurrence;
   until: string;
   remind: boolean;
@@ -97,6 +111,7 @@ export function NewEventForm({ prefillTitle, defaultDate }: { prefillTitle?: str
         </div>
         <ul className="mt-2 flex flex-col gap-1.5 text-xs" style={{ color: "var(--color-muted)" }}>
           <li>📝 <b>Título y día</b>, y la hora (o marca «Todo el día»).</li>
+          <li>🧳 <b>Varios días</b>: para un viaje o una escapada, del primer al último día. Sale en todos esos días del calendario.</li>
           <li>🔁 <b>Se repite</b>: cada semana, cada 2 semanas, cada mes o cada año, hasta el día que quieras.</li>
           <li>🔔 <b>Avisarnos el día antes</b>: os llega una notificación la noche anterior, a las 20:00.</li>
           <li>📍 <b>Ubicación y notas</b>, si queréis. A tu pareja le llega un aviso del plan nuevo.</li>
@@ -136,7 +151,10 @@ export function EventForm({
   const [repeat, setRepeat] = useState<Recurrence>(initial?.repeat ?? "none");
   const [time, setTime] = useState(initial?.time ?? "");
   const [until, setUntil] = useState(initial?.until ?? "");
+  const [multiDay, setMultiDay] = useState(!!initial?.endDate);
+  const [endDate, setEndDate] = useState(initial?.endDate ?? "");
   const formRef = useRef<HTMLFormElement>(null);
+  const spanText = multiDay ? spanSummary(date, endDate) : null;
   // Se ha enviado el formulario (para no confundir el primer render con
   // un plan recién creado).
   const submitted = useRef(false);
@@ -151,6 +169,8 @@ export function EventForm({
     setDate(defaultDate ?? "");
     setTime("");
     setUntil("");
+    setMultiDay(false);
+    setEndDate("");
     setRepeat("none");
     onCreated?.();
   }, [editing, isPending, state.error, defaultDate, onCreated]);
@@ -185,7 +205,7 @@ export function EventForm({
       <div className="flex gap-3">
         <div className="flex min-w-0 flex-[3] flex-col gap-1.5">
           <label htmlFor="date" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
-            {editing && repeat !== "none" ? "Primer día" : "Fecha"}
+            {multiDay || (editing && repeat !== "none") ? "Primer día" : "Fecha"}
           </label>
           <PickerField
             id="date"
@@ -193,13 +213,35 @@ export function EventForm({
             type="date"
             required
             value={date}
-            onChange={setDate}
+            onChange={(value) => {
+              setDate(value);
+              // Si el viaje acababa antes del nuevo primer día, se vuelve a elegir.
+              if (endDate && value && endDate <= value) setEndDate("");
+            }}
             placeholder="Elige el día"
             className="rounded-xl border px-3 py-2.5 text-sm outline-none"
             style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
           />
         </div>
-        {allDay ? null : (
+        {multiDay ? (
+          <div className="flex min-w-0 flex-[3] flex-col gap-1.5">
+            <label htmlFor="endDate" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
+              Último día
+            </label>
+            <PickerField
+              id="endDate"
+              name="endDate"
+              type="date"
+              required
+              min={date ? nextDay(date) : undefined}
+              value={endDate}
+              onChange={setEndDate}
+              placeholder="Elige el día"
+              className="rounded-xl border px-3 py-2.5 text-sm outline-none"
+              style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}
+            />
+          </div>
+        ) : allDay ? null : (
           <div className="flex min-w-0 flex-[2] flex-col gap-1.5">
             <label htmlFor="time" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
               Hora
@@ -219,21 +261,49 @@ export function EventForm({
         )}
       </div>
 
-      <label className="flex items-center gap-2 text-sm" style={{ color: "var(--color-ink)" }}>
-        <input
-          type="checkbox"
-          name="allDay"
-          checked={allDay}
-          onChange={(e) => setAllDay(e.target.checked)}
-          className="h-4 w-4 rounded"
-          style={{ accentColor: "var(--color-accent-2)" }}
-        />
-        Todo el día
-      </label>
+      {multiDay && spanText ? (
+        <p
+          className="rounded-xl px-3 py-2 text-xs font-semibold"
+          style={{
+            background: "color-mix(in srgb, var(--color-accent-2) 10%, transparent)",
+            color: "var(--color-accent-2)",
+          }}
+        >
+          🧳 {spanText}
+        </p>
+      ) : null}
+
+      <div className="flex flex-col gap-2.5">
+        {multiDay ? null : (
+          <label className="flex items-center gap-2 text-sm" style={{ color: "var(--color-ink)" }}>
+            <input
+              type="checkbox"
+              name="allDay"
+              checked={allDay}
+              onChange={(e) => setAllDay(e.target.checked)}
+              className="h-4 w-4 rounded"
+              style={{ accentColor: "var(--color-accent-2)" }}
+            />
+            Todo el día
+          </label>
+        )}
+        <label className="flex items-center gap-2 text-sm" style={{ color: "var(--color-ink)" }}>
+          <input
+            type="checkbox"
+            name="multiDay"
+            checked={multiDay}
+            onChange={(e) => setMultiDay(e.target.checked)}
+            className="h-4 w-4 rounded"
+            style={{ accentColor: "var(--color-accent-2)" }}
+          />
+          🧳 Varios días (un viaje, una escapada…)
+        </label>
+      </div>
 
       {/* Repetición y aviso, juntos: el tutorial de novedades los resalta. */}
       <div data-tour="cal-repeat" className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3">
+        {/* Un plan de varios días no se repite. */}
+        <div className={multiDay ? "hidden" : "flex flex-col gap-3"}>
           <div className="flex min-w-0 flex-1 flex-col gap-1.5">
             <label htmlFor="repeat" className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
               Se repite
@@ -242,6 +312,7 @@ export function EventForm({
               id="repeat"
               name="repeat"
               value={repeat}
+              disabled={multiDay}
               onChange={(e) => setRepeat(e.target.value as Recurrence)}
               className="w-full min-w-0 rounded-xl border px-3 py-2.5 text-sm outline-none"
               style={{ background: "var(--color-bg)", borderColor: "var(--color-line)", color: "var(--color-ink)" }}

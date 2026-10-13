@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, MapPin, Pencil, Repeat } from "lucide-react";
+import { CalendarDays, Luggage, MapPin, Pencil, Repeat } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ConfirmDeleteBar } from "@/components/shared/ConfirmDeleteBar";
 import { createClient } from "@/lib/supabase/server";
@@ -10,6 +10,8 @@ import { todayKey } from "@/lib/calendar/date-utils";
 import { LOVE_COLOR } from "@/lib/events/load";
 import { isRecurring, recurrenceLabel } from "@/lib/events/recurrence";
 import { loveDayLabel } from "@/lib/couple";
+import { spanDayLabel } from "@/lib/events/span";
+import { eventWhenLabel, isMultiDay } from "@/lib/events/when";
 import { ReminderToggle } from "./ReminderToggle";
 import { SkipOccurrenceButton, SkippedDays } from "./SkipButtons";
 import { deleteEvent } from "../actions";
@@ -64,6 +66,9 @@ export default async function EventoPage({
   const canAddPhotos = eventDay <= todayKey();
   const isLove = event.color === LOVE_COLOR;
   const repeats = recurrenceLabel(event);
+  const trip = isMultiDay(event);
+  const today = todayKey();
+  const tripToday = trip && event.first_day <= today && today <= event.last_day;
 
   return (
     <>
@@ -94,9 +99,21 @@ export default async function EventoPage({
             }}
           >
             <p className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: "var(--color-accent-2)" }}>
-              <CalendarDays size={15} />
-              {event.all_day ? `${formatDate(event.start_at)} · todo el día` : formatDateTime(event.start_at)}
+              {trip ? <Luggage size={15} /> : <CalendarDays size={15} />}
+              {trip
+                ? eventWhenLabel(event)
+                : event.all_day
+                  ? `${formatDate(event.start_at)} · todo el día`
+                  : formatDateTime(event.start_at)}
             </p>
+            {tripToday ? (
+              <p
+                className="w-fit rounded-full px-2.5 py-0.5 text-xs font-bold"
+                style={{ background: "var(--color-accent-2)", color: "#ffffff" }}
+              >
+                🧳 Hoy: {spanDayLabel(today, event.first_day, event.last_day).toLowerCase()}
+              </p>
+            ) : null}
             {repeats ? (
               <p className="flex items-center gap-1.5 text-sm" style={{ color: "var(--color-muted)" }}>
                 <Repeat size={15} />

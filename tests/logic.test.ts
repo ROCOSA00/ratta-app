@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { computeStats } from "@/lib/poop/stats";
 import { getTogetherInfo, loveDayLabel } from "@/lib/couple";
-import { zonedInputToUTC, formatDateTime } from "@/lib/format-date";
+import { zonedInputToUTC, formatDate, formatDateTime } from "@/lib/format-date";
 import { monthGridKeys, toDateKey, weekKeys } from "@/lib/calendar/date-utils";
 import { NUDGE_GROUPS, findNudge } from "@/lib/nudges/options";
 import { computeHeartStats } from "@/lib/hearts/stats";
@@ -35,6 +35,8 @@ import {
   type Series,
 } from "@/lib/events/recurrence";
 import { reminderMessage } from "@/lib/events/reminder-message";
+import { seriesLastDay, spanDayLabel, spanDaysInRange, spanLabel } from "@/lib/events/span";
+import { eventWhenLabel } from "@/lib/events/when";
 import { capsuleDateOptions, countdownLabel as capsuleCountdown } from "@/lib/capsules/config";
 import { wrappedPeriod, yearLabel } from "@/lib/wrapped/period";
 import { cheer, nailStats, nextMilestone } from "@/lib/nails/stats";
@@ -523,6 +525,50 @@ describe("Planes que se repiten", () => {
     expect(loveDayLabel("2026-10-06")).toBe("7 meses juntos");
     expect(loveDayLabel("2027-03-06")).toBe("¡1 año juntos! 🎉");
     expect(loveDayLabel("2028-03-06")).toBe("¡2 años juntos! 🎉");
+  });
+});
+
+describe("Planes de varios días (viajes)", () => {
+  // Del vie 9 al lun 12 oct 2026, en hora de Madrid (horario de verano).
+  const trip = {
+    start_at: "2026-10-08T22:00:00.000Z",
+    end_at: "2026-10-12T21:59:00.000Z",
+    all_day: true,
+    recurrence: "none" as const,
+  };
+
+  it("el último día es el del final del viaje, en hora de Madrid", () => {
+    expect(seriesLastDay(trip)).toBe("2026-10-12");
+  });
+
+  it("un plan de un día, uno con hora que pasa de medianoche o uno que se repite acaban el mismo día", () => {
+    expect(seriesLastDay({ ...trip, end_at: "2026-10-09T21:59:00.000Z" })).toBe("2026-10-09");
+    expect(
+      seriesLastDay({ start_at: "2026-10-09T21:30:00.000Z", end_at: "2026-10-09T22:30:00.000Z", all_day: false, recurrence: "none" }),
+    ).toBe("2026-10-09");
+    expect(seriesLastDay({ ...trip, recurrence: "monthly" })).toBe("2026-10-09");
+  });
+
+  it("salen solo los días del viaje que caen en lo que se mira", () => {
+    expect(spanDaysInRange("2026-10-09", "2026-10-12", "2026-10-01", "2026-10-31")).toEqual([
+      "2026-10-09",
+      "2026-10-10",
+      "2026-10-11",
+      "2026-10-12",
+    ]);
+    // Una semana que empieza a mitad del viaje.
+    expect(spanDaysInRange("2026-10-09", "2026-10-12", "2026-10-11", "2026-10-17")).toEqual(["2026-10-11", "2026-10-12"]);
+    expect(spanDaysInRange("2026-10-09", "2026-10-12", "2026-10-13", "2026-10-20")).toEqual([]);
+  });
+
+  it("etiquetas: del mismo mes, entre dos meses y qué día del viaje es", () => {
+    expect(spanLabel("2026-10-09", "2026-10-12")).toBe("vie 9 – lun 12 oct");
+    expect(spanLabel("2026-10-30", "2026-11-02")).toBe("vie 30 oct – lun 2 nov");
+    expect(spanDayLabel("2026-10-10", "2026-10-09", "2026-10-12")).toBe("Día 2 de 4");
+    expect(eventWhenLabel({ ...trip, first_day: "2026-10-09", last_day: "2026-10-12" })).toBe("vie 9 – lun 12 oct · 4 días");
+    expect(eventWhenLabel({ ...trip, first_day: "2026-10-09", last_day: "2026-10-09" })).toBe(
+      formatDate("2026-10-08T22:00:00.000Z"),
+    );
   });
 });
 

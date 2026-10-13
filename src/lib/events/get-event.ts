@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { EVENT_PHOTOS_BUCKET, EVENT_PHOTO_URL_SECONDS } from "./photos-config";
 import { photosOfOccurrence, SERIES_COLUMNS, type EventRow } from "./load";
 import { nextOccurrence, occurrenceTimes, occursOn, seriesStartDay } from "./recurrence";
+import { seriesLastDay } from "./span";
 
 export type EventPhoto = {
   id: string;
@@ -34,7 +35,7 @@ export async function getEvent(id: string, requestedDay: string | null = null): 
   ]);
   if (!event) return null;
 
-  const series = event as Omit<EventDetail, "photos" | "day" | "first_day">;
+  const series = event as Omit<EventDetail, "photos" | "day" | "first_day" | "last_day">;
   const day =
     requestedDay && occursOn(series, requestedDay)
       ? requestedDay
@@ -58,6 +59,7 @@ export async function getEvent(id: string, requestedDay: string | null = null): 
     ...occurrenceTimes(series, day),
     day,
     first_day: seriesStartDay(series),
+    last_day: seriesLastDay(series),
     photos: rows.map(({ id, uploaded_by, created_at, storage_path }) => ({
       id,
       uploaded_by,

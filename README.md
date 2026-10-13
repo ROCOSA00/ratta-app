@@ -392,6 +392,13 @@ puntuales según se van usando:
   tutorial existe de verdad en la app.
 - **El día 6 en Inicio**: si el próximo plan es vuestro día, «Próximo
   evento» sale con su tarjeta de corazones y los meses que cumplís.
+- **Planes de varios días 🧳** (un viaje, una escapada): en «Crear un
+  plan», «Varios días» pide el primer y el último día (como mucho 60). Es
+  un solo plan de todo el día que no se repite, guardado de las 00:00 del
+  primer día a las 23:59 del último (no hace falta SQL). Sale en cada uno
+  de sus días con «Día 2 de 4», en el mes con una barra que une sus días,
+  y en Inicio con «🧳 ¡De viaje!» mientras dura. Lógica en
+  `src/lib/events/span.ts`, con tests.
 
 ## Notas de seguridad
 

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { addDays } from "@/lib/calendar/date-utils";
 import { nextOccurrence, occurrenceDays, occurrenceTimes, seriesStartDay, type Recurrence } from "./recurrence";
+import { seriesLastDay, spanDaysInRange } from "./span";
 
 /** El plan especial de cada día 6 ("Día con el amor de mi vida"). */
 export const LOVE_COLOR = "love";
@@ -22,8 +23,10 @@ export type EventRow = {
   skipped_days: string[];
   /** Día de esta vez, en hora de Madrid ("YYYY-MM-DD"). */
   day: string;
-  /** Día de la primera vez (si se repite; si no, el mismo que `day`). */
+  /** Día de la primera vez (si se repite; si no, el primer día del plan). */
   first_day: string;
+  /** Último día del plan: otro día solo en los de varios días (un viaje). */
+  last_day: string;
   /** Fotos de esta vez (0 si ninguna). */
   photo_count: number;
 };
@@ -35,7 +38,7 @@ export const SERIES_COLUMNS =
 // para contar las de cada vez de un plan que se repite.
 const LIST_COLUMNS = `${SERIES_COLUMNS}, event_photos(occurrence)`;
 
-type SeriesRow = Omit<EventRow, "day" | "first_day" | "photo_count"> & { event_photos: { occurrence: string }[] | null };
+type SeriesRow = Omit<EventRow, "day" | "first_day" | "last_day" | "photo_count"> & { event_photos: { occurrence: string }[] | null };
 
 function toOccurrence(row: SeriesRow, day: string): EventRow {
   const { event_photos, ...series } = row;
@@ -44,6 +47,7 @@ function toOccurrence(row: SeriesRow, day: string): EventRow {
     ...occurrenceTimes(series, day),
     day,
     first_day: seriesStartDay(series),
+    last_day: seriesLastDay(series),
     photo_count: photosOfOccurrence(series, event_photos ?? [], day).length,
   };
 }
@@ -61,6 +65,13 @@ export function photosOfOccurrence<T extends { occurrence: string }>(
 }
 
 const byStart = (a: EventRow, b: EventRow) => a.start_at.localeCompare(b.start_at);
+
+/** Los días en que sale el plan entre `from` y `to`: cada vez que toca o, en un viaje, cada uno de sus días. */
+function visibleDays(row: SeriesRow, from: string, to: string): string[] {
+  const first = seriesStartDay(row);
+  const last = seriesLastDay(row);
+  return last === first ? occurrenceDays(row, from, to) : spanDaysInRange(first, last, from, to);
+}
 
 /** Enlace al detalle de esa vez del plan. */
 export function eventHref(event: Pick<EventRow, "id" | "day" | "recurrence">): string {
@@ -87,7 +98,7 @@ export async function getEventsInRange(spaceId: string, from: string, to: string
   ]);
 
   const rows = [...((singles ?? []) as SeriesRow[]), ...((series ?? []) as SeriesRow[])];
-  return rows.flatMap((row) => occurrenceDays(row, from, to).map((day) => toOccurrence(row, day))).sort(byStart);
+  return rows.flatMap((row) => visibleDays(row, from, to).map((day) => toOccurrence(row, day))).sort(byStart);
 }
 
 /**

@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentSpaceId } from "@/lib/spaces/get-current-space";
 import { formatDate, formatDateTime, zonedInputToUTC } from "@/lib/format-date";
 import { notifyPartner } from "@/lib/push/notify";
-import { todayKey } from "@/lib/calendar/date-utils";
+import { daysBetween, todayKey } from "@/lib/calendar/date-utils";
 import { EVENT_PHOTOS_BUCKET } from "@/lib/events/photos-config";
 import {
   followsRule,
@@ -19,6 +19,7 @@ import {
   type Series,
 } from "@/lib/events/recurrence";
 import { LOVE_COLOR } from "@/lib/events/load";
+import { MAX_SPAN_DAYS, seriesLastDay, spanLabel, spanLength } from "@/lib/events/span";
 
 const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -33,8 +34,23 @@ const newEventSchema = z
     repeat: z.enum(RECURRENCES, "Repetición no válida.").default("none"),
     until: z.union([z.literal(""), z.string().regex(DATE_KEY, "Fecha de fin no válida.")]).optional(),
     remind: z.boolean().default(false),
+    /** Varios días (un viaje): del día `date` al día `endDate`. */
+    multiDay: z.boolean().default(false),
+    endDate: z.union([z.literal(""), z.string().regex(DATE_KEY, "Último día no válido.")]).optional(),
   })
-  .refine((data) => data.allDay === "true" || !!data.time, {
+  .refine((data) => !data.multiDay || !!data.endDate, {
+    message: "Elige el último día.",
+    path: ["endDate"],
+  })
+  .refine((data) => !data.multiDay || !data.endDate || (DATE_KEY.test(data.date) && data.endDate > data.date), {
+    message: "El último día tiene que ser después del primero.",
+    path: ["endDate"],
+  })
+  .refine((data) => !data.multiDay || !data.endDate || daysBetween(data.date, data.endDate) < MAX_SPAN_DAYS, {
+    message: `Como mucho ${MAX_SPAN_DAYS} días seguidos.`,
+    path: ["endDate"],
+  })
+  .refine((data) => data.allDay === "true" || data.multiDay || !!data.time, {
     message: "Elige una hora.",
     path: ["time"],
   })
@@ -75,17 +91,24 @@ function parseEventForm(formData: FormData): { fields: EventFields } | { error: 
     repeat: formData.get("repeat") ?? undefined,
     until: formData.get("until") ?? undefined,
     remind: formData.get("remind") === "on",
+    multiDay: formData.get("multiDay") === "on",
+    endDate: formData.get("endDate") ?? undefined,
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   }
 
-  const isAllDay = parsed.data.allDay === "true";
+  // Un plan de varios días es de todo el día y no se repite.
+  const multiDay = parsed.data.multiDay && !!parsed.data.endDate;
+  const isAllDay = multiDay || parsed.data.allDay === "true";
   let startAt: Date;
   let endAt: Date;
 
-  if (isAllDay) {
+  if (multiDay) {
+    startAt = zonedInputToUTC(`${parsed.data.date}T00:00`);
+    endAt = zonedInputToUTC(`${parsed.data.endDate}T23:59`);
+  } else if (isAllDay) {
     startAt = zonedInputToUTC(`${parsed.data.date}T00:00`);
     endAt = zonedInputToUTC(`${parsed.data.date}T23:59`);
   } else {
@@ -97,7 +120,7 @@ function parseEventForm(formData: FormData): { fields: EventFields } | { error: 
     return { error: "Fecha u hora no válidas." };
   }
 
-  const recurrence = parsed.data.repeat;
+  const recurrence = multiDay ? "none" : parsed.data.repeat;
   return {
     fields: {
       title: parsed.data.title,
@@ -115,6 +138,9 @@ function parseEventForm(formData: FormData): { fields: EventFields } | { error: 
 
 /** "vie, 25 sept, 20:00 · cada semana (viernes)" para las notificaciones. */
 function whenLabel(fields: EventFields): string {
+  const first = seriesStartDay(fields);
+  const last = seriesLastDay(fields);
+  if (last !== first) return `(${spanLabel(first, last)} · ${spanLength(first, last)} días)`;
   const when = fields.all_day ? formatDate(fields.start_at) : formatDateTime(fields.start_at);
   const repeats = recurrenceLabel({ ...fields, recurrence_until: null });
   return repeats ? `(${when}) · ${repeats.toLowerCase()}` : `(${when})`;
