@@ -25,6 +25,7 @@ function readAllSources(dir: string): string {
 }
 import { STATUS_OPTIONS, findStatus } from "@/lib/status/options";
 import { clampView, cropRect, initialView, scaleFor, zoomAround } from "@/lib/images/crop";
+import { clampZoomView, containRect, MAX_PHOTO_ZOOM, NO_ZOOM, zoomAt } from "@/lib/images/zoom";
 import {
   nextOccurrence,
   occurrenceDays,
@@ -421,6 +422,40 @@ describe("Editor de recorte de fotos", () => {
     const r = cropRect(tall, wide, initialView(tall, wide));
     expect(r.sw / r.sh).toBeCloseTo(2);
     expect(r.sw).toBeCloseTo(3000); // ocupa todo el ancho de la foto
+  });
+});
+
+describe("Visor de fotos con zoom", () => {
+  // Pantalla de 400 × 800 y una foto apaisada de 2000 × 1000: sin zoom se
+  // ve a 400 × 200, centrada (de y = 300 a 500).
+  const photo = { w: 2000, h: 1000 };
+  const frame = { w: 400, h: 800 };
+
+  it("sin zoom, la foto entera y centrada", () => {
+    expect(containRect(photo, frame)).toEqual({ left: 0, top: 300, w: 400, h: 200 });
+    expect(clampZoomView(photo, frame, NO_ZOOM)).toEqual(NO_ZOOM);
+  });
+
+  it("ampliar con los dedos deja quieto el punto de debajo", () => {
+    // Doble de zoom en el centro de la foto (200, 400): sigue en el centro.
+    const v = zoomAt(photo, frame, NO_ZOOM, 2, 200, 400);
+    expect(v.z).toBe(2);
+    expect(200 * v.z + v.x).toBe(200);
+    expect(400 * v.z + v.y).toBe(400);
+  });
+
+  it("no deja mover la foto fuera de los bordes ni dejar hueco", () => {
+    const zoomed = zoomAt(photo, frame, NO_ZOOM, 2, 200, 400);
+    // A lo ancho (800 px > 400): como mucho, el borde izquierdo de la foto en 0.
+    expect(clampZoomView(photo, frame, { ...zoomed, x: 500 }).x).toBe(0);
+    expect(clampZoomView(photo, frame, { ...zoomed, x: -9999 }).x).toBe(-400);
+    // A lo alto (400 px < 800): sigue centrada aunque se arrastre.
+    expect(clampZoomView(photo, frame, { ...zoomed, y: 0 }).y).toBe(zoomed.y);
+  });
+
+  it("el zoom va de 1 al máximo", () => {
+    expect(zoomAt(photo, frame, NO_ZOOM, 0.3, 100, 100)).toEqual(NO_ZOOM);
+    expect(zoomAt(photo, frame, NO_ZOOM, 50, 200, 400).z).toBe(MAX_PHOTO_ZOOM);
   });
 });
 

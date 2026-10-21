@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { getPrefs } from "@/lib/prefs-server";
 import { htmlAttributes } from "@/lib/prefs";
+import { NoZoom } from "@/components/shared/NoZoom";
 
 export const metadata: Metadata = {
   title: "Ratta App",
@@ -31,6 +32,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // Como una app: sin zoom de la página (para leer mejor, Ajustes → Letra
+  // grande). Con maximumScale, el iPhone tampoco amplía al tocar un campo
+  // de texto. Las fotos a pantalla completa sí se amplían (ZoomableImage).
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
   themeColor: "#e1225e",
 };
@@ -58,7 +64,10 @@ export default async function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <NoZoom />
+        {children}
+      </body>
     </html>
   );
 }

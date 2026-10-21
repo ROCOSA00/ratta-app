@@ -10,6 +10,7 @@ import { EVENT_PHOTOS_BUCKET } from "@/lib/events/photos-config";
 import type { DayPhoto } from "@/lib/day/get-day";
 import { formatDateTime } from "@/lib/format-date";
 import { addDayPhoto, deleteDayPhoto } from "./actions";
+import { ZoomableImage } from "@/components/shared/ZoomableImage";
 
 /** Las fotos de un día «porque sí», con su botón para añadir más. */
 export function DayPhotos({
@@ -156,7 +157,7 @@ export function DayPhotos({
         >
           <div className="relative flex-1">
             {viewing.url ? (
-              <Image src={viewing.url} alt="Foto del día" fill unoptimized className="object-contain" />
+              <ZoomableImage src={viewing.url} alt="Foto del día" onTap={() => setViewing(null)} />
             ) : null}
           </div>
           <div

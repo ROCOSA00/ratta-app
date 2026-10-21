@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import type { MomentPhoto } from "@/lib/moments/get-moments";
 import { lateLabel } from "@/lib/moments/config";
 import { TIME_ZONE } from "@/lib/format-date";
+import { ZoomableImage } from "@/components/shared/ZoomableImage";
 
 const timeFormatter = new Intl.DateTimeFormat("es-ES", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit" });
 
@@ -78,7 +79,7 @@ export function MomentPhotos({
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/95"
           onClick={() => setViewing(null)}
         >
-          {viewing.url ? <Image src={viewing.url} alt="Momento" fill unoptimized className="object-contain" /> : null}
+          {viewing.url ? <ZoomableImage src={viewing.url} alt="Momento" onTap={() => setViewing(null)} /> : null}
           <button
             type="button"
             onClick={() => setViewing(null)}

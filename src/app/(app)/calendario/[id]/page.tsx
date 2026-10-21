@@ -127,7 +127,7 @@ export default async function EventoPage({
               </p>
             ) : null}
             {event.description ? (
-              <p className="mt-1 whitespace-pre-wrap text-sm" style={{ color: "var(--color-ink)" }}>
+              <p className="selectable mt-1 whitespace-pre-wrap text-sm" style={{ color: "var(--color-ink)" }}>
                 {event.description}
               </p>
             ) : null}
