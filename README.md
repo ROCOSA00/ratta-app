@@ -399,6 +399,16 @@ puntuales según se van usando:
   de sus días con «Día 2 de 4», en el mes con una barra que une sus días,
   y en Inicio con «🧳 ¡De viaje!» mientras dura. Lógica en
   `src/lib/events/span.ts`, con tests.
+- **Sensación de app, no de web**: la página no se amplía (ni pellizcando,
+  ni con doble toque, ni al tocar un campo de texto en iPhone: viewport con
+  `maximum-scale=1`, `touch-action` y `NoZoom`, que anula los gestos de
+  Safari), no rebota entera al llegar arriba o abajo, y mantener pulsado no
+  selecciona botones ni saca el menú del navegador. Los textos largos
+  (cartas, notas de planes, respuestas) llevan `.selectable` para poder
+  copiarlos. Las fotos a pantalla completa se amplían como en la galería
+  (pellizco, doble toque y arrastrar) con `ZoomableImage`; las cuentas
+  están en `src/lib/images/zoom.ts`, con tests. Para leer mejor, Ajustes →
+  Letra grande.
 
 ## Notas de seguridad
 

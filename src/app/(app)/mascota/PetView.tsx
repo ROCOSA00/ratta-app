@@ -23,6 +23,7 @@ import type { Pet, PetEvent, PetPhoto, PetWeight } from "@/lib/pets/get-pet";
 import { dayLabel, daysBetween } from "@/lib/calendar/date-utils";
 import { WeightChart } from "./WeightChart";
 import { PickerField } from "@/components/shared/PickerField";
+import { ZoomableImage } from "@/components/shared/ZoomableImage";
 
 type Tab = "album" | "peso" | "diario";
 type Run = (action: () => Promise<{ error: string | null }>, after?: () => void) => void;
@@ -491,7 +492,7 @@ function Album({
         >
           {viewing.url ? (
             <div className="relative h-[65vh] w-full">
-              <Image src={viewing.url} alt={viewing.caption ?? ""} fill unoptimized className="object-contain" />
+              <ZoomableImage src={viewing.url} alt={viewing.caption ?? ""} onTap={() => setViewing(null)} />
             </div>
           ) : null}
           <p className="text-center text-sm font-semibold text-white">

@@ -10,6 +10,7 @@ import { addEventPhoto, deleteEventPhoto } from "../actions";
 import { EVENT_PHOTOS_BUCKET } from "@/lib/events/photos-config";
 import type { EventPhoto } from "@/lib/events/get-event";
 import { formatDateTime } from "@/lib/format-date";
+import { ZoomableImage } from "@/components/shared/ZoomableImage";
 
 export function EventPhotos({
   eventId,
@@ -153,7 +154,7 @@ export function EventPhotos({
         >
           <div className="relative flex-1">
             {viewing.url ? (
-              <Image src={viewing.url} alt="Foto del plan" fill unoptimized className="object-contain" />
+              <ZoomableImage src={viewing.url} alt="Foto del plan" onTap={() => setViewing(null)} />
             ) : null}
           </div>
           <div

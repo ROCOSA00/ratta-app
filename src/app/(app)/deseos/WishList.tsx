@@ -160,7 +160,7 @@ export function WishList({ wishes, names }: { wishes: Wish[]; names: Record<stri
                     {cat.emoji} {wish.title}
                   </p>
                   {wish.note ? (
-                    <p className="mt-0.5 whitespace-pre-wrap text-xs" style={{ color: "var(--color-muted)" }}>
+                    <p className="selectable mt-0.5 whitespace-pre-wrap text-xs" style={{ color: "var(--color-muted)" }}>
                       {wish.note}
                     </p>
                   ) : null}

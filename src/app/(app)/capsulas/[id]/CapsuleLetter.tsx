@@ -68,7 +68,7 @@ export function CapsuleLetter({
       <h2 className="text-lg font-bold leading-snug" style={{ color: "var(--color-ink)" }}>
         {title}
       </h2>
-      <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed" style={{ color: "var(--color-ink)" }}>
+      <p className="selectable mt-3 whitespace-pre-wrap text-[15px] leading-relaxed" style={{ color: "var(--color-ink)" }}>
         {body}
       </p>
       {photoUrl ? (

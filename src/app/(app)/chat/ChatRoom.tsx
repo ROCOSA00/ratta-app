@@ -17,6 +17,7 @@ import { TIME_ZONE } from "@/lib/format-date";
 import { MemberCard, type MemberCardPerson } from "@/components/features/MemberCard";
 import { findStatus } from "@/lib/status/options";
 import { addDays, dayLabel, todayKey, toDateKey } from "@/lib/calendar/date-utils";
+import { ZoomableImage } from "@/components/shared/ZoomableImage";
 
 const timeFormatter = new Intl.DateTimeFormat("es-ES", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit" });
 
@@ -683,7 +684,7 @@ export function ChatRoom({
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/95"
           onClick={() => setViewing(null)}
         >
-          <Image src={viewing} alt="Foto" fill unoptimized className="object-contain" />
+          <ZoomableImage src={viewing} alt="Foto" onTap={() => setViewing(null)} />
           <button
             type="button"
             onClick={() => setViewing(null)}

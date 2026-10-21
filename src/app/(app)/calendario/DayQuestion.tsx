@@ -22,7 +22,7 @@ export function DayQuestion({ question, isToday }: { question: DayQuestionData; 
             <p className="text-[11px] font-bold" style={{ color: "var(--color-muted)" }}>
               {a.name}
             </p>
-            <p className="whitespace-pre-wrap text-sm" style={{ color: a.answer ? "var(--color-ink)" : "var(--color-muted)" }}>
+            <p className="selectable whitespace-pre-wrap text-sm" style={{ color: a.answer ? "var(--color-ink)" : "var(--color-muted)" }}>
               {a.answer ??
                 (a.mine
                   ? isToday

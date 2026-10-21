@@ -79,6 +79,58 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ---------------------------------------------------------------
+   Que se sienta una app y no una web en el navegador
+   --------------------------------------------------------------- */
+
+/* Sin rebote de la página entera al llegar arriba o abajo, ni gestos de
+   "atrás" del navegador al deslizar de lado. */
+html,
+body {
+  overscroll-behavior: none;
+}
+
+/* Sin zoom de la página: ni pellizcando ni con doble toque (el doble toque,
+   además, ya no hace esperar al tocar). Las fotos a pantalla completa
+   tienen su propio zoom. Ver también NoZoom y el viewport. */
+html {
+  touch-action: pan-x pan-y;
+}
+
+/* Mantener pulsado no selecciona textos ni botones ni saca el menú del
+   navegador (vista previa de enlaces, copiar…). */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Donde sí se escribe o se lee algo largo, se puede seleccionar y copiar
+   como siempre. (En iPhone, sin esto, los campos no dejarían escribir.) */
+input,
+textarea,
+select,
+[contenteditable="true"],
+.selectable {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/* Las fotos (por ejemplo, a pantalla completa) se pueden guardar
+   manteniéndolas pulsadas; las que son un botón o un enlace, no. */
+img {
+  -webkit-touch-callout: default;
+  -webkit-user-drag: none;
+}
+a img,
+button img,
+a,
+button {
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+}
+
 h1,
 h2,
 h3,
